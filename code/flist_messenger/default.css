@@ -1,0 +1,6 @@
+<style type="text/css">
+	span#warning { color: rgb(0,0,0); background-color: rgb(255, 0, 0); }
+	span#highlight { color: rgb(0, 255, 0) !important; }
+	a { color: rgb(155, 184, 184) !important; }
+	a:hover { color:#cBe7e8 !important; }
+</style>

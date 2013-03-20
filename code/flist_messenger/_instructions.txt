@@ -1,0 +1,4 @@
+- Open the CMakeLists.txt file with Qt Creator, after making sure that you have CMake and QtSDK correctly installed.
+- After compiling, you need to move the following files to the output folder or you will get runtime errors: default.qss, default.css and colors.ini
+
+If you have any questions, feel free to contact Viona/Bastogne on F-chat, or post in the desktop client's group forums.

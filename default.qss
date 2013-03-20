@@ -1,0 +1,102 @@
+/* 
+	Quick colorchange for f-chat desk client.
+	
+	Love, Vixe
+
+
+
+QSS Documentation:	http://developer.qt.nokia.com/doc/qt-4.8/stylesheet-syntax.html
+ 
+ 
+The Groupbox with login stuff: 		QGroubBox #loginGroup
+Login button:						QPushButton #loginButton
+Character select box: 				QComboBox #charSelectBox
+"Character" label: 					QLabel #charlabel
+Main window: 						flist_messenger inherits QMainWindow #MainWindow
+Active Panels: 						QScrollArea #activePanels (Currently broken)
+Current tab's name: 				QLabel #currentpanelname
+
+Settings button: 					QPushButton #settingsbutton
+Channels button: 					QPushButton #channelsbutton
+Makeroom button: 					QPushButton #makeroombutton
+Setstatus button: 					QPushButton #setstatusbutton
+Friends button: 					QPushButton #friendsbutton
+Alertstaff button: 					QPushButton #alertstaffbutton
+Chat output: 						QTextBrowser #chatoutput
+Userlist: 							QListWidget #userlist
+Chat input: 						QPlainTextEdit #chatinput
+Sendmessage button: 				QPushButton #sendmsgbutton
+Sendadvertisement button: 			QPushButton #sendadvbutton
+Menu bar: 							QMenuBar #menubar
+Menu help: 							QMenu #menuHelp
+Menu File: 							QMenu #menuFile
+
+All dialogs are QDialog. There's a lot I still have to give names to, but here's some more classes you can use:
+QCheckBox
+QLabel (any text that isn't attached to something else)
+QLineEdit (any text input box that's one line big)
+QListWidgetItem (item of a listwidget. Like in the userlist, each user is a QListWidgetItem)
+QTabWidget (a tab control. Mostly used in dialogs, like the one with channels (a tab for public ones, a tab for private ones))
+
+
+ 
+ 
+ */
+
+/* The main display area. */
+QTextBrowser#chatoutput {
+	background-color:#202020;
+	color:#eeeeee;
+	font-size:15px;
+	padding-bottom:4px;
+	border-top:1px solid #000000;
+	border-left:1px solid #000000;
+	border-right:1px solid #666666;
+	border-bottom:1px solid #666666;
+}
+
+
+
+/* Userlist on right. */
+QListWidget#userlist {
+	background-color:#202020;
+	border-top:1px solid #000000;
+	border-left:1px solid #000000;
+	border-right:0px;
+	border-bottom:1px solid #666666;
+	
+}
+
+/* Input area. */
+QTextEdit#reportinput, QPlainTextEdit#chatinput {
+	background-color:#FFFFFF;
+	border-top:1px solid #000000;
+	border-left:1px solid #000000;
+	border-right:1px solid #888888;
+	border-bottom:1px solid #888888;
+	color:#000000;
+	border-radius:3px;
+}
+
+
+QMainWindow {
+	background-color:#444444;
+	color:#ffffff;
+}
+
+QLabel {
+	color:#ffffff;
+	font-size:15px;
+}
+
+QAbstractScrollArea { 
+	background-color:#444444;
+	color:#ffffff;
+	border:0px;
+	border-left:0px solid #000000;
+	border-bottom:0px solid #000000;
+}
+QMessageBox, QDialog {
+	background-color:#444444;
+	color:#ffffff;
+}
