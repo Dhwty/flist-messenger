@@ -22,8 +22,8 @@
 #include "flist_messenger.h"
 #include <QString>
 
-#define VERSION "F-List Messenger [Beta] 0.8.3"
-#define VERSIONNUM "0.8.3"
+#define VERSION "F-List Messenger [Beta] 0.8.4"
+#define VERSIONNUM "0.8.4"
 #define CLIENTID "F-List Desktop Client"
 
 // Bool to string macro
