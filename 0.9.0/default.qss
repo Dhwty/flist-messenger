@@ -1,0 +1,12 @@
+/* 
+ * Editing this file allows you to customize the look of any UI element in the application.
+ * Please see http://developer.qt.nokia.com/doc/qt-4.8/stylesheet-syntax.html for details on the syntax of this file.
+ */
+
+/* The main display area. */
+QTextBrowser#chatoutput { background-color: rgb(4, 64, 128); color: white; }
+/* Userlist on right. */
+QListWidget#userlist { background-color: rgb(4, 62, 128); }
+QListWidget#userlist::item { background-color: rgb(39, 69, 100); }
+/* Input area. */
+QPlainTextEdit#chatinput { background-color: rgb(4, 62, 128); color: white; }
