@@ -240,11 +240,6 @@ void FChannel::setOps ( QStringList& oplist )
 
 void FChannel::addLine(QString chanLine, bool log)
 {
-	char timebuf[64];
-	time_t now = time(0);
-	size_t len = strftime(&timebuf[0], 64, "[%T] ", localtime(&now));
-	timebuf[len] = 0;
-	chanLine = &timebuf[0] + chanLine;
 	chanLines << chanLine;
 
 	while ( chanLines.count() > 256 )
