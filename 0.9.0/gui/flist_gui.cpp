@@ -140,7 +140,7 @@ void FGui::setupRealUI()
     centralButtons->addWidget(btnMakeRoom);
     centralButtons->addWidget(btnChannels);
     connect(btnFriends, SIGNAL ( clicked() ), this, SLOT ( friendsDialogRequested() ) );
-    connect(btnChannels, SIGNAL ( clicked() ), this, SLOT ( channelsDialogRequested() ) );
+    connect(btnChannels, SIGNAL ( clicked() ), this, SLOT ( btnChannelsClicked() ) );
     connect(btnSettings, SIGNAL(clicked()), this, SLOT(settingsDialogRequested()));
     connect(btnReport, SIGNAL(clicked()), this, SLOT(reportDialogRequested()));
     connect(btnMakeRoom, SIGNAL ( clicked() ), this, SLOT ( makeRoomDialogRequested() ) );
@@ -1225,8 +1225,6 @@ void FGui::channelsDialogRequested()
         setupChannelsUI();
 
     channelsDialog->show();
-
-    emit channelListRequested();
 }
 void FGui::characterInfoDialogRequested()
 {
@@ -1316,6 +1314,10 @@ void FGui::reportDialogRequested()
     re_teProblem->clear();
     reportDialog->show();
 
+}
+void FGui::btnChannelsClicked()
+{
+    emit channelListRequested();
 }
 
 void FGui::iconActivated(QSystemTrayIcon::ActivationReason reason)

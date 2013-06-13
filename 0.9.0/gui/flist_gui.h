@@ -201,6 +201,7 @@ public slots:
     void quitApp();
     void btnConnectClicked();
     void btnLoginClicked();
+    void btnChannelsClicked();
     void enterPressed();
     void tabSwitched(FChannel* from, FChannel* to);
     void closeEvent(QCloseEvent *);
@@ -214,7 +215,7 @@ public slots:
     void fr_friendsContextMenuRequested(const QPoint& point);
 
     void tb_channelRightClicked(const QPoint& point);
-private slots:
+public slots:
     void friendsDialogRequested();
     void channelsDialogRequested();
     void characterInfoDialogRequested();

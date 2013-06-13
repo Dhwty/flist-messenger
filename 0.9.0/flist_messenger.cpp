@@ -2584,6 +2584,7 @@ void flist_messenger::friendsDialogRequested()
 }
 void flist_messenger::channelsDialogRequested()
 {
+    gui->channelsDialogRequested();
     network->sendChannelsRequest();
     network->sendProomsRequest();
 }
