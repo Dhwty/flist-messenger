@@ -22,8 +22,8 @@
 #ifndef flist_messenger_H
 #define flist_messenger_H
 
-#define VERSION "F-List Messenger [Beta] 0.8.3"
-#define VERSIONNUM "0.8.3"
+#define VERSION "F-List Messenger [Beta] 0.9.0"
+#define VERSIONNUM "0.9.0"
 #define CLIENTID "F-List Desktop Client"
 
 #include <QtWidgets/QMainWindow>
