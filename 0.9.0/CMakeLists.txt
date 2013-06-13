@@ -18,6 +18,7 @@ include_directories(
 	"../libjson/Source"
 )
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_FLAGS "${Qt5Widgets_EXECUTABLE_COMPILE_FLAGS}")
 set(flist_messenger_SRCS
 	../libjson/Source/internalJSONNode.cpp
 	../libjson/Source/JSONNode.cpp
