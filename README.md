@@ -26,3 +26,7 @@ More about this client, including detailed instructions for building under linux
 Most user bug reports will show up here: http://www.f-list.net/forum.php?forum=1698
 
 Updated bugs for 0.9.0 will be added here, in the issues tracker, as soon as the Deer gets this thing to compile. 
+
+Versions for Other Platforms
+==============
+0.8.4 for Open Pandora: http://repo.openpandora.org/?page=detail&app=fchat-001
