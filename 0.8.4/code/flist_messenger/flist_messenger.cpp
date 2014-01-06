@@ -38,8 +38,8 @@ QString flist_messenger::settingsPath = "./settings.ini";
 //get ticket, get characters, get friends list, get default character
 void flist_messenger::prepareLogin ( QString& username, QString& password )
 {
-	lurl = QString ( "http://www.f-list.net/json/getApiTicket.json" );
-	lurl.addQueryItem("secure", "no");
+	lurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
+	lurl.addQueryItem("secure", "yes");
 	lurl.addQueryItem("account", username);
 	lurl.addQueryItem("password", password);
 	lreply = qnam.get ( QNetworkRequest ( lurl ) ); //using lreply since this will replace the existing login system.
