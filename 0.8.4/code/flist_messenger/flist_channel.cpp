@@ -293,7 +293,7 @@ void FChannel::logLine ( QString &chanLine )
 	}
     chanLine.append("<br />\n");
     chanLine.replace("#LNK-", "");
-    chanLine.replace("#USR-", "http://www.f-list.net/c/");
+    chanLine.replace("#USR-", "https://www.f-list.net/c/");
 	logfile.write(chanLine.toUtf8());
 	logfile.close();
 }
