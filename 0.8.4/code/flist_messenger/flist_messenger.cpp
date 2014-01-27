@@ -785,6 +785,9 @@ void flist_messenger::submitReport()
 {
 	lurl = QString ( "https://www.f-list.net/json/getApiTicket.json?secure=no&account=" + username + "&password=" + password );
 	lreply = qnam.get ( QNetworkRequest ( lurl ) );
+	//todo: fix this!
+	lreply->ignoreSslErrors();
+
 	connect ( lreply, SIGNAL ( finished() ), this, SLOT ( reportTicketFinished() ) );
 }
 
@@ -883,6 +886,9 @@ void flist_messenger::reportTicketFinished()
     lurl.addQueryItem("log", toWrite.c_str());
     postData = lurl.encodedQuery();
     lreply = qnam.post ( request, postData );
+    //todo: fix this!
+    lreply->ignoreSslErrors();
+
     connect ( lreply, SIGNAL ( finished() ), this, SLOT ( handleReportFinished() ) );
     delete lognodes;
 }

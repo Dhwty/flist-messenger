@@ -43,7 +43,9 @@ QPixmap FAvatar::getAvatar ( QString userName )
 
 	QUrl targetUrl ( "https://static.f-list.net/images/avatar/" + name.toLower() + ".png" );
 	connect ( &manager, SIGNAL ( finished ( QNetworkReply* ) ), SLOT ( buttonAvatarReady ( QNetworkReply* ) ) );
-	manager.get ( QNetworkRequest ( targetUrl ) );
+	QNetworkReply* reply = manager.get ( QNetworkRequest ( targetUrl ) );
+	//todo: fix this!
+	reply->ignoreSslErrors();
 	return QPixmap();
 }
 
@@ -64,7 +66,9 @@ void FAvatar::applyAvatarToButton ( QAbstractButton *button, QString name )
 
 	std::cout << "Beginning download for " + name.toStdString() + ".\n";
 	connect ( &manager, SIGNAL ( finished ( QNetworkReply* ) ), SLOT ( buttonAvatarReady ( QNetworkReply* ) ) );
-	manager.get ( QNetworkRequest ( targetUrl ) );
+	QNetworkReply* reply = manager.get ( QNetworkRequest ( targetUrl ) );
+	//todo: fix this!
+	reply->ignoreSslErrors();
 }
 
 void FAvatar::buttonAvatarReady ( QNetworkReply* reply )
