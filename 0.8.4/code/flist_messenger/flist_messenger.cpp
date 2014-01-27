@@ -22,8 +22,8 @@
 #include "flist_messenger.h"
 #include <QString>
 
-#define VERSION "F-List Messenger [Beta] 0.8.4"
-#define VERSIONNUM "0.8.4"
+#define VERSION "F-List Messenger [Beta] 0.8.5"
+#define VERSIONNUM "0.8.5"
 #define CLIENTID "F-List Desktop Client"
 
 // Bool to string macro
@@ -32,14 +32,14 @@
 #define STRBOOL(s) ( (s=="true") ? true : false )
 
 // Some day we may implement a proper websocket connection system. Today is not that day.
-std::string flist_messenger::WSConnect = "GET / HTTP/1.1\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nHost: f-list.net:9722\r\nOrigin: http://www.f-list.net\r\nSec-WebSocket-Key1: Z+t 6` H  XM%31   7T 5=7 330 r@\r\nSec-WebSocket-Key2: 267 0 4 0  \\ K36 3 2\r\n\r\nabcdefgh";
+std::string flist_messenger::WSConnect = "GET / HTTP/1.1\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nHost: f-list.net:9722\r\nOrigin: https://www.f-list.net\r\nSec-WebSocket-Key1: Z+t 6` H  XM%31   7T 5=7 330 r@\r\nSec-WebSocket-Key2: 267 0 4 0  \\ K36 3 2\r\n\r\nabcdefgh";
 QString flist_messenger::settingsPath = "./settings.ini";
 
 //get ticket, get characters, get friends list, get default character
 void flist_messenger::prepareLogin ( QString& username, QString& password )
 {
-	lurl = QString ( "http://www.f-list.net/json/getApiTicket.json" );
-	lurl.addQueryItem("secure", "no");
+	lurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
+	lurl.addQueryItem("secure", "yes");
 	lurl.addQueryItem("account", username);
 	lurl.addQueryItem("password", password);
 	lreply = qnam.get ( QNetworkRequest ( lurl ) ); //using lreply since this will replace the existing login system.
@@ -559,7 +559,7 @@ void flist_messenger::setupHelpDialog()
 	he_teTags->setHtml(str);
 	str = "<b>F-chat Desktop Messenger</b><br />";
 	str+= "by <a href=\"#USR-Viona\">Viona</a>, <a href=\"#USR-Kira\">Kira</a>, <a href=\"#USR-Aniko\">Aniko</a>, <a href=\"#USR-Hexxy\">Hexxy</a> & <a href=\"#USR-Eager\">Eager</a>.<br />";
-	str+= "For bug reports, PM Viona or post <a href=\"#LNK-http://www.f-list.net/forum.php?forum=1698\">here</a>.<br />";
+	str+= "For bug reports, PM Viona or post <a href=\"#LNK-https://www.f-list.net/forum.php?forum=1698\">here</a>.<br />";
 	str+= "(Please do not use the helpdesk or contact other staff for this.)<br /><br />";
 	str+= "Thank you for using the messenger's beta version. For updates, regularly check the F-chat Desktop Client group forums.<br />";
 	str+= "To get debug output, run the application with the \"-d\" argument.<br />";
@@ -758,7 +758,7 @@ void flist_messenger::re_btnSubmitClicked()
 
 void flist_messenger::submitReport()
 {
-	lurl = QString ( "http://www.f-list.net/json/getApiTicket.json?secure=no&account=" + username + "&password=" + password );
+	lurl = QString ( "https://www.f-list.net/json/getApiTicket.json?secure=no&account=" + username + "&password=" + password );
 	lreply = qnam.get ( QNetworkRequest ( lurl ) );
 	connect ( lreply, SIGNAL ( finished() ), this, SLOT ( reportTicketFinished() ) );
 }
@@ -840,7 +840,7 @@ void flist_messenger::reportTicketFinished()
     }
     JSONNode subnode = respnode.at ( "ticket" );
     loginTicket = subnode.as_string().c_str();
-    QString url_string="http://www.f-list.net/json/api/report-submit.php?account=";
+    QString url_string="https://www.f-list.net/json/api/report-submit.php?account=";
     url_string += username;
     url_string += "&character=";
     url_string += charName;
@@ -1429,7 +1429,7 @@ void flist_messenger::anchorClicked ( QUrl link )
 		}
 		else if (cmd == "#USR-")
 		{
-			QString flist = "http://www.f-list.net/c/";
+			QString flist = "https://www.f-list.net/c/";
 			flist += ls.right(ls.length()-5);
 			QUrl link(flist);
 			QDesktopServices::openUrl(link);
@@ -2271,7 +2271,7 @@ void flist_messenger::ul_chatOpRemove()
 void flist_messenger::ul_profileRequested()
 {
 	FCharacter* ch = ul_recent;
-	QString l = "http://www.f-list.net/c/";
+	QString l = "https://www.f-list.net/c/";
 	l += ch->name();
 	QUrl link(l);
 	QDesktopServices::openUrl(link);
@@ -4112,7 +4112,7 @@ void flist_messenger::parseCommand ( std::string& input )
 				output	= "<b>STAFF ALERT!</b> From " + character + "<br />";
 				output += report + "<br />";
 				if (logged)
-					output += "<a href=\"#LNK-http://www.f-list.net/fchat/getLog.php?log=" + logid + "\" ><b>Log~</b></a> | ";
+					output += "<a href=\"#LNK-https://www.f-list.net/fchat/getLog.php?log=" + logid + "\" ><b>Log~</b></a> | ";
 				output += "<a href=\"#CSA-" + callid + "\"><b>Confirm Alert</b></a>";
 				FMessage fmsg(FMessage::MESSAGETYPE_REPORT, currentPanel, 0, output, currentPanel, channelList);
 			}
