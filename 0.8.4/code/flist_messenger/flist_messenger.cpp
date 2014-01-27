@@ -31,7 +31,7 @@
 // String to bool macro
 #define STRBOOL(s) ( (s=="true") ? true : false )
 
-#define FLIST_PORT 8722 //Test server
+//#define FLIST_PORT 8722 //Test server
 #define FLIST_PORT 9722 //Real server
 
 // Some day we may implement a proper websocket connection system. Today is not that day.
@@ -89,7 +89,6 @@ void flist_messenger::handleLogin()
 
 	lreply->deleteLater();
 	std::string response ( respbytes.begin(), respbytes.end() );
-	printf("%s\n", response.c_str());
 	JSONNode respnode = libJSON::parse ( response );
 	JSONNode childnode = respnode.at ( "error" );
 
@@ -1793,14 +1792,11 @@ void flist_messenger::connectedToSocket()
 	QString header;
 	header.sprintf( WSConnect.c_str(), FLIST_PORT, (const char *)QByteArray((const char *)nonce, 16).toBase64());
 
-	printf("%s\n", (const char *)header.toAscii() );
-
 	tcpSock->write ( header.toAscii() );
 	tcpSock->flush();
 /*	QString input = "Connected. SSL negotiation...";
 	FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);
 	tcpSock->startClientEncryption();
-	printf("Connected!\n");
 	*/
 }
 void flist_messenger::connectedToSsl() {
@@ -1816,7 +1812,6 @@ void flist_messenger::readReadyOnSocket()
 	{
 		QByteArray buffer = tcpSock->readAll();
 		std::string buf ( buffer.begin(), buffer.end() );
-		printf(buffer);
 		if ( buf.find ( "\r\n\r\n" ) != std::string::npos )
 			doingWS = false;
 		//todo: verify "Sec-WebSocket-Accept" response
@@ -1846,10 +1841,10 @@ void flist_messenger::readReadyOnSocket()
 		QByteArray buffer = tcpSock->readAll();
 		std::string buf ( networkBuffer );
 		buf.append ( buffer.begin(), buffer.end() );
-
 		unsigned int lengthsize;
 		unsigned int payloadlength;
 		unsigned int headersize;
+		int i;
 		while(1) {
 			if(buf.length() < 2) {
 				break;
@@ -1862,21 +1857,20 @@ void flist_messenger::readReadyOnSocket()
 				if(buf.length() < 4) {
 					break;
 				}
-				payloadlength = (buf[2] << 8) | buf[3];
+				payloadlength = ((buf[2] & 0xff) << 8) | (buf[3] & 0xff);
 			} else {
 				lengthsize = 8;
 				if(buf.length() < 10) {
 					break;
 				}
 				//Does not handle lengths greater than 4GB
-				payloadlength = (buf[6] << 24) | (buf[7] << 16) | (buf[8] << 8) | buf[9];
+				payloadlength = ((buf[6] & 0xff) << 24) | ((buf[7] & 0xff) << 16) | ((buf[8] & 0xff) << 8) | (buf[9] & 0xff);
 			}
 			if(buf[1] & 0x80) {
 				headersize = lengthsize + 2 + 4;
 			} else {
 				headersize = lengthsize + 2;
 			}
-			printf("0x%2.2x:0x%2.2x len%d\n", (unsigned char)buf[0], (unsigned char)buf[1], payloadlength);
 			//todo: sanity check the opcode, final fragment and reserved bits
 			//if(buf != 0x81) {
 			//	display error
@@ -1886,7 +1880,11 @@ void flist_messenger::readReadyOnSocket()
 				break;
 			}
 			std::string cmd = buf.substr ( headersize, payloadlength );
-			printf("%s\n", cmd.c_str());
+			if(buf[1] & 0x80) {
+				for(i = 0; i < payloadlength; i++) {
+					cmd[i] ^= buf[lengthsize + 2 + (i & 0x3)];
+				}
+			}
 			parseCommand ( cmd );
 			if ( buf.length() <= headersize + payloadlength)
 			{
@@ -1897,27 +1895,6 @@ void flist_messenger::readReadyOnSocket()
 			}
 		}
 		networkBuffer = buf;
-#if 0
-		int spos = buf.find ( ( char ) 0 );
-		int epos = buf.find ( ( char ) 0xff );
-
-		while ( spos != std::string::npos && epos != std::string::npos )
-		{
-			std::string cmd = buf.substr ( spos + 1, epos - ( spos + 1 ) );
-			parseCommand ( cmd );
-			spos = buf.find ( ( char ) 0, epos );
-			epos = buf.find ( ( char ) 0xff, epos + 1 );
-		}
-
-		if ( spos != std::string::npos && epos == std::string::npos )
-		{
-			networkBuffer = buf.substr ( spos, buf.length() - spos );
-		}
-		else if ( networkBuffer.length() )
-		{
-			networkBuffer.clear();
-		}
-#endif
 	}
 }
 void flist_messenger::socketError ( QAbstractSocket::SocketError socketError )
@@ -1961,7 +1938,6 @@ void flist_messenger::sendWS ( std::string& input )
 	{
 		fix_broken_escaped_apos ( input );
 		printDebugInfo( ">>" + input);
-		printf("%s%s\n", ">>", input.c_str());
 		QByteArray buf;
 		QDataStream stream ( &buf, QIODevice::WriteOnly );
 		input.resize ( input.length() );
@@ -1988,24 +1964,17 @@ void flist_messenger::sendWS ( std::string& input )
 		}
 		//The mask to use for this frame.
 		//The spec says it should be cryptographically strong random number, but we're using a weak random source instead.
-		quint32 r = rand();
-		stream << ( quint8 ) (r >> 24);
-		stream << ( quint8 ) (r >> 16);
-		stream << ( quint8 ) (r >> 8);
-		stream << ( quint8 ) (r);
-		
+		quint8 mask[4];
 		int i;
-		for(i = 0; i < buf.length(); i++) {
-			printf("\\x%2.2x", (unsigned char)buf[i]);
+
+		for(i = 0; i < 4; i++) {
+			mask[i] = rand() & 0xff;
+			stream << mask[i];
 		}
-		//printf("%s\n", input.c_str());
-		//stream << ( quint8 ) 0;
-		stream.writeRawData ( input.c_str(), input.length() );
-		for(; i < buf.length(); i++) {
-			printf("%c", (unsigned char)buf[i]);
+		
+		for(i = 0; i < input.length(); i++) {
+			stream << (quint8)(input[i] ^ mask[i & 0x3]);
 		}
-		printf("\n");
-		//stream << ( quint8 ) 0xff;
 		tcpSock->write ( buf );
 		tcpSock->flush();
 	}
