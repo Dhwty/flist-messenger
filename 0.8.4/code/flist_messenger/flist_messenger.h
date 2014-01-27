@@ -25,6 +25,7 @@
 #include <QtGui/QMainWindow>
 #include <QNetworkAccessManager>
 #include <QTcpSocket>
+#include <QSslSocket>
 #include <QUrl>
 #include <QString>
 #include <QSignalMapper>
@@ -242,6 +243,7 @@ public slots:
 private slots:
 	void prepareLogin ( QString& username, QString& password );
 	void handleLogin();
+	void handleSslErrors( QList<QSslError> sslerrors );
 	void setupConnectBox();			// The connect box is used for account login
 	void setupLoginBox();			// The login box is used for character selection
 	void clearLoginBox();			// Destroys login box
@@ -274,8 +276,10 @@ private slots:
 	void destroyMenu();
 	void destroyChanMenu();
 	void connectedToSocket();
+	void connectedToSsl();
 	void readReadyOnSocket();
 	void socketError ( QAbstractSocket::SocketError socketError );
+        void socketSslError ( QList<QSslError> sslerrors );
 	void quitApp();
 	void aboutApp();
 	void channelButtonMenuRequested();
@@ -381,7 +385,9 @@ private:
 	QNetworkAccessManager qnam;
 	QNetworkReply* lreply;
 	QUrl lurl;
+	QUrl lparam;
 	QTcpSocket* tcpSock;
+	//QSslSocket* tcpSock;
 
 	std::string networkBuffer;
 	unsigned int loginStep;
