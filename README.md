@@ -3,11 +3,11 @@ flist-messenger
 
 THIS CLIENT DOES NOT CURRENTLY WORK!
 
-F-List switched to using SSL and Hybi websockets, on 6 January, and this client has not yet been updated. Please see the 'SSL-Fixed' branch for the 0.8.4 version with HTTPS support, but be aware it is still using Hixie websockets. I have not yet patched 0.9.0, but I'll get there. It'll happen in the SSL-Fixed branch. If you're looking to work on fixing the websockets problem, that's the branch to pull.
+=======
+F-List switched to using SSL and Hybi websockets, on 6 January, and this client has not yet been updated. The 0.8.4 version is now using HTTPS support, but be aware it is still using Hixie websockets. I have not yet patched 0.9.0, but I'll get there.
 
 
-
-
+=======
 A multi-platform desktop client for the F-Chat protocol. If you have any questions, feel free to contact Viona/Bastogne on F-chat, or post in the desktop client's group forums.
 
 THE LATEST CODE IS THE 0.9.0 FOLDER. 
