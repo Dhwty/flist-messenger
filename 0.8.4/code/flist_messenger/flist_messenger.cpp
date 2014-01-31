@@ -50,10 +50,17 @@ QString flist_messenger::settingsPath = "./settings.ini";
 void flist_messenger::prepareLogin ( QString& username, QString& password )
 {
         lurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
-        lparam.addQueryItem("secure", "yes");
-        lparam.addQueryItem("account", username);
-        lparam.addQueryItem("password", password);
-        lreply = qnam.post ( QNetworkRequest ( lurl ), lparam.encodedQuery() ); //using lreply since this will replace the existing login system.
+        //todo: Fix this. Doing a proper POST works uner Linux but not Windows.
+        lurl.addQueryItem("secure", "yes");
+        lurl.addQueryItem("account", username);
+        lurl.addQueryItem("password", password);
+        //lparam = QUrl();
+        //lparam.addQueryItem("secure", "yes");
+        //lparam.addQueryItem("account", username);
+        //lparam.addQueryItem("password", password);
+        QNetworkRequest request( lurl );
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+        lreply = qnam.post ( request, lparam.encodedQuery() ); //using lreply since this will replace the existing login system.
         lreply->ignoreSslErrors();
         connect ( lreply, SIGNAL ( finished() ), this, SLOT ( handleLogin() ) );
         connect ( lreply, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( handleSslErrors( QList<QSslError> ) ) );
