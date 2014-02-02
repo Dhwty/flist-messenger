@@ -1,0 +1,48 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/address-book.png</file>
+        <file>images/alarm-clock.png</file>
+        <file>images/auction-hammer--exclamation.png</file>
+        <file>images/auction-hammer--minus.png</file>
+        <file>images/auction-hammer--plus.png</file>
+        <file>images/auction-hammer.png</file>
+        <file>images/blue-document--exclamation.png</file>
+        <file>images/book-open-list.png</file>
+        <file>images/bullet.png</file>
+        <file>images/chain.png</file>
+        <file>images/cookie.png</file>
+        <file>images/cross-button.png</file>
+        <file>images/cross-circle-frame.png</file>
+        <file>images/cross.png</file>
+        <file>images/crown.png</file>
+        <file>images/eye.png</file>
+        <file>images/fire.png</file>
+        <file>images/hash.png</file>
+        <file>images/heart-break.png</file>
+        <file>images/heart.png</file>
+        <file>images/icon.ico</file>
+        <file>images/icon.png</file>
+        <file>images/key.png</file>
+        <file>images/lightning.png</file>
+        <file>images/newspaper.png</file>
+        <file>images/pencil.png</file>
+        <file>images/plug-connect.png</file>
+        <file>images/plug-disconnect.png</file>
+        <file>images/question-frame.png</file>
+        <file>images/question.png</file>
+        <file alias="status-yellow.png">images/status-away.png</file>
+        <file alias="status-orange.png">images/status-blue.png</file>
+        <file alias="status-red.png">images/status-busy.png</file>
+        <file alias="status-black.png">images/status-default.png</file>
+        <file alias="status-white.png">images/status-offline.png</file>
+        <file alias="status-green.png">images/status.png</file>
+        <file>images/tag--pencil.png</file>
+        <file>images/tag-label.png</file>
+        <file>images/terminal.png</file>
+        <file>images/tick.png</file>
+        <file>images/user--pencil.png</file>
+        <file>images/user--plus.png</file>
+        <file>images/user.png</file>
+        <file>images/users.png</file>
+    </qresource>
+</RCC>

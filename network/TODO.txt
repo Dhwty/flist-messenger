@@ -1,0 +1,32 @@
+void FNetwork::sendDebug(QString& command){}
+void FNetwork::sendJoinChannel(QString& channel){}
+void FNetwork::sendLeaveChannel(QString& channel){}
+void FNetwork::sendSetStatus(QString& status, QString& message){}
+void FNetwork::sendIgnoreAdd(QString& character){}
+void FNetwork::sendIgnoreDelete(QString& character){}
+void FNetwork::sendChannelsRequest(){}
+void FNetwork::sendProomsRequest(){}
+void FNetwork::sendChannelKick(QString& channel, QString& character){}
+void FNetwork::sendChannelBan(QString& channel, QString& character){}
+void FNetwork::sendKick(QString& character){}
+void FNetwork::sendBan(QString& character){}
+void FNetwork::sendMakeRoom(QString& channel){}
+void FNetwork::sendRestrictRoom(QString& channel, QString& restriction){}
+void FNetwork::sendChannelInvite(QString& channel, QString& character){}
+void FNetwork::sendChannelAddOp(QString& channel, QString& character){}
+void FNetwork::sendChannelDeleteOp(QString& channel, QString& character){}
+void FNetwork::sendAddOp(QString& character){}
+void FNetwork::sendDeleteOp(QString& character){}
+void FNetwork::sendReward(QString& character){}
+void FNetwork::sendChannelUnban(QString& channel, QString& character){}
+void FNetwork::sendRequestBanlist(QString& channel){}
+void FNetwork::sendSetDescription(QString& channel, QString& description){}
+void FNetwork::sendRequestCoplist(QString& channel){}
+void FNetwork::sendTimeout(QString& character, int time, QString& reason){}
+void FNetwork::sendUnban(QString& character){}
+void FNetwork::sendCreateChannel(QString& channel){}
+void FNetwork::sendKillChannel(QString& channel){}
+void FNetwork::sendBroadcast(QString& broadcast){}
+void FNetwork::sendSetMode(QString& channel, QString& mode){}
+void FNetwork::sendBottle(QString& channel){}
+void FNetwork::sendRoll(QString& channel, QString& dice){}

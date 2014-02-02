@@ -1,8 +1,9 @@
 flist-messenger
 ===============
 
-**0.8.5 WORKS, THANKS TO ALICIA SPRIG! And it's compiled for Windows and everything!**
+**0.8.4 WORKS, THANKS TO ALICIA SPRIG!**
 
+(But, you have to compile it, yourself, because I've never gotten this bloody thing to build on Windows. If you get it to build, send me a copy and I'll add it in.)
 
 **Known issues:**
 
@@ -17,16 +18,16 @@ SSL connections are not verified. I had problems with F-List's SSL certificate v
 
 A multi-platform desktop client for the F-Chat protocol. If you have any questions, feel free to contact Viona/Bastogne on F-chat, or post in the desktop client's group forums.
 
-THE LATEST CODE IS THE 0.9.0 BRANCH. (But, 0.9.0 hasn't been updated for SSL or HyBi.)
+THE LATEST CODE IS THE 0.9.0 FOLDER. (But, 0.9.0 hasn't been updated for SSL or HyBi.)
 - If you would like to work on this client, please work with 0.9.0. 
 - If you would like to compile and use this client, I suggest sticking to 0.8.4, for now.
 
-To build 0.8.x, you will need:
+To build 0.8.4, you will need:
 - Cmake
-- Qt4 (not Qt5! Qt5 declines to build 0.8.x!)
+- Qt4 (not Qt5! Qt5 declines to build 0.8.4!)
 
 To build 0.9.0, you will need:
-- the libjson directory from 0.8.x
+- the libjson directory from 0.8.4
 - Cmake 2.8.8 or higher
 - Qt5
 
