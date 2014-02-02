@@ -66,22 +66,39 @@ void FCharacter::initClass()
 	{
 		return;
 	}
-	QStringList colstr = colset.value("gender/none").toStringList();
-	genderColors[ (quint32)GENDER_NONE] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	QStringList colstr;
+	colstr = colset.value("gender/none").toStringList();
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_NONE] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
 	colstr = colset.value("gender/male").toStringList();
-	genderColors[ (quint32)GENDER_MALE] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_MALE] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
 	colstr = colset.value("gender/female").toStringList();
-	genderColors[ (quint32)GENDER_FEMALE] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_FEMALE] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
 	colstr = colset.value("gender/transgender").toStringList();
-	genderColors[ (quint32)GENDER_TRANSGENDER] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_TRANSGENDER] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
 	colstr = colset.value("gender/shemale").toStringList();
-	genderColors[ (quint32)GENDER_SHEMALE] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_SHEMALE] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
 	colstr = colset.value("gender/herm").toStringList();
-	genderColors[ (quint32)GENDER_HERM] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_HERM] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
 	colstr = colset.value("gender/maleherm").toStringList();
-	genderColors[ (quint32)GENDER_MALEHERM] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_MALEHERM] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
 	colstr = colset.value("gender/cuntboy").toStringList();
-	genderColors[ (quint32)GENDER_CUNTBOY] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_CUNTBOY] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
 }
 
 FCharacter::FCharacter()
