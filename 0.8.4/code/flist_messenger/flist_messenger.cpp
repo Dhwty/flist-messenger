@@ -51,16 +51,23 @@ void flist_messenger::prepareLogin ( QString& username, QString& password )
 {
         lurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
         //todo: Fix this. Doing a proper POST works uner Linux but not Windows.
-        lurl.addQueryItem("secure", "yes");
-        lurl.addQueryItem("account", username);
-        lurl.addQueryItem("password", password);
-        //lparam = QUrl();
-        //lparam.addQueryItem("secure", "yes");
-        //lparam.addQueryItem("account", username);
-        //lparam.addQueryItem("password", password);
+        //lurl.addQueryItem("secure", "yes");
+        //lurl.addQueryItem("account", username);
+        //lurl.addQueryItem("password", password);
+        lparam = QUrlQuery();
+        lparam.addQueryItem("secure", "yes");
+        lparam.addQueryItem("account", username);
+        lparam.addQueryItem("password", password);
         QNetworkRequest request( lurl );
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
-        lreply = qnam.post ( request, lparam.encodedQuery() ); //using lreply since this will replace the existing login system.
+        //request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
+        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+        QByteArray postData;
+#if QT_VERSION >= 0x050000
+        postData = lparam.query(QUrl::FullyEncoded).toUtf8();
+#else
+        postData = lparam.encodedQuery();
+#endif
+        lreply = qnam.post ( request, postData ); //using lreply since this will replace the existing login system.
         lreply->ignoreSslErrors();
         connect ( lreply, SIGNAL ( finished() ), this, SLOT ( handleLogin() ) );
         connect ( lreply, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( handleSslErrors( QList<QSslError> ) ) );
@@ -890,8 +897,13 @@ void flist_messenger::reportTicketFinished()
     toWrite = lognodes->write();
     QNetworkRequest request(lurl);
     fix_broken_escaped_apos(toWrite);
-    lurl.addQueryItem("log", toWrite.c_str());
-    postData = lurl.encodedQuery();
+    lparam = QUrlQuery();
+    lparam.addQueryItem("log", toWrite.c_str());
+#if QT_VERSION >= 0x050000
+    postData = lparam.query(QUrl::FullyEncoded).toUtf8();
+#else
+    postData = lparam.encodedQuery();
+#endif
     lreply = qnam.post ( request, postData );
     //todo: fix this!
     lreply->ignoreSslErrors();
@@ -1805,7 +1817,7 @@ void flist_messenger::connectedToSocket()
         QString header;
         header.sprintf( WSConnect.c_str(), FLIST_PORT, (const char *)QByteArray((const char *)nonce, 16).toBase64());
 
-        tcpSock->write ( header.toAscii() );
+        tcpSock->write ( header.toUtf8() );
         tcpSock->flush();
 /*        QString input = "Connected. SSL negotiation...";
         FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);

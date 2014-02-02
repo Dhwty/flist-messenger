@@ -19,8 +19,8 @@
  * DAMAGE.
  */
 
-#include <QtGui/QApplication>
-#include <QtCore/QFile>
+#include <QApplication>
+#include <QFile>
 #include "flist_messenger.h"
 
 int main(int argc, char** argv)

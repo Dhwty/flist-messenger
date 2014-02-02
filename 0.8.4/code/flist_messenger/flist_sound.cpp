@@ -29,11 +29,6 @@ FSound::FSound()
 
 void FSound::play ( soundName sound )
 {
-	if ( !QSound::isAvailable() )
-	{
-		//std::cout << "Error!  Tried to play "+soundFile.toStdString()+", but sound facilities are not available on this system.\n";
-		return;
-	}
 
 	QString soundFile = soundToString ( sound );
 
