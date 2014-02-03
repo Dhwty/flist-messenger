@@ -31,7 +31,7 @@ FGui::FGui(flist_messenger *parent, FSettings *settings) :
     connect(this, SIGNAL(characterInfoRequested(QString&)), parent, SLOT(characterDialogRequested(QString&)));
 
     this->parent = parent;
-    this->setupConnectBox();
+    this->setupConnectBox(settings->getUsername(), settings->getPassword());
     this->show();
 }
 
@@ -239,7 +239,7 @@ void FGui::setupRealUI()
     emit consoleButtonReady();
 }
 
-void FGui::setupConnectBox()
+void FGui::setupConnectBox(QString &username, QString &password)
 {
     this->setWindowTitle ( "F-chat messenger - Login" );
     this->setWindowIcon ( QIcon ( ":/images/icon.png" ) );
@@ -258,11 +258,11 @@ void FGui::setupConnectBox()
     label = new QLabel ( QString ( "Password:" ) );
     gridLayout->addWidget ( label, 1, 0 );
     ReturnLogin* loginreturn = new ReturnLogin(this);
-    lineEdit = new QLineEdit();
+    lineEdit = new QLineEdit(username);
     lineEdit->installEventFilter(loginreturn);
     lineEdit->setObjectName ( QString ( "accountNameInput" ) );
     gridLayout->addWidget ( lineEdit, 0, 1 );
-    lineEdit = new QLineEdit;
+    lineEdit = new QLineEdit(password);
     lineEdit->installEventFilter(loginreturn);
     lineEdit->setEchoMode ( QLineEdit::Password );
     lineEdit->setObjectName ( QString ( "passwordInput" ) );
@@ -378,7 +378,7 @@ QPushButton* FGui::addPanelButton(QString &name, QString &tooltip)
         pushButton->setContextMenuPolicy(Qt::CustomContextMenu);
         activePanelButtons[name] = pushButton;
         connect ( pushButton, SIGNAL ( clicked() ), parent, SLOT ( channelButtonClicked() ) );
-//        connect ( pushButton, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(tb_channelRightClicked(QPoint)));
+        connect ( pushButton, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(tb_channelRightClicked(QPoint)));
         activePanelsContents->addWidget ( pushButton, 0, Qt::AlignTop );
 
         if ( name.length() > 4 && name.toStdString().substr ( 0, 3 ) == "PM-" )
@@ -1114,7 +1114,7 @@ void FGui::setupHelpDialog()
     he_teTags->setHtml(str);
     str = "<b>F-chat Desktop Messenger</b><br />";
     str+= "by <a href=\"#USR-Viona\">Viona</a>, <a href=\"#USR-Kira\">Kira</a>, <a href=\"#USR-Aniko\">Aniko</a>, <a href=\"#USR-Hexxy\">Hexxy</a> & <a href=\"#USR-Eager\">Eager</a>.<br />";
-    str+= "For bug reports, PM Viona or post <a href=\"#LNK-http://www.f-list.net/forum.php?forum=1698\">here</a>.<br />";
+    str+= "For bug reports, PM Viona or post <a href=\"#LNK-https://www.f-list.net/forum.php?forum=1698\">here</a>.<br />";
     str+= "(Please do not use the helpdesk or contact other staff for this.)<br /><br />";
     str+= "Thank you for using the messenger's beta version. For updates, regularly check the F-chat Desktop Client group forums.<br />";
     str+= "To get debug output, run the application with the \"-d\" argument.<br />";
@@ -1128,10 +1128,14 @@ bool FGui::setupChannelSettingsDialog()
     if (tb_recent->type() == FChannel::CHANTYPE_PM)
     {
         // Setup for PM
-        if (characterList.count(tb_recent->recipient()) == 0) // Recipient is offline
+        //if (characterList.count(tb_recent->recipient()) == 0)
+        //    return false;
+        if(!parent->haveCharacter(tb_recent->recipient())) {
+            // Recipient is offline
             return false;
+        }
         channelSettingsDialog = new QDialog(this);
-        FCharacter* ch = characterList[tb_recent->recipient()];
+        FCharacter* ch = parent->getCharacter(tb_recent->recipient()); //characterList[tb_recent->recipient()];
         cs_chanCurrent = tb_recent;
         channelSettingsDialog->setWindowTitle(ch->name());
         channelSettingsDialog->setWindowIcon(tb_recent->pushButton->icon());
@@ -1141,7 +1145,7 @@ bool FGui::setupChannelSettingsDialog()
         cs_vblDescription = new QVBoxLayout;
         QLabel* lblStatus = new QLabel(ch->statusString());
         cs_tbDescription = new QTextBrowser;
-        cs_tbDescription->setHtml(bbparser.parse(cs_qsPlainDescription));
+        cs_tbDescription->setHtml(parent->getParser()->parse(cs_qsPlainDescription));
         cs_tbDescription->setReadOnly(true);
         cs_hblButtons = new QHBoxLayout;
         cs_btnCancel = new QPushButton(QIcon ( QString ( ":/images/cross.png" ) ), "Cancel");
@@ -1157,6 +1161,7 @@ bool FGui::setupChannelSettingsDialog()
 
         connect(cs_btnCancel, SIGNAL(clicked()), this, SLOT(cs_btnCancelClicked()));
         connect(cs_tbDescription, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
+        return true;
     } else {
         channelSettingsDialog = new QDialog(this);
         FChannel* ch = tb_recent;
@@ -1168,12 +1173,12 @@ bool FGui::setupChannelSettingsDialog()
         cs_gbDescription = new QGroupBox("Description");
         cs_vblDescription = new QVBoxLayout;
         cs_tbDescription = new QTextBrowser;
-        cs_tbDescription->setHtml(bbparser.parse(cs_qsPlainDescription));
+        cs_tbDescription->setHtml(parent->getParser()->parse(cs_qsPlainDescription));
         cs_teDescription = new QTextEdit;
         cs_teDescription->setPlainText(cs_qsPlainDescription);
         cs_teDescription->hide();
         cs_chbEditDescription = new QCheckBox("Editable mode (OPs only)");
-        if ( ! ( ch->isOp(characterList[charName]) || characterList[charName]->isChatOp() ) )
+        if ( ! ( ch->isOp(parent->me()) || parent->me()->isChatOp() ) )
             cs_chbEditDescription->setEnabled(false);
         cs_chbAlwaysPing = new QCheckBox("Always ping in this channel");
         cs_chbAlwaysPing->setChecked(ch->getAlwaysPing());
@@ -1197,10 +1202,11 @@ bool FGui::setupChannelSettingsDialog()
         connect(cs_btnCancel, SIGNAL(clicked()), this, SLOT(cs_btnCancelClicked()));
         connect(cs_btnSave, SIGNAL(clicked()), this, SLOT(cs_btnSaveClicked()));
         connect(cs_tbDescription, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
+        return true;
     }
-*/
-    return true;
-
+    */
+    std::cout << "Channel settings disabled due to crashing." << std::endl;
+    return false;
 }
 
 //==================================================================
@@ -1691,7 +1697,7 @@ void FGui::ul_chatOpRemove()
 void FGui::ul_profileRequested()
 {
     FCharacter* ch = ul_recent;
-    QString l = "http://www.f-list.net/c/";
+    QString l = "https://www.f-list.net/c/";
     l += ch->name();
     QUrl link(l);
     QDesktopServices::openUrl(link);

@@ -49,7 +49,8 @@ void FSettings::loadSettings()
         alwaysPing = settings.value("alwaysping").toBool();
         helpdesk = settings.value("helpdesk").toBool();
         chatLogs = settings.value("logs").toBool();
-        username = settings.value("username").toString();
+        username = settings.value("username", "").toString();
+        password = settings.value("password", "").toString();
 
         QString pings = settings.value("pinglist").toString();
         setPingList(pings);
@@ -72,6 +73,8 @@ void FSettings::loadDefaultSettings()
     alwaysPing = false;
     helpdesk = false;
     chatLogs = true;
+    username = "";
+    password = "";
 }
 void FSettings::setDefaultChannels(QString channels)
 {

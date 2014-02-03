@@ -117,6 +117,7 @@ public:
     // GETTERS AND SETTERS
     bool getDisconnected() {return disconnected;}
     FCharacter* getCharacter(QString name) { return characterList[name]; }
+    bool haveCharacter(QString name) { return characterList.count(name) > 0; }
     FChannel* getChannel(QString name) { return channelList[name]; }
     FChannel* getCurrentPanel() {return currentPanel;}
     bool isIgnored(QString name) { return selfIgnoreList.contains(name); }

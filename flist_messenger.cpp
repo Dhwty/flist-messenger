@@ -23,7 +23,7 @@
 #include <QString>
 
 // Some day we may implement a proper websocket connection system. Today is not that day.
-std::string flist_messenger::WSConnect = "GET / HTTP/1.1\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nHost: f-list.net:9722\r\nOrigin: http://www.f-list.net\r\nSec-WebSocket-Key1: Z+t 6` H  XM%31   7T 5=7 330 r@\r\nSec-WebSocket-Key2: 267 0 4 0  \\ K36 3 2\r\n\r\nabcdefgh";
+std::string flist_messenger::WSConnect = "GET / HTTP/1.1\r\nUpgrade: WebSocket\r\nConnection: Upgrade\r\nHost: f-list.net:9722\r\nOrigin: https://www.f-list.net\r\nSec-WebSocket-Key1: Z+t 6` H  XM%31   7T 5=7 330 r@\r\nSec-WebSocket-Key2: 267 0 4 0  \\ K36 3 2\r\n\r\nabcdefgh";
 QString flist_messenger::settingsPath = "./settings.ini";
 
 //get ticket, get characters, get friends list, get default character
@@ -31,12 +31,13 @@ void flist_messenger::prepareLogin ( QString& username, QString& password )
 {
     this->username = username;
     this->password = password;
-    lurl = QUrl ( "http://www.f-list.net/json/getApiTicket.json?" );
+    lurl = QUrl ( "https://www.f-list.net/json/getApiTicket.json?" );
     QNetworkRequest request(lurl);
     QUrlQuery q;
     q.addQueryItem("secure", "no");
     q.addQueryItem("account", username);
     q.addQueryItem("password", password);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     QByteArray postData = q.query(QUrl::FullyEncoded).toUtf8();
     lreply = qnam.post ( request, postData );
     connect ( lreply, SIGNAL ( finished() ), this, SLOT ( handleLogin() ) );
@@ -106,7 +107,7 @@ flist_messenger::flist_messenger(bool d)
     FChannel::initClass(settingsPath);
     FMessage::initClass(se_ping, se_alwaysPing, this);
     network = new FNetwork(this);
-    gui = new FGui(this);
+    gui = new FGui(this, settings);
     connect(gui, SIGNAL(consoleButtonReady()), this, SLOT(setupConsole()));
     connect(this, SIGNAL(tabSwitched(FChannel*,FChannel*)), gui, SLOT(tabSwitched(FChannel*,FChannel*)));
 }
@@ -184,7 +185,7 @@ void flist_messenger::submitReport(QString &problem, QString &who)
     postSystemMessage(FSystemMessage::SYSTYPE_FEEDBACK, currentPanel, message);
     this->re_problem = problem;
     this->re_who = who;
-    QString url = "http://www.f-list.net/json/getApiTicket.json?";
+    QString url = "https://www.f-list.net/json/getApiTicket.json?";
     url += "&secure=no";
     url += ("&account=" + username);
     url += ("&password=" + password);
@@ -269,7 +270,7 @@ void flist_messenger::reportTicketFinished()
     }
     JSONNode subnode = respnode.at ( "ticket" );
     loginTicket = subnode.as_string().c_str();
-    QString url_string="http://www.f-list.net/json/api/report-submit.php?account=";
+    QString url_string="https://www.f-list.net/json/api/report-submit.php?account=";
     url_string += username;
     url_string += "&character=";
     url_string += charName;
@@ -560,7 +561,7 @@ void flist_messenger::anchorClicked ( QUrl link )
         }
         else if (cmd == "#USR-")
         {
-            QString flist = "http://www.f-list.net/c/";
+            QString flist = "https://www.f-list.net/c/";
             flist += ls.right(ls.length()-5);
             QUrl link(flist);
             QDesktopServices::openUrl(link);
@@ -863,6 +864,7 @@ void flist_messenger::postChatMessage(FChannel* channel, FCharacter* character, 
     FChatMessage post(channel, character, msg);
     QString output = post.getOutput();
 
+    std::cout << "postChatMessage: Channel ( " << channel->toString()->toStdString() << " )" << std::endl;
     // post it in the panel
     channel->addLine(output, true);
 
@@ -2411,7 +2413,7 @@ void flist_messenger::parseCommand ( std::string& input )
                 output	= "<b>STAFF ALERT!</b> From " + character + "<br />";
                 output += report + "<br />";
                 if (logged)
-                    output += "<a href=\"#LNK-http://www.f-list.net/fchat/getLog.php?log=" + logid + "\" ><b>Log~</b></a> | ";
+                    output += "<a href=\"#LNK-https://www.f-list.net/fchat/getLog.php?log=" + logid + "\" ><b>Log~</b></a> | ";
                 output += "<a href=\"#CSA-" + callid + "\"><b>Confirm Alert</b></a>";
                 postReportMessage(characterList[character], output);
             }

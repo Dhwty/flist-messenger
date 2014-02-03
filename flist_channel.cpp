@@ -50,16 +50,27 @@ void FChannel::initClass(QString& settingsPath)
 	{
 		return;
 	}
-	QStringList colstr = colset.value("buttons/inactive").toStringList();
-	colorInactive = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
-	colstr = colset.value("buttons/highlighted").toStringList();
-	colorHighlighted = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
-	colstr = colset.value("buttons/newmessages").toStringList();
-	colorNewMessages = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
-	colstr = colset.value("buttons/typing").toStringList();
-	colorTyping = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
-	colstr = colset.value("buttons/paused").toStringList();
-	colorPaused = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+    QStringList colstr;
+    colstr = colset.value("buttons/inactive").toStringList();
+    if(colstr.size() >= 2) {
+        colorInactive = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+    }
+    colstr = colset.value("buttons/highlighted").toStringList();
+    if(colstr.size() >= 2) {
+        colorHighlighted = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+    }
+    colstr = colset.value("buttons/newmessages").toStringList();
+    if(colstr.size() >= 2) {
+        colorNewMessages = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+    }
+    colstr = colset.value("buttons/typing").toStringList();
+    if(colstr.size() >= 2) {
+        colorTyping = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+    }
+    colstr = colset.value("buttons/paused").toStringList();
+    if(colstr.size() >= 2) {
+        colorPaused = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+    }
 }
 
 FChannel::FChannel ( QString name, channelType type )
@@ -299,6 +310,7 @@ void FChannel::logLine ( QString &chanLine )
 		qApp->exit(1);
 	}
 	logfile.write(chanLine.toUtf8());
+    logfile.write("\r\n");
 	logfile.close();
 }
 QString FChannel::updateButtonColor()

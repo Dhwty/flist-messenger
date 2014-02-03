@@ -116,7 +116,7 @@ private:
     void destroyMenu();
     void destroyChanMenu();
     void setupRealUI();
-    void setupConnectBox();
+    void setupConnectBox(QString &username, QString &password);
     void clearConnectBox();
     void clearLoginBox();
     void doSetupLoginBox(QList<QString>& characterList, QString& defaultCharacter);

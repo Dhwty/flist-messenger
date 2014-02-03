@@ -16,9 +16,15 @@ void FNetwork::tryLogin(QString& username, QString& charName, QString& loginTick
     setupSocket();
 }
 
+#define FLIST_PORT 8722 //test server
+//#define FLIST_PORT 9722 //real server
+
+
 void FNetwork::setupSocket()
 {
-    connectToHost ( "chat.f-list.net", 9722 );
+    std::cout << "Connecting to server..." << std::endl;
+    connectToHost ( "chat.f-list.net", FLIST_PORT );
+    //connectToHost ( "chat.f-list.net", 9722 );
     connect ( this, SIGNAL ( connected() ), this, SLOT ( connectedToSocket() ) );
     connect ( this, SIGNAL ( readyRead() ), this, SLOT ( readReadyOnSocket() ) );
     connect ( this, SIGNAL ( error ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
@@ -26,9 +32,34 @@ void FNetwork::setupSocket()
 }
 void FNetwork::connectedToSocket()
 {
+    std::string WSConnect =
+            "GET / HTTP/1.1\r\n"
+            "Upgrade: WebSocket\r\n"
+            "Connection: Upgrade\r\n"
+            "Host: f-list.net:%d\r\n"
+            "Origin: https://www.f-list.net\r\n"
+            "Sec-WebSocket-Key: %s\r\n"
+            "Sec-WebSocket-Version: 8\r\n"
+            "\r\n";
+    std::cout << "Connected! Sending HyBi WebSocket request..." << std::endl;
     connected = true;
-    write ( mainprog->WSConnect.c_str() );
+
+    //todo: this should use a better random source
+    srand(QTime::currentTime().msecsTo(QTime()));
+    unsigned char nonce[16];
+    int i;
+    for(i = 0; i < 16; i++) {
+        nonce[i] = (unsigned char) rand();
+    }
+
+    QString header;
+    header.sprintf( WSConnect.c_str(), FLIST_PORT, (const char *)QByteArray((const char *)nonce, 16).toBase64());
+    
+    write ( header.toUtf8() );
     flush();
+
+    //write ( mainprog->WSConnect.c_str() );
+    //flush();
 }
 void FNetwork::readReadyOnSocket()
 {
@@ -37,8 +68,13 @@ void FNetwork::readReadyOnSocket()
         QByteArray buffer = readAll();
         std::string buf ( buffer.begin(), buffer.end() );
 
-        if ( buf.find ( "\r\n\r\n" ) != std::string::npos )
+        if ( buf.find ( "\r\n\r\n" ) != std::string::npos ) {
             doingWS = false;
+        } else {
+            return;
+        }
+        //todo: verify "Sec-WebSocket-Accept" response
+        //todo: Don't discard extra data incase the server starts sending frames before we identify to it.
 
         JSONNode loginnode;
         JSONNode tempnode ( "method", "ticket" );
@@ -66,6 +102,61 @@ void FNetwork::readReadyOnSocket()
         QByteArray buffer = readAll();
         std::string buf ( networkBuffer );
         buf.append ( buffer.begin(), buffer.end() );
+        unsigned int lengthsize;
+        unsigned int payloadlength;
+        unsigned int headersize;
+        int i;
+        while(1) {
+            if(buf.length() < 2) {
+                break;
+            }
+            payloadlength = buf[1] & 0x7f;
+            if(payloadlength < 126) {
+                lengthsize = 0;
+            } else if(payloadlength == 126) {
+                lengthsize = 2;
+                if(buf.length() < 4) {
+                    break;
+                }
+                payloadlength = ((buf[2] & 0xff) << 8) | (buf[3] & 0xff);
+            } else {
+                lengthsize = 8;
+                if(buf.length() < 10) {
+                    break;
+                }
+                //Does not handle lengths greater than 4GB
+                payloadlength = ((buf[6] & 0xff) << 24) | ((buf[7] & 0xff) << 16) | ((buf[8] & 0xff) << 8) | (buf[9] & 0xff);
+            }
+            if(buf[1] & 0x80) {
+                headersize = lengthsize + 2 + 4;
+            } else {
+                headersize = lengthsize + 2;
+            }
+            //todo: sanity check the opcode, final fragment and reserved bits
+            //if(buf != 0x81) {
+            //        display error
+            //        disconnect?
+            //}
+            if(buf.length() < headersize + payloadlength) {
+                break;
+            }
+            std::string cmd = buf.substr ( headersize, payloadlength );
+            if(buf[1] & 0x80) {
+                for(i = 0; i < payloadlength; i++) {
+                    cmd[i] ^= buf[lengthsize + 2 + (i & 0x3)];
+                }
+            }
+            mainprog->parseCommand ( cmd );
+            if ( buf.length() <= headersize + payloadlength)
+            {
+                buf.clear();
+                break;
+            } else {
+                buf = buf.substr ( headersize + payloadlength, buf.length() - (headersize + payloadlength) );
+            }
+        }
+        networkBuffer = buf;
+#if 0
         int spos = buf.find ( ( char ) 0 );
         int epos = buf.find ( ( char ) 0xff );
 
@@ -85,6 +176,7 @@ void FNetwork::readReadyOnSocket()
         {
             networkBuffer.clear();
         }
+#endif
     }
 }
 void FNetwork::socketError ( QAbstractSocket::SocketError socketError )
@@ -106,9 +198,43 @@ void FNetwork::sendWS ( std::string& input )
         QByteArray buf;
         QDataStream stream ( &buf, QIODevice::WriteOnly );
         input.resize ( input.length() );
-        stream << ( quint8 ) 0;
-        stream.writeRawData ( input.c_str(), input.length() );
-        stream << ( quint8 ) 0xff;
+        //Send WS frame as a single text frame
+        stream << ( quint8 ) 0x81;
+        //Length of frame with mask bit sent
+        if(input.length() < 126) {
+            stream << ( quint8 ) (input.length() | 0x80);
+        } else if(input.length() < 0x10000) {
+            stream << ( quint8 ) (126 | 0x80);
+            stream << ( quint8 ) (input.length() >> 8);
+            stream << ( quint8 ) (input.length() >> 0);
+        } else {
+            //Does not handle the case if we're trying to send more than 4GB.
+            stream << ( quint8 ) (127 | 0x80);
+            stream << ( quint8 ) (0x00);
+            stream << ( quint8 ) (0x00);
+            stream << ( quint8 ) (0x00);
+            stream << ( quint8 ) (0x00);
+            stream << ( quint8 ) (input.length() >> 24);
+            stream << ( quint8 ) (input.length() >> 16);
+            stream << ( quint8 ) (input.length() >> 8);
+            stream << ( quint8 ) (input.length());
+        }
+        //The mask to use for this frame.
+        //The spec says it should be cryptographically strong random number, but we're using a weak random source instead.
+        quint8 mask[4];
+        int i;
+
+        for(i = 0; i < 4; i++) {
+            mask[i] = rand() & 0xff;
+            stream << mask[i];
+        }
+
+        for(i = 0; i < input.length(); i++) {
+            stream << (quint8)(input[i] ^ mask[i & 0x3]);
+        }
+        //stream << ( quint8 ) 0;
+        //stream.writeRawData ( input.c_str(), input.length() );
+        //stream << ( quint8 ) 0xff;
         write ( buf );
         flush();
     }
