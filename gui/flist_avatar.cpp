@@ -40,7 +40,7 @@ QPixmap FAvatar::getAvatar ( QString userName )
 		return imageHash[name];
 	}
 
-	QUrl targetUrl ( "http://static.f-list.net/images/avatar/" + name.toLower() + ".png" );
+    QUrl targetUrl ( "https://static.f-list.net/images/avatar/" + name.toLower() + ".png" );
 	connect ( &manager, SIGNAL ( finished ( QNetworkReply* ) ), SLOT ( buttonAvatarReady ( QNetworkReply* ) ) );
 	manager.get ( QNetworkRequest ( targetUrl ) );
 	return QPixmap();
@@ -57,7 +57,7 @@ void FAvatar::applyAvatarToButton ( QAbstractButton *button, QString name )
 		return;
 	}
 
-	QUrl targetUrl ( "http://static.f-list.net/images/avatar/" + name.toLower() + ".png" );
+    QUrl targetUrl ( "https://static.f-list.net/images/avatar/" + name.toLower() + ".png" );
 
 	buttonDownloads.insert ( name, button );
 
@@ -71,7 +71,7 @@ void FAvatar::buttonAvatarReady ( QNetworkReply* reply )
 	reply->deleteLater();
 	QString name = reply->url().toString();
 	name.chop ( 4 );	    // remove ".png" from the end.
-	name = name.remove ( 0, 39 );  // remove start of url from the beginning.
+    name = name.remove ( 0, 40 );  // remove start of url from the beginning.
 	QList<QAbstractButton*> buttonList;
 
 	if ( buttonDownloads.values ( name ).length() > 0 )

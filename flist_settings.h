@@ -22,7 +22,8 @@ public:
     bool doAlwaysPing() {return alwaysPing;}
     bool doPing() {return ping;}
     bool showHelpdesk() { std::cout << helpdesk << std::endl; return helpdesk;}
-    QString* getUsername() {return &username;}
+    QString &getUsername() {return username;}
+    QString &getPassword() {return password;}
     QStringList* getPingList() {return &pinglist;}
     QStringList* getDefaultChannels() {return &defaultChannels;}
     QString* getPath() {return &path;}
@@ -47,6 +48,7 @@ private:
     QStringList defaultChannels;
     QStringList pinglist;
     QString username;
+    QString password;
     QString path;
     bool leaveJoin;
     bool onlineOffline;
