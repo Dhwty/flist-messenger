@@ -22,8 +22,11 @@ THE LATEST CODE IS THE 0.9.0 BRANCH. (But, 0.9.0 hasn't been updated for SSL or 
 - If you would like to compile and use this client, I suggest sticking to 0.8.4, for now.
 
 To build 0.8.x, you will need:
-- Cmake
-- Qt4 (not Qt5! Qt5 declines to build 0.8.x!)
+- Cmake 2.6 or newer
+- Qt4 (On Windows, installing Qt SDK 1.2.1 is the easiest way to get this.)
+   or
+- Cmake 2.8.8 or newer
+- Qt5 (Replace 'CMakeLists.txt' with the one from the 'qt5' directory.)
 
 To build 0.9.0, you will need:
 - the libjson directory from 0.8.x
