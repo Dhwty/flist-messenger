@@ -22,44 +22,49 @@
 #ifndef flist_messenger_H
 #define flist_messenger_H
 
-#include <QtGui/QMainWindow>
+#include "flist_common.h"
+
+#include <QMainWindow>
 #include <QNetworkAccessManager>
 #include <QTcpSocket>
 #include <QSslSocket>
+#if QT_VERSION >= 0x050000
+#include <QUrlQuery>
+#endif
 #include <QUrl>
 #include <QString>
 #include <QSignalMapper>
 #include <QDesktopServices>
 
 #include <iostream>
-#include <QtGui/QDesktopWidget>
-#include <QtGui/QApplication>
-#include <QtGui/QLabel>
-#include <QtGui/QMenu>
-#include <QtGui/QMenuBar>
-#include <QtGui/QAction>
-#include <QtGui/QMessageBox>
-#include <QtGui/QComboBox>
-#include <QtGui/QPushButton>
-#include <QtGui/QGroupBox>
-#include <QtGui/QButtonGroup>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QGridLayout>
-#include <QtGui/QHeaderView>
-#include <QtGui/QListWidget>
-#include <QtGui/QScrollArea>
-#include <QtGui/QStatusBar>
-#include <QtGui/QTextEdit>
-#include <QtGui/QTextBrowser>
-#include <QtGui/QLineEdit>
-#include <QtGui/QScrollBar>
-#include <QtGui/QSpacerItem>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QPlainTextEdit>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QDialog>
-#include <QtGui/QTabWidget>
-#include <QtGui/QCheckBox>
+#include <QDesktopWidget>
+#include <QApplication>
+#include <QLabel>
+#include <QMenu>
+#include <QMenuBar>
+#include <QAction>
+#include <QMessageBox>
+#include <QComboBox>
+#include <QPushButton>
+#include <QGroupBox>
+#include <QButtonGroup>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QHeaderView>
+#include <QListWidget>
+#include <QScrollArea>
+#include <QStatusBar>
+#include <QTextEdit>
+#include <QTextBrowser>
+#include <QLineEdit>
+#include <QScrollBar>
+#include <QSpacerItem>
+#include <QVBoxLayout>
+#include <QPlainTextEdit>
+#include <QListWidgetItem>
+#include <QDialog>
+#include <QTabWidget>
+#include <QCheckBox>
 #include <QIcon>
 #include <QSystemTrayIcon>
 #include <QTextBrowser>
@@ -385,7 +390,7 @@ private:
 	QNetworkAccessManager qnam;
 	QNetworkReply* lreply;
 	QUrl lurl;
-	QUrl lparam;
+	QUrlQuery lparam;
 	QTcpSocket* tcpSock;
 	//QSslSocket* tcpSock;
 
