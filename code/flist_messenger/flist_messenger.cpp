@@ -2188,6 +2188,9 @@ void flist_messenger::fr_btnCloseClicked()
 }
 void flist_messenger::fr_btnFriendsPMClicked()
 {
+	if(fr_lwFriends->selectedItems().size() <= 0) {
+		return;
+	}
         QListWidgetItem* lwi = fr_lwFriends->selectedItems().at ( 0 );
 
         if (lwi)
@@ -2198,6 +2201,9 @@ void flist_messenger::fr_btnFriendsPMClicked()
 }
 void flist_messenger::fr_btnIgnoreRemoveClicked()
 {
+	if(fr_lwFriends->selectedItems().size() <= 0) {
+		return;
+	}
         QListWidgetItem* lwi = fr_lwIgnore->selectedItems().at ( 0 );
 
         if ( lwi )
