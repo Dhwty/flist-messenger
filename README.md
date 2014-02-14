@@ -6,7 +6,7 @@ flist-messenger
 
 **Known issues:**
 
-The code only implements a small subset of HyBi WebSockets. This is enough to work with FChat but may cause problems in the future if the server starts using more features.
+The code only implements a small subset of HyBi WebSockets. This is enough to work with F-Chat but may cause problems in the future if the server starts using more features.
 
 SSL connections are not verified. I had problems with F-List's SSL certificate verifying correctly. Because my attention was focused on get the HyBi WebSockets working, I've set it so that it currently ignores any errors in the certificate. The initial login will display a popup listing the errors encountered while verifying the SSL connection but it should continue as normal.
 
@@ -19,7 +19,7 @@ A multi-platform desktop client for the F-Chat protocol. If you have any questio
 
 THE LATEST CODE IS THE 0.9.0 BRANCH. (But, 0.9.0 hasn't been updated for SSL or HyBi.)
 - If you would like to work on this client, please work with 0.9.0. 
-- If you would like to compile and use this client, I suggest sticking to 0.8.4, for now.
+- If you would like to compile and use this client, I suggest sticking to 0.8.x, for now.
 
 To build 0.8.x, you will need:
 - Cmake 2.6 or newer
@@ -46,4 +46,4 @@ Updated bugs for 0.9.0 will be added here, in the issues tracker, as soon as the
 
 Versions for Other Platforms
 ==============
-0.8.4 for Open Pandora: http://repo.openpandora.org/?page=detail&app=fchat-001 (Currently non-working.)
+0.8.5 for Open Pandora: http://repo.openpandora.org/?page=detail&app=fchat-001
