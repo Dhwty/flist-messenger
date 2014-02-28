@@ -22,6 +22,7 @@
 #include <QApplication>
 #include <QFile>
 #include "flist_messenger.h"
+#include "flist_global.h"
 
 int main(int argc, char** argv)
 {
@@ -30,6 +31,7 @@ int main(int argc, char** argv)
 	app.setOrganizationName("F-list.net");
 	app.setOrganizationDomain("www.f-list.net");
 	app.setApplicationName("F-list Messenger");
+	globalInit();
 	QFile stylefile("default.qss");
 	stylefile.open(QFile::ReadOnly);
 	QString stylesheet = QLatin1String(stylefile.readAll());
@@ -38,4 +40,5 @@ int main(int argc, char** argv)
 	flist_messenger fmessenger(d);
 	fmessenger.show();
 	return app.exec();
+	//todo: globalQuit();
 }

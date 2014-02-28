@@ -20,19 +20,15 @@
 */
 
 #include "flist_messenger.h"
+#include "flist_global.h"
 #include <QString>
 
-#define VERSIONNUM "0.8.6"
-#define VERSION "F-List Messenger [Beta] " VERSIONNUM
-#define CLIENTID "F-List Desktop Client"
+#include "flist_session.h"
 
 // Bool to string macro
 #define BOOLSTR(b) ( (b) ? "true" : "false" )
 // String to bool macro
 #define STRBOOL(s) ( (s=="true") ? true : false )
-
-//#define FLIST_PORT 8722 //Test server
-#define FLIST_PORT 9722 //Real server
 
 // Some day we may implement a proper websocket connection system. Today is not that day.
 std::string flist_messenger::WSConnect =
@@ -49,28 +45,34 @@ QString flist_messenger::settingsPath = "./settings.ini";
 //get ticket, get characters, get friends list, get default character
 void flist_messenger::prepareLogin ( QString& username, QString& password )
 {
-        lurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
+	connect(&account, SIGNAL( loginError(FAccount *, QString &, QString &) ), this, SLOT( loginError(FAccount *, QString &, QString &) ));
+	connect(&account, SIGNAL( loginComplete(FAccount *) ), this, SLOT( loginComplete(FAccount *) ));
+
+	account.loginUserPass(username, password);
+#if 0
+	account.loginurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
         //todo: Fix this. Doing a proper POST works uner Linux but not Windows.
         //lurl.addQueryItem("secure", "yes");
         //lurl.addQueryItem("account", username);
         //lurl.addQueryItem("password", password);
-        lparam = QUrlQuery();
-        lparam.addQueryItem("secure", "yes");
-        lparam.addQueryItem("account", username);
-        lparam.addQueryItem("password", password);
-        QNetworkRequest request( lurl );
+	account.loginparam = QUrlQuery();
+	account.loginparam.addQueryItem("secure", "yes");
+	account.loginparam.addQueryItem("account", username);
+	account.loginparam.addQueryItem("password", password);
+	QNetworkRequest request( account.loginurl );
         //request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
         QByteArray postData;
 #if QT_VERSION >= 0x050000
-        postData = lparam.query(QUrl::FullyEncoded).toUtf8();
+	postData = account.loginparam.query(QUrl::FullyEncoded).toUtf8();
 #else
-        postData = lparam.encodedQuery();
+	postData = account.loginparam.encodedQuery();
 #endif
-        lreply = qnam.post ( request, postData ); //using lreply since this will replace the existing login system.
-        lreply->ignoreSslErrors();
-        connect ( lreply, SIGNAL ( finished() ), this, SLOT ( handleLogin() ) );
-        connect ( lreply, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( handleSslErrors( QList<QSslError> ) ) );
+	account.loginreply = networkaccessmanager->post ( request, postData ); //using account.loginreply since this will replace the existing login system.
+	account.loginreply->ignoreSslErrors();
+	connect ( account.loginreply, SIGNAL ( finished() ), this, SLOT ( handleLogin() ) );
+	connect ( account.loginreply, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( handleSslErrors( QList<QSslError> ) ) );
+#endif
 }
 void flist_messenger::handleSslErrors( QList<QSslError> sslerrors )
 {
@@ -88,20 +90,20 @@ void flist_messenger::handleLogin()
 {
         QMessageBox msgbox;
 
-        if ( lreply->error() != QNetworkReply::NoError )
+	if ( account.loginreply->error() != QNetworkReply::NoError )
         {
                 QString message = "Response error during login step ";
                 message.append ( NumberToString::_uitoa<unsigned int> ( loginStep ).c_str() );
                 message.append ( " of type " );
-                message.append ( NumberToString::_uitoa<unsigned int> ( ( unsigned int ) lreply->error() ).c_str() );
+		message.append ( NumberToString::_uitoa<unsigned int> ( ( unsigned int ) account.loginreply->error() ).c_str() );
                 msgbox.critical ( this, "FATAL ERROR DURING LOGIN!", message );
                 if (btnConnect) btnConnect->setEnabled(true);
                 return;
         }
 
-        QByteArray respbytes = lreply->readAll();
+	QByteArray respbytes = account.loginreply->readAll();
 
-        lreply->deleteLater();
+	account.loginreply->deleteLater();
         std::string response ( respbytes.begin(), respbytes.end() );
         JSONNode respnode = libJSON::parse ( response );
         JSONNode childnode = respnode.at ( "error" );
@@ -116,19 +118,31 @@ void flist_messenger::handleLogin()
 
         JSONNode subnode = respnode.at ( "ticket" );
 
-        loginTicket = subnode.as_string();
+	account.ticket = subnode.as_string().c_str();
         subnode = respnode.at ( "default_character" );
-        defaultCharacter = subnode.as_string();
+        account.defaultCharacter = subnode.as_string().c_str();
         childnode = respnode.at ( "characters" );
         int children = childnode.size();
 
         for ( int i = 0; i < children; ++i )
         {
                 QString addchar = childnode[i].as_string().c_str();
-                selfCharacterList.append ( addchar );
+                account.characterList.append ( addchar );
         }
         setupLoginBox();
 }
+
+void flist_messenger::loginError(FAccount *account, QString &errortitle, QString &errorstring)
+{
+	if (btnConnect) btnConnect->setEnabled(true);
+	QMessageBox msgbox;
+	msgbox.critical(this, errortitle, errorstring);
+}
+void flist_messenger::loginComplete(FAccount *account)
+{
+        setupLoginBox();
+}
+
 void flist_messenger::versionInfoReceived()
 {
 }
@@ -145,7 +159,7 @@ flist_messenger::flist_messenger(bool d)
         notificationsAreaMessageShown = false;
         console = 0;
         textEdit = 0;
-        tcpSock = 0;
+        //tcpSock = 0;
         debugging = d;
         disconnected = true;
         friendsDialog = 0;
@@ -270,7 +284,7 @@ void flist_messenger::setupConnectBox()
         label = new QLabel ( QString ( "Password:" ) );
         gridLayout->addWidget ( label, 1, 0 );
         ReturnLogin* loginreturn = new ReturnLogin(this);
-        lineEdit = new QLineEdit(username);
+	lineEdit = new QLineEdit(account.getUserName());
         lineEdit->installEventFilter(loginreturn);
         lineEdit->setObjectName ( QString ( "accountNameInput" ) );
         gridLayout->addWidget ( lineEdit, 0, 1 );
@@ -313,11 +327,11 @@ void flist_messenger::connectClicked()
         {
                 btnConnect->setEnabled(false);
                 lineEdit = this->findChild<QLineEdit *> ( QString ( "accountNameInput" ) );
-                username = lineEdit->text();
+		account.setUserName(lineEdit->text());
                 lineEdit = this->findChild<QLineEdit *> ( QString ( "passwordInput" ) );
                 password = lineEdit->text();
                 loginStep = 1;
-                prepareLogin ( username, password );
+		prepareLogin ( account.getUserName(), password );
         }
 }
 void flist_messenger::setupLoginBox()
@@ -334,11 +348,11 @@ void flist_messenger::setupLoginBox()
         comboBox->setObjectName ( QString::fromUtf8 ( "charSelectBox" ) );
         comboBox->setGeometry ( QRect ( 80, 10, 180, 27 ) );
 
-        for ( int i = 0;i < selfCharacterList.count();++i )
+        for ( int i = 0;i < account.characterList.count();++i )
         {
-                comboBox->addItem ( selfCharacterList[i] );
+                comboBox->addItem ( account.characterList[i] );
 
-                if ( selfCharacterList[i].toStdString() == defaultCharacter )
+                if ( account.characterList[i] == account.defaultCharacter )
                 {
                         comboBox->setCurrentIndex ( i );
                 }
@@ -797,7 +811,7 @@ void flist_messenger::re_btnSubmitClicked()
 
 void flist_messenger::submitReport()
 {
-        lurl = QString ( "https://www.f-list.net/json/getApiTicket.json?secure=no&account=" + username + "&password=" + password );
+	lurl = QString ( "https://www.f-list.net/json/getApiTicket.json?secure=no&account=" + account.getUserName() + "&password=" + password );
         lreply = qnam.get ( QNetworkRequest ( lurl ) );
         //todo: fix this!
         lreply->ignoreSslErrors();
@@ -881,13 +895,13 @@ void flist_messenger::reportTicketFinished()
                 return;
     }
     JSONNode subnode = respnode.at ( "ticket" );
-    loginTicket = subnode.as_string().c_str();
+    account.ticket = subnode.as_string().c_str();
     QString url_string="https://www.f-list.net/json/api/report-submit.php?account=";
-    url_string += username;
+    url_string += account.getUserName();
     url_string += "&character=";
     url_string += charName;
     url_string += "&ticket=";
-    url_string += loginTicket.c_str();
+    url_string += account.ticket;
     lurl = url_string;
     std::cout << url_string.toStdString() << std::endl;
     QByteArray postData;
@@ -1134,33 +1148,50 @@ void flist_messenger::setupChannelsUI()
 }
 void flist_messenger::loginClicked()
 {
+#if 1
+        charName = comboBox->currentText();
+        FMessage::selfName = charName;
+	FSession *session = account.getSession(charName);
+
+        clearLoginBox();
+
+        setupRealUI();
+
+        connect ( session, SIGNAL ( socketErrorSignal ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
+	connect ( session, SIGNAL ( wsRecv(std::string) ), this, SLOT ( parseCommand(std::string) ) );
+
+	session->connectSession();
+		
+#else
         disconnected = false;
         soundPlayer.play ( soundPlayer.SOUND_LOGIN );
         charName = comboBox->currentText();
         FMessage::selfName = charName;
-        if ( tcpSock )
+	FSession *session = account.getSession(charName);
+        if ( session->tcpsocket )
         {
-                tcpSock->abort();
-                tcpSock->deleteLater();
+                session->tcpsocket->abort();
+                session->tcpsocket->deleteLater();
         }
 
         clearLoginBox();
 
         setupRealUI();
-        tcpSock = new QTcpSocket ( this );
-        //tcpSock = new QSslSocket ( this );
-        //tcpSock->setPeerVerifyMode ( QSslSocket::QueryPeer );
-        //tcpSock->setPeerVerifyMode ( QSslSocket::VerifyNone );
-        //tcpSock->ignoreSslErrors();
-        tcpSock->connectToHost ( "chat.f-list.net", FLIST_PORT );
-        //tcpSock->connectToHostEncrypted ( "chat.f-list.net", FLIST_PORT );
-        connect ( tcpSock, SIGNAL ( connected() ), this, SLOT ( connectedToSocket() ) );
-        //connect ( tcpSock, SIGNAL ( encrypted() ), this, SLOT ( connectedToSsl() ) );
-        connect ( tcpSock, SIGNAL ( readyRead() ), this, SLOT ( readReadyOnSocket() ) );
-        connect ( tcpSock, SIGNAL ( error ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
-        //connect ( tcpSock, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( socketSslError ( QList<QSslError> ) ) );
+        session->tcpsocket = new QTcpSocket ( this );
+        //session->tcpsocket = new QSslSocket ( this );
+        //session->tcpsocket->setPeerVerifyMode ( QSslSocket::QueryPeer );
+        //session->tcpsocket->setPeerVerifyMode ( QSslSocket::VerifyNone );
+        //session->tcpsocket->ignoreSslErrors();
+        session->tcpsocket->connectToHost ( "chat.f-list.net", FLIST_PORT );
+        //session->tcpsocket->connectToHostEncrypted ( "chat.f-list.net", FLIST_PORT );
+        connect ( session->tcpsocket, SIGNAL ( connected() ), this, SLOT ( connectedToSocket() ) );
+        //connect ( session->tcpsocket, SIGNAL ( encrypted() ), this, SLOT ( connectedToSsl() ) );
+        connect ( session->tcpsocket, SIGNAL ( readyRead() ), this, SLOT ( readReadyOnSocket() ) );
+        connect ( session->tcpsocket, SIGNAL ( error ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
+        //connect ( session->tcpsocket, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( socketSslError ( QList<QSslError> ) ) );
         QString input = "Connecting...";
         FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);
+#endif
 }
 void flist_messenger::clearConnectBox()
 {
@@ -1183,7 +1214,7 @@ void flist_messenger::setupRealUI()
                 setObjectName ( "MainWindow" );
 
         resize ( 836, 454 );
-        setWindowTitle ( VERSION );
+        setWindowTitle ( FLIST_VERSION );
         setWindowIcon ( QIcon ( ":/images/apple-touch-icon.png" ) );
         actionDisconnect = new QAction ( this );
         actionDisconnect->setObjectName ( "actionDisconnect" );
@@ -1721,50 +1752,50 @@ void flist_messenger::refreshChatLines()
         textEdit->clear();
         currentPanel->printChannel ( textEdit );
 }
-QPushButton* flist_messenger::addToActivePanels ( QString& channel, QString& tooltip )
+FChannelTab* flist_messenger::addToActivePanels ( QString& channel, QString& tooltip )
 {
         printDebugInfo("Joining " + channel.toStdString());
-        pushButton = this->findChild<QPushButton *> ( channel );
+	channelTab = this->findChild<FChannelTab *> ( channel );
 
-        if ( pushButton != 0 )
+	if ( channelTab != 0 )
         {
-                pushButton->setVisible ( true );
+		channelTab->setVisible ( true );
         }
         else
         {
                 activePanelsContents->removeItem ( activePanelsSpacer );
-                pushButton = new QPushButton();
-                pushButton->setObjectName ( channel );
-                pushButton->setGeometry ( QRect ( 0, 0, 30, 30 ) );
-                pushButton->setFixedSize ( 30, 30 );
-                pushButton->setStyleSheet ( "background-color: rgb(255, 255, 255);" );
-                pushButton->setAutoFillBackground ( true );
-                pushButton->setCheckable ( true );
-                pushButton->setChecked ( false );
-                pushButton->setToolTip ( tooltip );
-                pushButton->setContextMenuPolicy(Qt::CustomContextMenu);
-                connect ( pushButton, SIGNAL ( clicked() ), this, SLOT ( channelButtonClicked() ) );
-                connect ( pushButton, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(tb_channelRightClicked(QPoint)));
-                activePanelsContents->addWidget ( pushButton, 0, Qt::AlignTop );
+		channelTab = new FChannelTab();
+		channelTab->setObjectName ( channel );
+		channelTab->setGeometry ( QRect ( 0, 0, 30, 30 ) );
+		channelTab->setFixedSize ( 30, 30 );
+		channelTab->setStyleSheet ( "background-color: rgb(255, 255, 255);" );
+		channelTab->setAutoFillBackground ( true );
+		channelTab->setCheckable ( true );
+		channelTab->setChecked ( false );
+		channelTab->setToolTip ( tooltip );
+		channelTab->setContextMenuPolicy(Qt::CustomContextMenu);
+		connect ( channelTab, SIGNAL ( clicked() ), this, SLOT ( channelButtonClicked() ) );
+		connect ( channelTab, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(tb_channelRightClicked(QPoint)));
+		activePanelsContents->addWidget ( channelTab, 0, Qt::AlignTop );
 
                 if ( channel.length() > 4 && channel.toStdString().substr ( 0, 3 ) == "PM-" )
                 {
-                        avatarFetcher.applyAvatarToButton ( pushButton, QString ( channel.toStdString().substr ( 3, channel.length() - 3 ).c_str() ) );
-                        //pushButton->setIconSize(pushButton->iconSize()*1.5);
+			avatarFetcher.applyAvatarToButton ( channelTab, QString ( channel.toStdString().substr ( 3, channel.length() - 3 ).c_str() ) );
+			//channelTab->setIconSize(channelTab->iconSize()*1.5);
                 }
                 else if ( channel.length() > 5 && channel.toStdString().substr ( 0, 4 ) == "ADH-" )
                 {
-                        pushButton->setIcon ( QIcon ( ":/images/key.png" ) );
+			channelTab->setIcon ( QIcon ( ":/images/key.png" ) );
                 }
                 else
                 {
-                        pushButton->setIcon ( QIcon ( ":/images/hash.png" ) );
+			channelTab->setIcon ( QIcon ( ":/images/hash.png" ) );
                 }
 
                 activePanelsContents->addSpacerItem ( activePanelsSpacer );
         }
 
-        return pushButton;
+	return channelTab;
 }
 void flist_messenger::receivePM ( QString& message, QString& character )
 {
@@ -1817,25 +1848,29 @@ void flist_messenger::connectedToSocket()
         QString header;
         header.sprintf( WSConnect.c_str(), FLIST_PORT, (const char *)QByteArray((const char *)nonce, 16).toBase64());
 
-        tcpSock->write ( header.toUtf8() );
-        tcpSock->flush();
+	FSession *session = account.getSession(charName);
+        session->tcpsocket->write ( header.toUtf8() );
+        session->tcpsocket->flush();
 /*        QString input = "Connected. SSL negotiation...";
         FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);
-        tcpSock->startClientEncryption();
+        session->tcpsocket->startClientEncryption();
         */
 }
 void flist_messenger::connectedToSsl() {
         QString input = "SSL negotiated.";
         FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);
-        tcpSock->write ( WSConnect.c_str() );
-        tcpSock->flush();
+	FSession *session = account.getSession(charName);
+        session->tcpsocket->write ( WSConnect.c_str() );
+        session->tcpsocket->flush();
 }
 
+#if 0
 void flist_messenger::readReadyOnSocket()
 {
+	FSession *session = account.getSession(charName);
         if ( doingWS )
         {
-                QByteArray buffer = tcpSock->readAll();
+                QByteArray buffer = session->tcpsocket->readAll();
                 std::string buf ( buffer.begin(), buffer.end() );
                 if ( buf.find ( "\r\n\r\n" ) != std::string::npos )
                         doingWS = false;
@@ -1844,16 +1879,16 @@ void flist_messenger::readReadyOnSocket()
                 JSONNode tempnode ( "method", "ticket" );
                 loginnode.push_back ( tempnode );
                 tempnode.set_name ( "ticket" );
-                tempnode = loginTicket;//.toStdString();
+		tempnode = account.ticket.toStdString();
                 loginnode.push_back ( tempnode );
                 tempnode.set_name ( "account" );
-                tempnode = username.toStdString();
+		tempnode = account.getUserName().toStdString();
                 loginnode.push_back ( tempnode );
                 tempnode.set_name ( "cname" );
-                tempnode = CLIENTID;
+                tempnode = FLIST_CLIENTID;
                 loginnode.push_back ( tempnode );
                 tempnode.set_name ( "cversion" );
-                tempnode = VERSIONNUM;
+                tempnode = FLIST_VERSIONNUM;
                 loginnode.push_back ( tempnode );
                 tempnode.set_name ( "character" );
                 tempnode = charName.toStdString();
@@ -1863,7 +1898,7 @@ void flist_messenger::readReadyOnSocket()
         }
         else
         {
-                QByteArray buffer = tcpSock->readAll();
+                QByteArray buffer = session->tcpsocket->readAll();
                 std::string buf ( networkBuffer );
                 buf.append ( buffer.begin(), buffer.end() );
                 unsigned int lengthsize;
@@ -1922,9 +1957,11 @@ void flist_messenger::readReadyOnSocket()
                 networkBuffer = buf;
         }
 }
+#endif
 void flist_messenger::socketError ( QAbstractSocket::SocketError socketError )
 {
-        QString sockErrorStr = tcpSock->errorString();
+	FSession *session = account.getSession(charName);
+        QString sockErrorStr = session->tcpsocket->errorString();
         if (btnConnect)
                 btnConnect->setEnabled(true);
         if ( currentPanel )
@@ -1936,9 +1973,9 @@ void flist_messenger::socketError ( QAbstractSocket::SocketError socketError )
                 QMessageBox::critical ( this, "Socket Error!", "Socket Error: " + sockErrorStr );
 
         disconnected = true;
-        tcpSock->abort();
-        tcpSock->deleteLater();
-        tcpSock = 0;
+        //session->tcpsocket->abort();
+        //session->tcpsocket->deleteLater();
+        //session->tcpsocket = 0;
 }
 void flist_messenger::socketSslError (QList<QSslError> sslerrors ) {
         QMessageBox msgbox;
@@ -1955,6 +1992,10 @@ void flist_messenger::socketSslError (QList<QSslError> sslerrors ) {
 
 void flist_messenger::sendWS ( std::string& input )
 {
+#if 1
+	FSession *session = account.getSession(charName);
+	session->wsSend(input);
+#else
         if ( disconnected )
         {
                 textEdit->append ( "Attempted to send a message, but client is disconnected." );
@@ -2000,9 +2041,11 @@ void flist_messenger::sendWS ( std::string& input )
                 for(i = 0; i < input.length(); i++) {
                         stream << (quint8)(input[i] ^ mask[i & 0x3]);
                 }
-                tcpSock->write ( buf );
-                tcpSock->flush();
+		FSession *session = account.getSession(charName);
+                session->tcpsocket->write ( buf );
+                session->tcpsocket->flush();
         }
+#endif
 }
 bool flist_messenger::is_broken_escaped_apos ( std::string const &data, std::string::size_type n )
 {
@@ -2201,9 +2244,6 @@ void flist_messenger::fr_btnFriendsPMClicked()
 }
 void flist_messenger::fr_btnIgnoreRemoveClicked()
 {
-	if(fr_lwFriends->selectedItems().size() <= 0) {
-		return;
-	}
         QListWidgetItem* lwi = fr_lwIgnore->selectedItems().at ( 0 );
 
         if ( lwi )
@@ -3430,7 +3470,7 @@ void flist_messenger::saveSettings()
         settings.setValue("alwaysping", BOOLSTR(se_alwaysPing));
         settings.setValue("helpdesk", BOOLSTR(se_helpdesk));
         settings.setValue("logs", BOOLSTR(se_chatLogs));
-        settings.setValue("username", username);
+	settings.setValue("username", account.getUserName());
         QString pinglist, s;
         foreach (s, selfPingList)
         {
@@ -3464,7 +3504,7 @@ void flist_messenger::loadSettings()
                 se_alwaysPing = STRBOOL(settings.value("alwaysping").toString());
                 se_helpdesk = STRBOOL(settings.value("helpdesk").toString());
                 se_chatLogs = STRBOOL(settings.value("logs").toString());
-                username = settings.value("username").toString();
+		account.setUserName(settings.value("username").toString());
 
                 QString pinglist = settings.value("pinglist").toString();
                 if (pinglist != "")
@@ -3501,7 +3541,7 @@ void flist_messenger::loadDefaultSettings()
         se_helpdesk = false;
         se_chatLogs = true;
 }
-void flist_messenger::parseCommand ( std::string& input )
+void flist_messenger::parseCommand ( std::string input )
 {
         try
         {
@@ -3756,19 +3796,19 @@ void flist_messenger::parseCommand ( std::string& input )
                                 JSONNode tempnode ( "method", "ticket" );
                                 loginnode.push_back ( tempnode );
                                 tempnode.set_name ( "ticket" );
-                                tempnode = loginTicket;//.toStdString();
+				tempnode = account.ticket.toStdString();
                                 loginnode.push_back ( tempnode );
                                 tempnode.set_name ( "account" );
-                                tempnode = username.toStdString();
+				tempnode = account.getUserName().toStdString();
                                 loginnode.push_back ( tempnode );
                                 tempnode.set_name ( "character" );
                                 tempnode = charName.toStdString();
                                 loginnode.push_back ( tempnode );
                                 tempnode.set_name ( "cname" );
-                                tempnode = CLIENTID;
+                                tempnode = FLIST_CLIENTID;
                                 loginnode.push_back ( tempnode );
                                 tempnode.set_name ( "cversion" );
-                                tempnode = VERSIONNUM;
+                                tempnode = FLIST_VERSIONNUM;
                                 loginnode.push_back ( tempnode );
                                 std::string idenStr = "IDN " + loginnode.write();
                                 sendWS ( idenStr );

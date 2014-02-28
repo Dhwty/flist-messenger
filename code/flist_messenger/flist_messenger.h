@@ -82,7 +82,8 @@
 #include "flist_sound.h"
 #include "flist_avatar.h"
 #include "flist_message.h"
-
+#include "flist_account.h"
+#include "flist_channeltab.h"
 
 #ifndef USERETURN_CLASS
 #define USERETURN_CLASS
@@ -194,6 +195,7 @@ public:
 	flist_messenger(bool d);
 	~flist_messenger();
 	QPushButton* pushButton;
+	FChannelTab* channelTab;
 	QLabel* label;
 	QComboBox* comboBox;
 	QGroupBox* groupBox;
@@ -246,8 +248,11 @@ public slots:
     void enterPressed();
 
 private slots:
+	void parseCommand ( std::string input );			// Parses messages received from the server.
 	void prepareLogin ( QString& username, QString& password );
 	void handleLogin();
+	void loginError(FAccount *account, QString &errortitle, QString &errorstring);
+	void loginComplete(FAccount *account);
 	void handleSslErrors( QList<QSslError> sslerrors );
 	void setupConnectBox();			// The connect box is used for account login
 	void setupLoginBox();			// The login box is used for character selection
@@ -282,7 +287,7 @@ private slots:
 	void destroyChanMenu();
 	void connectedToSocket();
 	void connectedToSsl();
-	void readReadyOnSocket();
+	//void readReadyOnSocket();
 	void socketError ( QAbstractSocket::SocketError socketError );
         void socketSslError ( QList<QSslError> sslerrors );
 	void quitApp();
@@ -352,16 +357,17 @@ public:
 	static const int BUFFERPRIV = 50000; // Buffer limit in private
 
 private:
+	FAccount account;
+
 	bool debugging;
 	bool versionIsOkay;
 	bool notificationsAreaMessageShown;
 	void printDebugInfo(std::string s);
 	void createTrayIcon();
 	void setupConsole();								// Makes the console channel.
-	void parseCommand ( std::string& input );			// Parses messages received from the server.
 	void sendWS ( std::string& input );					// Sends messages to the server
 	void joinChannel ( QString& channel );				// Adds the joined channel to the channel list
-	QPushButton* addToActivePanels ( QString& channel, QString& tooltip );	// Adds the newly joined channel to the displayed list of channels
+	FChannelTab* addToActivePanels ( QString& channel, QString& tooltip );	// Adds the newly joined channel to the displayed list of channels
 	void leaveChannel ( std::string& channel, bool toServer = true );		// Leaves the channel
 	void messageChannel ( std::string& channel, std::string& message );	// Sends a message to the specified channel
 	void messagePrivate ( std::string& character, std::string& message );	// Sends a message to the specified character
@@ -391,7 +397,7 @@ private:
 	QNetworkReply* lreply;
 	QUrl lurl;
 	QUrlQuery lparam;
-	QTcpSocket* tcpSock;
+	//QTcpSocket* tcpSock;
 	//QSslSocket* tcpSock;
 
 	std::string networkBuffer;
@@ -401,14 +407,14 @@ private:
 	FSound soundPlayer;
 	BBCodeParser bbparser;
 	QString sessionID;
-	QList<QString> selfCharacterList;
+	//QList<QString> selfCharacterList;
 	QList<QString> selfFriendsList;
 	QList<QString> selfIgnoreList;
 	QStringList selfPingList;
 	QStringList defaultChannels;
-	QString username;
-	std::string loginTicket;
-	std::string defaultCharacter;
+	//QString username;
+	//std::string loginTicket;
+	//std::string defaultCharacter;
 	QString password;
 	QString sessionHash;
 	QString accountID;
