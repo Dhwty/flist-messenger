@@ -30,16 +30,6 @@
 // String to bool macro
 #define STRBOOL(s) ( (s=="true") ? true : false )
 
-// Some day we may implement a proper websocket connection system. Today is not that day.
-std::string flist_messenger::WSConnect =
-                "GET / HTTP/1.1\r\n"
-                "Upgrade: WebSocket\r\n"
-                "Connection: Upgrade\r\n"
-                "Host: f-list.net:%d\r\n"
-                "Origin: https://www.f-list.net\r\n"
-                "Sec-WebSocket-Key: %s\r\n"
-                "Sec-WebSocket-Version: 8\r\n"
-                "\r\n";
 QString flist_messenger::settingsPath = "./settings.ini";
 
 //get ticket, get characters, get friends list, get default character
@@ -49,30 +39,6 @@ void flist_messenger::prepareLogin ( QString& username, QString& password )
 	connect(&account, SIGNAL( loginComplete(FAccount *) ), this, SLOT( loginComplete(FAccount *) ));
 
 	account.loginUserPass(username, password);
-#if 0
-	account.loginurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
-        //todo: Fix this. Doing a proper POST works uner Linux but not Windows.
-        //lurl.addQueryItem("secure", "yes");
-        //lurl.addQueryItem("account", username);
-        //lurl.addQueryItem("password", password);
-	account.loginparam = QUrlQuery();
-	account.loginparam.addQueryItem("secure", "yes");
-	account.loginparam.addQueryItem("account", username);
-	account.loginparam.addQueryItem("password", password);
-	QNetworkRequest request( account.loginurl );
-        //request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        QByteArray postData;
-#if QT_VERSION >= 0x050000
-	postData = account.loginparam.query(QUrl::FullyEncoded).toUtf8();
-#else
-	postData = account.loginparam.encodedQuery();
-#endif
-	account.loginreply = networkaccessmanager->post ( request, postData ); //using account.loginreply since this will replace the existing login system.
-	account.loginreply->ignoreSslErrors();
-	connect ( account.loginreply, SIGNAL ( finished() ), this, SLOT ( handleLogin() ) );
-	connect ( account.loginreply, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( handleSslErrors( QList<QSslError> ) ) );
-#endif
 }
 void flist_messenger::handleSslErrors( QList<QSslError> sslerrors )
 {
@@ -329,7 +295,7 @@ void flist_messenger::connectClicked()
                 lineEdit = this->findChild<QLineEdit *> ( QString ( "accountNameInput" ) );
 		account.setUserName(lineEdit->text());
                 lineEdit = this->findChild<QLineEdit *> ( QString ( "passwordInput" ) );
-                password = lineEdit->text();
+                QString password = lineEdit->text();
                 loginStep = 1;
 		prepareLogin ( account.getUserName(), password );
         }
@@ -811,7 +777,8 @@ void flist_messenger::re_btnSubmitClicked()
 
 void flist_messenger::submitReport()
 {
-	lurl = QString ( "https://www.f-list.net/json/getApiTicket.json?secure=no&account=" + account.getUserName() + "&password=" + password );
+	//todo: fix this
+	lurl = QString("https://www.f-list.net/json/getApiTicket.json?secure=no&account=" + account.getUserName() + "&password=" + account.getPassword());
         lreply = qnam.get ( QNetworkRequest ( lurl ) );
         //todo: fix this!
         lreply->ignoreSslErrors();
@@ -1148,7 +1115,6 @@ void flist_messenger::setupChannelsUI()
 }
 void flist_messenger::loginClicked()
 {
-#if 1
         charName = comboBox->currentText();
         FMessage::selfName = charName;
 	FSession *session = account.getSession(charName);
@@ -1162,36 +1128,6 @@ void flist_messenger::loginClicked()
 
 	session->connectSession();
 		
-#else
-        disconnected = false;
-        soundPlayer.play ( soundPlayer.SOUND_LOGIN );
-        charName = comboBox->currentText();
-        FMessage::selfName = charName;
-	FSession *session = account.getSession(charName);
-        if ( session->tcpsocket )
-        {
-                session->tcpsocket->abort();
-                session->tcpsocket->deleteLater();
-        }
-
-        clearLoginBox();
-
-        setupRealUI();
-        session->tcpsocket = new QTcpSocket ( this );
-        //session->tcpsocket = new QSslSocket ( this );
-        //session->tcpsocket->setPeerVerifyMode ( QSslSocket::QueryPeer );
-        //session->tcpsocket->setPeerVerifyMode ( QSslSocket::VerifyNone );
-        //session->tcpsocket->ignoreSslErrors();
-        session->tcpsocket->connectToHost ( "chat.f-list.net", FLIST_PORT );
-        //session->tcpsocket->connectToHostEncrypted ( "chat.f-list.net", FLIST_PORT );
-        connect ( session->tcpsocket, SIGNAL ( connected() ), this, SLOT ( connectedToSocket() ) );
-        //connect ( session->tcpsocket, SIGNAL ( encrypted() ), this, SLOT ( connectedToSsl() ) );
-        connect ( session->tcpsocket, SIGNAL ( readyRead() ), this, SLOT ( readReadyOnSocket() ) );
-        connect ( session->tcpsocket, SIGNAL ( error ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
-        //connect ( session->tcpsocket, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( socketSslError ( QList<QSslError> ) ) );
-        QString input = "Connecting...";
-        FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);
-#endif
 }
 void flist_messenger::clearConnectBox()
 {
@@ -1832,132 +1768,7 @@ void flist_messenger::quitApp()
 {
         QApplication::quit();
 }
-void flist_messenger::connectedToSocket()
-{
-        QString input = "Connection open.";
-        FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);
 
-        //todo: this should use a better random source
-        srand(QTime::currentTime().msecsTo(QTime()));
-        unsigned char nonce[16];
-        int i;
-        for(i = 0; i < 16; i++) {
-                nonce[i] = (unsigned char) rand();
-        }
-
-        QString header;
-        header.sprintf( WSConnect.c_str(), FLIST_PORT, (const char *)QByteArray((const char *)nonce, 16).toBase64());
-
-	FSession *session = account.getSession(charName);
-        session->tcpsocket->write ( header.toUtf8() );
-        session->tcpsocket->flush();
-/*        QString input = "Connected. SSL negotiation...";
-        FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);
-        session->tcpsocket->startClientEncryption();
-        */
-}
-void flist_messenger::connectedToSsl() {
-        QString input = "SSL negotiated.";
-        FMessage msg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, input, currentPanel);
-	FSession *session = account.getSession(charName);
-        session->tcpsocket->write ( WSConnect.c_str() );
-        session->tcpsocket->flush();
-}
-
-#if 0
-void flist_messenger::readReadyOnSocket()
-{
-	FSession *session = account.getSession(charName);
-        if ( doingWS )
-        {
-                QByteArray buffer = session->tcpsocket->readAll();
-                std::string buf ( buffer.begin(), buffer.end() );
-                if ( buf.find ( "\r\n\r\n" ) != std::string::npos )
-                        doingWS = false;
-                //todo: verify "Sec-WebSocket-Accept" response
-                JSONNode loginnode;
-                JSONNode tempnode ( "method", "ticket" );
-                loginnode.push_back ( tempnode );
-                tempnode.set_name ( "ticket" );
-		tempnode = account.ticket.toStdString();
-                loginnode.push_back ( tempnode );
-                tempnode.set_name ( "account" );
-		tempnode = account.getUserName().toStdString();
-                loginnode.push_back ( tempnode );
-                tempnode.set_name ( "cname" );
-                tempnode = FLIST_CLIENTID;
-                loginnode.push_back ( tempnode );
-                tempnode.set_name ( "cversion" );
-                tempnode = FLIST_VERSIONNUM;
-                loginnode.push_back ( tempnode );
-                tempnode.set_name ( "character" );
-                tempnode = charName.toStdString();
-                loginnode.push_back ( tempnode );
-                std::string idenStr = "IDN " + loginnode.write();
-                sendWS ( idenStr );
-        }
-        else
-        {
-                QByteArray buffer = session->tcpsocket->readAll();
-                std::string buf ( networkBuffer );
-                buf.append ( buffer.begin(), buffer.end() );
-                unsigned int lengthsize;
-                unsigned int payloadlength;
-                unsigned int headersize;
-                int i;
-                while(1) {
-                        if(buf.length() < 2) {
-                                break;
-                        }
-                        payloadlength = buf[1] & 0x7f;
-                        if(payloadlength < 126) {
-                                lengthsize = 0;
-                        } else if(payloadlength == 126) {
-                                lengthsize = 2;
-                                if(buf.length() < 4) {
-                                        break;
-                                }
-                                payloadlength = ((buf[2] & 0xff) << 8) | (buf[3] & 0xff);
-                        } else {
-                                lengthsize = 8;
-                                if(buf.length() < 10) {
-                                        break;
-                                }
-                                //Does not handle lengths greater than 4GB
-                                payloadlength = ((buf[6] & 0xff) << 24) | ((buf[7] & 0xff) << 16) | ((buf[8] & 0xff) << 8) | (buf[9] & 0xff);
-                        }
-                        if(buf[1] & 0x80) {
-                                headersize = lengthsize + 2 + 4;
-                        } else {
-                                headersize = lengthsize + 2;
-                        }
-                        //todo: sanity check the opcode, final fragment and reserved bits
-                        //if(buf != 0x81) {
-                        //        display error
-                        //        disconnect?
-                        //}
-                        if(buf.length() < headersize + payloadlength) {
-                                break;
-                        }
-                        std::string cmd = buf.substr ( headersize, payloadlength );
-                        if(buf[1] & 0x80) {
-                                for(i = 0; i < payloadlength; i++) {
-                                        cmd[i] ^= buf[lengthsize + 2 + (i & 0x3)];
-                                }
-                        }
-                        parseCommand ( cmd );
-                        if ( buf.length() <= headersize + payloadlength)
-                        {
-                                buf.clear();
-                                break;
-                        } else {
-                                buf = buf.substr ( headersize + payloadlength, buf.length() - (headersize + payloadlength) );
-                        }
-                }
-                networkBuffer = buf;
-        }
-}
-#endif
 void flist_messenger::socketError ( QAbstractSocket::SocketError socketError )
 {
 	FSession *session = account.getSession(charName);
@@ -1992,76 +1803,8 @@ void flist_messenger::socketSslError (QList<QSslError> sslerrors ) {
 
 void flist_messenger::sendWS ( std::string& input )
 {
-#if 1
 	FSession *session = account.getSession(charName);
 	session->wsSend(input);
-#else
-        if ( disconnected )
-        {
-                textEdit->append ( "Attempted to send a message, but client is disconnected." );
-        }
-        else
-        {
-                fix_broken_escaped_apos ( input );
-                printDebugInfo( ">>" + input);
-                QByteArray buf;
-                QDataStream stream ( &buf, QIODevice::WriteOnly );
-                input.resize ( input.length() );
-                //Send WS frame as a single text frame
-                stream << ( quint8 ) 0x81;
-                //Length of frame with mask bit sent
-                if(input.length() < 126) {
-                        stream << ( quint8 ) (input.length() | 0x80);
-                } else if(input.length() < 0x10000) {
-                        stream << ( quint8 ) (126 | 0x80);
-                        stream << ( quint8 ) (input.length() >> 8);
-                        stream << ( quint8 ) (input.length() >> 0);
-                } else {
-                        //Does not handle the case if we're trying to send more than 4GB.
-                        stream << ( quint8 ) (127 | 0x80);
-                        stream << ( quint8 ) (0x00);
-                        stream << ( quint8 ) (0x00);
-                        stream << ( quint8 ) (0x00);
-                        stream << ( quint8 ) (0x00);
-                        stream << ( quint8 ) (input.length() >> 24);
-                        stream << ( quint8 ) (input.length() >> 16);
-                        stream << ( quint8 ) (input.length() >> 8);
-                        stream << ( quint8 ) (input.length());
-                }
-                //The mask to use for this frame.
-                //The spec says it should be cryptographically strong random number, but we're using a weak random source instead.
-                quint8 mask[4];
-                int i;
-
-                for(i = 0; i < 4; i++) {
-                        mask[i] = rand() & 0xff;
-                        stream << mask[i];
-                }
-                
-                for(i = 0; i < input.length(); i++) {
-                        stream << (quint8)(input[i] ^ mask[i & 0x3]);
-                }
-		FSession *session = account.getSession(charName);
-                session->tcpsocket->write ( buf );
-                session->tcpsocket->flush();
-        }
-#endif
-}
-bool flist_messenger::is_broken_escaped_apos ( std::string const &data, std::string::size_type n )
-{
-        return n + 2 <= data.size()
-                        and data[n] == '\\'
-                        and data[n+1] == '\'';
-}
-void flist_messenger::fix_broken_escaped_apos ( std::string &data )
-{
-        for ( std::string::size_type n = 0; n != data.size(); ++n )
-        {
-                if ( is_broken_escaped_apos ( data, n ) )
-                {
-                        data.replace ( n, 2, 1, '\'' );
-                }
-        }
 }
 
 bool UseReturn::eventFilter ( QObject* obj, QEvent* event )

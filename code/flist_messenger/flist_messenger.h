@@ -285,9 +285,6 @@ private slots:
 	void channelSettingsDialogRequested();
 	void destroyMenu();
 	void destroyChanMenu();
-	void connectedToSocket();
-	void connectedToSsl();
-	//void readReadyOnSocket();
 	void socketError ( QAbstractSocket::SocketError socketError );
         void socketSslError ( QList<QSslError> sslerrors );
 	void quitApp();
@@ -379,8 +376,6 @@ private:
 	void refreshChatLines();							// Refreshes the GUI's chat lines, based on what the current panel is
 	void usersCommand();								// Does the /users thing.
 	void receivePM ( QString& message, QString& character );
-	bool is_broken_escaped_apos ( std::string const &data, std::string::size_type n );
-	void fix_broken_escaped_apos ( std::string &data );
 	void typingPaused ( FChannel* channel );
 	void typingContinued ( FChannel* channel );
 	void typingCleared ( FChannel* channel );
@@ -397,33 +392,20 @@ private:
 	QNetworkReply* lreply;
 	QUrl lurl;
 	QUrlQuery lparam;
-	//QTcpSocket* tcpSock;
-	//QSslSocket* tcpSock;
 
-	std::string networkBuffer;
 	unsigned int loginStep;
 	FChannel* console;	// We could just put this into the channel list, but the console needs to be accessed quite often. So here we go...
 	FChannel* currentPanel;
 	FSound soundPlayer;
 	BBCodeParser bbparser;
-	QString sessionID;
-	//QList<QString> selfCharacterList;
 	QList<QString> selfFriendsList;
 	QList<QString> selfIgnoreList;
 	QStringList selfPingList;
 	QStringList defaultChannels;
-	//QString username;
-	//std::string loginTicket;
-	//std::string defaultCharacter;
-	QString password;
-	QString sessionHash;
-	QString accountID;
 	QString charName;
 	QString selfStatus;
 	QString selfStatusMessage;
-	QString defaultChar;
 	bool disconnected;
-	static std::string WSConnect;
 	static QString settingsPath;
 	bool doingWS;
 	QList<QString> opList;
