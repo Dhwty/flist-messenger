@@ -50,6 +50,7 @@ void FChannel::initClass()
         }
         QStringList colstr;
         colstr = colset.value("buttons/inactive").toStringList();
+	std::cout << colset.value("buttons/inactive").toString().toUtf8().constData() << std::endl;
         if(colstr.size() >= 2) {
             colorInactive = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
         }
@@ -71,13 +72,14 @@ void FChannel::initClass()
         }
 }
 
-FChannel::FChannel ( QString name, channelType type )
+FChannel::FChannel (QString panelname, QString channelname, channelType type)
 {
-    mode = CHANMODE_BOTH;
-        chanName = name;
+	mode = CHANMODE_BOTH;
+	this->panelname = panelname;
+        chanName = channelname;
         creationTime = time ( 0 );
         chanType = type;
-        chanTitle = name;
+        chanTitle = channelname;
         active = true;
         typing = TYPINGSTATUS_CLEAR;
         typingSelf = TYPINGSTATUS_CLEAR;
@@ -181,7 +183,7 @@ void FChannel::sortChars()
         //std::cout << "Gnome sorted userlist~." << std::endl;
 }
 
-const bool FChannel::isOp ( FCharacter* character )
+bool FChannel::isOp ( FCharacter* character )
 {
         if ( character == 0 )
         {
@@ -198,7 +200,7 @@ const bool FChannel::isOp ( FCharacter* character )
         return false;
 }
 
-const bool FChannel::isOwner ( FCharacter* character )
+bool FChannel::isOwner ( FCharacter* character )
 {
         if ( character == 0 )
         {
@@ -238,6 +240,7 @@ void FChannel::setOps ( QStringList& oplist )
 
 void FChannel::addLine(QString chanLine, bool log, bool parse)
 {
+        (void) parse; //todo: check what this was intended for
         // if (parse) chanLine = bbparser->parse(chanLine);
         char timebuf[64];
         time_t now = time(0);

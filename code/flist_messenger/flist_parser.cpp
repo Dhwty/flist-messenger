@@ -100,11 +100,13 @@ QString BBCodeParser::BBCodeTagColor::parse ( QString& param, QString& content )
 
 QString BBCodeParser::BBCodeTagNoparse::parse ( QString& param, QString& content )
 {
+        (void) param;
         return content;
 }
 
 QString BBCodeParser::BBCodeTagChannel::parse(QString& param, QString& content)
 {
+        (void) param;
         if( QRegExp("[A-Za-z0-9 \\-/']+").indexIn(content) >= 0 )
                 return "<a href=\"#AHI-" + content + "\"><img src=\":/images/hash.png\" />" + content + "</a>";
         return content;
@@ -120,6 +122,7 @@ QString BBCodeParser::BBCodeTagSession::parse(QString& param, QString& content)
 
 QString BBCodeParser::BBCodeTagIcon::parse(QString& param, QString& content)
 {
+        (void) param;
         if( QRegExp("[A-Za-z0-9 \\-_]+").indexIn(content) >= 0 )
                 return "<a href=\"#LNK-https://www.f-list.net/c/" + content + "\"><img src=\"https://static.f-list.net/images/avatar/" + content.toLower() + ".png\" style=\"width:50px;height:50px;\" align=\"top\"/></a>";
         return content;
@@ -127,6 +130,7 @@ QString BBCodeParser::BBCodeTagIcon::parse(QString& param, QString& content)
 
 QString BBCodeParser::BBCodeTagUser::parse(QString& param, QString& content)
 {
+        (void) param;
         if( QRegExp("[A-Za-z0-9 \\-_]+").indexIn(content) >= 0 )
                 return "<a href=\"#LNK-https://www.f-list.net/c/" + content + "\"><img src=\":/images/user.png\" />" + content + "</a>";
         return content;

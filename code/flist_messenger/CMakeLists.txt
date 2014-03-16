@@ -17,12 +17,14 @@ set(flist_messenger_SRCS
 	flist_channel.cpp
 	flist_channeltab.cpp
 	flist_character.cpp
+	flist_characterprofile.cpp
 	flist_global.cpp
 	flist_loginwindow.cpp
 	flist_loginselectwindow.cpp
 	flist_message.cpp
 	flist_messenger.cpp
 	flist_parser.cpp
+	flist_server.cpp
 	flist_session.cpp
 	flist_sound.cpp
 	main.cpp
@@ -31,8 +33,10 @@ SET(flist_messenger_HEADERS
 	flist_account.h
 	flist_avatar.h
 	flist_channeltab.h
+	flist_characterprofile.h
 	flist_loginwindow.h
 	flist_loginselectwindow.h
+	flist_server.h
 	flist_session.h
 )
 set(QtApp_RCCS resources.qrc)

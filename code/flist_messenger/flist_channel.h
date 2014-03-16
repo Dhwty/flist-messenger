@@ -90,44 +90,45 @@ public:
 		CHANMODE_MAX
 	};
 
-	FChannel ( QString name, channelType type );
+	FChannel(QString panelname, QString channelname, channelType type);
 	~FChannel() {}
 	static void initClass();
 	void setRecipient ( QString& name ){recipientName = name;}
-	const QString& recipient() const{return recipientName;}
+	QString& recipient(){return recipientName;}
 	void setName ( QString& name );
-	const QString& name() const{return chanName;}
+	QString& getChannelName(){return chanName;}
+	QString& getPanelName(){return panelname;}
 	void setInput ( QString& input ){this->input = input;}
-	const QString& getInput(){return input;}
+	QString& getInput(){return input;}
 	void setType ( channelType type );
-	const channelType type() const{return chanType;}
+	channelType type(){return chanType;}
 	void setDescription ( QString& desc );
-	const QString& description() const{return chanDesc;}
+	QString& description(){return chanDesc;}
 	void setTitle ( QString& title );
-	const QString& title() const{return chanTitle;}
+	QString& title(){return chanTitle;}
 	void updateButtonColor();
 	void setOps ( QStringList& oplist );
-	QList<QString> opList() const{return chanOps;}
+	QList<QString> opList(){return chanOps;}
 	void setTyping ( typingStatus status );
-	typingStatus getTyping() const{return typing;}
+	typingStatus getTyping(){return typing;}
 	void setTypingSelf ( typingStatus status ){typingSelf = status;}
-	typingStatus getTypingSelf() const{return typingSelf;}
+	typingStatus getTypingSelf(){return typingSelf;}
 	void addChar ( FCharacter* character, bool sort_list = true );
 	void remChar ( FCharacter* character );
-	QList<FCharacter*> charList() const{return chanChars;}
+	QList<FCharacter*> charList(){return chanChars;}
 	void sortChars();
-	const bool isOp ( FCharacter* character );
-	const bool isOwner ( FCharacter* character );
+	bool isOp ( FCharacter* character );
+	bool isOwner ( FCharacter* character );
 	void setActive ( bool o ){active = o;}
-	const bool getActive() const{return active;}
+	bool getActive(){return active;}
 	void setHighlighted ( bool o ){highlighted = o;}
-	const bool getHighlighted(){return highlighted;}
+	bool getHighlighted(){return highlighted;}
 	void setHasNewMessages ( bool o ){hasNewMessages = o;}
-	const bool getHasNewMessages(){return hasNewMessages;}
+	bool getHasNewMessages(){return hasNewMessages;}
 	void setMode ( channelMode o ){mode = o;}
-	const channelMode getMode(){return mode;}
+	channelMode getMode(){return mode;}
 	void setAlwaysPing ( bool b ) {alwaysPing = b;}
-	const bool getAlwaysPing(){return alwaysPing;}
+	bool getAlwaysPing(){return alwaysPing;}
 	JSONNode* toJSON();
 	QString* toString();
 
@@ -147,6 +148,7 @@ private:
 	bool					highlighted;
 	bool					hasNewMessages;
 	bool					alwaysPing;			// This channel pings on every message.
+	QString					panelname;
 	QString					chanName;
 	QString					chanTitle;
 	QString					chanDesc;

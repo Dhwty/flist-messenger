@@ -68,7 +68,7 @@ public:
 	}
 
 	void setStatus ( QString& status );
-	const characterStatus status() const
+	characterStatus status()
 	{
 		return charStatus;
 	}
@@ -82,25 +82,25 @@ public:
 	}
 
 	void setGender ( QString& gender );
-	const characterGender gender() const
+	characterGender gender()
 	{
 		return charGender;
 	}
 
 	QString& genderString();
 	void updateActivityTimer();
-	const quint32 activityTimer() const
+	quint32 activityTimer()
 	{
 		return lastActivity;
 	}
 
 	QString activityString();
-	const bool isChatOp() const
+	bool isChatOp()
 	{
 		return chatOp;
 	}
 	void setIsFriend(bool b) { isFriend = b; }
-	const bool getFriend() const
+	bool getFriend()
 	{
 		return isFriend;
 	}

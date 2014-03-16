@@ -13,22 +13,22 @@
 #include <QNetworkReply>
 
 class FSession;
+class FServer;
 
 class FAccount : public QObject
 {
 	Q_OBJECT
 public:
-	FAccount();
-	QString &getUserName() {return username;}
+	FAccount(QObject *parent, FServer *server);
+	QString getUserName() {return username;}
 	void setUserName(QString name) {username = name;}
-	void setUserName(QString &name) {username = name;}
-	QString &getPassword() {return password;}
-	void setPassword(QString &pass) {password = pass;}
-	FSession *getSession(QString &character);
+	QString getPassword() {return password;}
+	void setPassword(QString pass) {password = pass;}
+	FSession *getSession(QString character);
 
 public slots:
 	void loginStart();
-	void loginUserPass(QString &user, QString &pass);
+	void loginUserPass(QString user, QString pass);
 
 private slots:
 	void loginHttps();
@@ -36,11 +36,11 @@ private slots:
 	void loginHandle();
 
 signals:
-	void loginGetLogin(FAccount *account, QString &username, QString &password);
-	void loginError(FAccount *account, QString &errortitle, QString &errorsring);
+	void loginGetLogin(FAccount *account, QString username, QString password);
+	void loginError(FAccount *account, QString errortitle, QString errorsring);
 	void loginComplete(FAccount *account);
 
-	void ticketReady(FAccount *account, QString &ticket);
+	void ticketReady(FAccount *account, QString ticket);
 
 public:
 	//todo: make this stuff private
@@ -62,6 +62,8 @@ private:
 
 	bool ticketvalid;
 
+public:
+	FServer *server;
 };
 
 #endif // FLIST_ACCOUNT_H

@@ -6,14 +6,20 @@
 #include "flist_session.h"
 
 
-FAccount::FAccount() :
-		QObject()
+FAccount::FAccount(QObject *parent, FServer *server) :
+	QObject(parent),
+	username(),
+	password(),
+	valid(false),
+	ticketvalid(false),
+	server(server)
 {
-	valid = false;
 }
+
 
 void FAccount::loginHttps()
 {
+	debugMessage("account->loginHttps()");
 	ticketvalid = false;
 	//send HTTPS request for ticket
 	loginurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
@@ -42,12 +48,15 @@ void FAccount::loginHttps()
 void FAccount::loginSslErrors( QList<QSslError> sslerrors )
 {
 	//todo: handle SSL error and pass on error message, or suppress if appropriate
+    (void) sslerrors;
 }
 
 void FAccount::loginHandle()
 {
+	debugMessage("account->loginHandle()");
 	//handle the HTTPS reply
 	if(loginreply->error() != QNetworkReply::NoError) {
+		debugMessage("account->loginHandle() error!");
 		//Bad response, emit error.
 		QString title = "Response Error";
                 QString message = "Response error while connecting for login ticket. Error: ";
@@ -108,7 +117,7 @@ void FAccount::loginStart()
 	loginHttps();
 }
 
-void FAccount::loginUserPass(QString &user, QString &pass)
+void FAccount::loginUserPass(QString user, QString pass)
 {
 	debugMessage("account->loginUserPass()");
 	username = user;
@@ -118,8 +127,9 @@ void FAccount::loginUserPass(QString &user, QString &pass)
 	loginStart();
 }
 
-FSession *FAccount::getSession(QString &character)
+FSession *FAccount::getSession(QString character)
 {
+	//debugMessage("account->getSession()");
 	int i;
 	//Find existing session, if any.
 	for(i = 0; i < charactersessions.length(); i++) {
@@ -127,6 +137,7 @@ FSession *FAccount::getSession(QString &character)
 			return charactersessions[i];
 		}
 	}
+	debugMessage("account->getSession() [new]");
 	//todo: Find character and create a session.
 	FSession *session = new FSession(this, character, this);
 	charactersessions.append(session);

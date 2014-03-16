@@ -79,14 +79,15 @@ public:
 
     public:
         WrapperBBCodeTag ( QString pre, QString post, bool blacklist ) :
+                BBCodeTag ( blacklist ),
                 pre ( pre ),
-                post ( post ),
-                BBCodeTag ( blacklist )
+                post ( post )
         {
         }
 
         QString parse ( QString& param, QString& content )
         {
+            (void) param;
             return pre + content + post;
         }
     };

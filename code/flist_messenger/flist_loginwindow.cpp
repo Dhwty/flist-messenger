@@ -98,6 +98,8 @@ void FLoginWindow::loginGetUserPass(QString &username, QString &password) {
 	createWindow();
 	//todo: show window
 	//todo:
+    (void)username;
+    (void)password;
 }
 
 void FLoginWindow::loginError(QString &title, QString &message)

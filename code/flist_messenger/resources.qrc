@@ -1,4 +1,4 @@
-<RCC>
+<!DOCTYPE RCC><RCC version="1.0">
 	<qresource prefix="/">
 		<file>images/address-book.png</file>
 		<file>images/alarm-clock.png</file>

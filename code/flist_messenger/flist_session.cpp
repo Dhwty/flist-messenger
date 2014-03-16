@@ -4,15 +4,20 @@
 #include "flist_session.h"
 #include "flist_account.h"
 #include "flist_global.h"
+#include "flist_server.h"
 
 #include "../libjson/libJSON.h"
 
 FSession::FSession(FAccount *account, QString &character, QObject *parent) :
-    QObject(parent)
+	QObject(parent),
+	connected(false),
+	account(account),
+	character(character),
+	tcpsocket(0),
+	characterlist(),
+	wsready(false),
+	socketreadbuffer()
 {
-	this->account = account;
-	this->character = character;
-	this->tcpsocket = 0;
 }
 
 FSession::~FSession()
@@ -23,8 +28,10 @@ FSession::~FSession()
 	}
 }
 
+//todo: All the web socket stuff should really go into its own class.
 void FSession::connectSession()
 {
+	debugMessage("session->connectSession()");
 	if(connected) {
 		return;
 	}
@@ -35,8 +42,9 @@ void FSession::connectSession()
         tcpsocket = new QTcpSocket ( this );
         //tcpsocket = new QSslSocket ( this );
         //tcpsocket->ignoreSslErrors();
-	//debugMessage("Connecting...");
-        tcpsocket->connectToHost (FLIST_CHAT_SERVER, FLIST_PORT);
+	debugMessage("Connecting...");
+        //tcpsocket->connectToHost (FLIST_CHAT_SERVER, FLIST_CHAT_SERVER_PORT);
+	tcpsocket->connectToHost (account->server->chatserver_host, account->server->chatserver_port);
         //tcpsocket->connectToHostEncrypted ( "chat.f-list.net", FLIST_PORT );
         connect ( tcpsocket, SIGNAL ( connected() ), this, SLOT ( socketConnected() ) );
         //connect ( tcpsocket, SIGNAL ( encrypted() ), this, SLOT ( socketSslConnected() ) );
@@ -47,7 +55,7 @@ void FSession::connectSession()
 
 void FSession::socketConnected()
 {
-	//debugMessage("Connected.");
+	debugMessage("Connected.");
 	//todo: this should use a better random source
 	srand(QTime::currentTime().msecsTo(QTime()));
 	unsigned char nonce[16];
@@ -62,11 +70,12 @@ void FSession::socketConnected()
 		       "Upgrade: WebSocket\r\n"
 		       "Connection: Upgrade\r\n"
 		       "Host: f-list.net:%d\r\n"
-		       "Origin: https://www.f-list.net\r\n"
+		       "Origin: https://%s\r\n"
 		       "Sec-WebSocket-Key: %s\r\n"
 		       "Sec-WebSocket-Version: 8\r\n"
 		       "\r\n"
-		       , FLIST_PORT, (const char *)QByteArray((const char *)nonce, 16).toBase64());
+		       , account->server->chatserver_port, (const char *)account->server->chatserver_host.toUtf8()
+		       , (const char *)QByteArray((const char *)nonce, 16).toBase64());
 
 	tcpsocket->write ( header.toUtf8() );
 	tcpsocket->flush();
@@ -97,29 +106,18 @@ void FSession::socketReadReady()
 			socketreadbuffer = buf;
 			return;
 		} else {
-			//debugMessage("WebSocket connected.");
+			debugMessage("WebSocket connected.");
 			wsready = true;
 			socketreadbuffer.clear();
 		}
 		//todo: verify "Sec-WebSocket-Accept" response
 		JSONNode loginnode;
-		JSONNode tempnode ( "method", "ticket" );
-		loginnode.push_back ( tempnode );
-		tempnode.set_name ( "ticket" );
-		tempnode = account->ticket.toStdString();
-		loginnode.push_back ( tempnode );
-		tempnode.set_name ( "account" );
-		tempnode = account->getUserName().toStdString();
-		loginnode.push_back ( tempnode );
-		tempnode.set_name ( "cname" );
-		tempnode = FLIST_CLIENTID;
-		loginnode.push_back ( tempnode );
-		tempnode.set_name ( "cversion" );
-		tempnode = FLIST_VERSIONNUM;
-		loginnode.push_back ( tempnode );
-		tempnode.set_name ( "character" );
-		tempnode = character.toStdString();
-		loginnode.push_back ( tempnode );
+		loginnode.push_back(JSONNode("method", "ticket"));
+		loginnode.push_back(JSONNode("ticket", account->ticket.toStdString()));
+		loginnode.push_back(JSONNode("account", account->getUserName().toStdString()));
+		loginnode.push_back(JSONNode("cname", FLIST_CLIENTID));
+		loginnode.push_back(JSONNode("cversion", FLIST_VERSIONNUM));
+		loginnode.push_back(JSONNode("character", character.toStdString()));
 		std::string idenStr = "IDN " + loginnode.write();
 		//debugMessage("Indentify...");
 		wsSend(idenStr);
@@ -131,7 +129,7 @@ void FSession::socketReadReady()
 		unsigned int lengthsize;
 		unsigned int payloadlength;
 		unsigned int headersize;
-		int i;
+		unsigned int i;
 		while(1) {
 			if(buf.length() < 2) {
 				break;
@@ -172,7 +170,7 @@ void FSession::socketReadReady()
 					cmd[i] ^= buf[lengthsize + 2 + (i & 0x3)];
 				}
 			}
-			emit wsRecv(cmd);
+			wsRecv(cmd);
 			if ( buf.length() <= headersize + payloadlength)
 			{
 				buf.clear();
@@ -219,7 +217,7 @@ void FSession::wsSend(std::string &input)
 		//The mask to use for this frame.
 		//The spec says it should be cryptographically strong random number, but we're using a weak random source instead.
 		quint8 mask[4];
-		int i;
+        unsigned int i;
 
 		for(i = 0; i < 4; i++) {
 			mask[i] = rand() & 0xff;
@@ -233,4 +231,34 @@ void FSession::wsSend(std::string &input)
 		tcpsocket->flush();
 	}
 	
+}
+
+void FSession::wsRecv(std::string packet)
+{
+	debugMessage("<<" + packet);
+	try {
+		std::string cmd = packet.substr(0, 3);
+		JSONNode nodes;
+		if(packet.length() > 4) {
+			nodes = libJSON::parse(packet.substr(4, packet.length() - 4));
+		}
+#define CMD(name) if(cmd == #name) {cmd##name(packet, nodes); return;}
+		CMD(PIN);
+		emit processCommand(packet, cmd, nodes);
+	} catch(std::invalid_argument) {
+                debugMessage("Server returned invalid json in its response: " + packet);
+        } catch(std::out_of_range) {
+                debugMessage("Server produced unexpected json without a field we expected: " + packet);
+        }
+}
+
+#define COMMAND(name) void FSession::cmd##name(std::string &rawpacket, JSONNode &nodes)
+
+//void FSession::cmdPIN(std::string &rawpacket, JSONNode &nodes)
+COMMAND(PIN)
+{
+	(void)rawpacket; (void)nodes;
+	//debugMessage("Ping!");
+	std::string cmd = "PIN";
+	wsSend(cmd);
 }
