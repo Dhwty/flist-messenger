@@ -98,14 +98,16 @@ public:
     public:
 	   #ifdef JSON_LIBRARY
 		  iteratorKeeper(jsonChildren * pthis, JSONNode ** & position) : 
-			 myRelativeOffset((json_index_t)(position - pthis -> array)),
-	   #else
+             myChildren(pthis),
+             myPos(position),
+             myRelativeOffset((json_index_t)(position - pthis -> array)){}
+       #else
 		  iteratorKeeper(jsonChildren * pthis, JSONNode ** & position, bool reverse = false) : 
-			 myRelativeOffset(reverse ? (json_index_t)(pthis -> array + (size_t)pthis -> mysize - position) : (json_index_t)(position - pthis -> array)),
-			 myReverse(reverse),
+             myChildren(pthis),
+             myPos(position),
+             myRelativeOffset(reverse ? (json_index_t)(pthis -> array + (size_t)pthis -> mysize - position) : (json_index_t)(position - pthis -> array)),
+             myReverse(reverse){}
 	   #endif
-			 myChildren(pthis), 
-			 myPos(position){}
 
 	   ~iteratorKeeper(void){
 		  #ifdef JSON_LIBRARY

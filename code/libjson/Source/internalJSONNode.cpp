@@ -23,13 +23,20 @@ void internalJSONNode::decinternalAllocCount(void) {
 #endif
 
 internalJSONNode::internalJSONNode(const internalJSONNode & orig) :
-        _type(orig._type), _name(orig._name), _name_encoded(orig._name_encoded), Children(),
-        _string(orig._string), _string_encoded(orig._string_encoded), _value(orig._value)
-        initializeRefCount(1)
+    #ifdef JSON_REF_COUNT
+        //initializeRefCount(1)
+        refcount(1),
+    #endif
+        _type(orig._type),
+        _name_encoded(orig._name_encoded),
+        _name(orig._name),
+        _string(orig._string), _string_encoded(orig._string_encoded), _value(orig._value),
+        Children()
+        initializeValid(orig.isValid)
         initializeFetch(orig.fetched)
         initializeMutex()
         initializeComment(orig._comment)
-        initializeValid(orig.isValid) {
+{
 
 
     incinternalAllocCount();
@@ -57,12 +64,23 @@ internalJSONNode::internalJSONNode(const internalJSONNode & orig) :
 #endif
 
 //this one is specialized because the root can only be array or node
-internalJSONNode::internalJSONNode(const json_string & unparsed) : _type(), _name(),_name_encoded(false), _string(unparsed), _string_encoded(), _value(), Children()
+internalJSONNode::internalJSONNode(const json_string & unparsed) :
+    #ifdef JSON_REF_COUNT
+        //initializeRefCount(1)
+        refcount(1),
+    #endif
+        _type(),
+        _name_encoded(false),
+        _name(),
+        _string(unparsed),
+        _string_encoded(),
+        _value(),
+        Children()
         initializeMutex(0)
-        initializeRefCount(1)
+        initializeValid()
         initializeFetch(false)
         initializeComment()
-        initializeValid() {
+{
 
     incinternalAllocCount();
     switch (unparsed[0]) {
@@ -84,12 +102,23 @@ internalJSONNode::internalJSONNode(const json_string & unparsed) : _type(), _nam
     }
 }
 
-internalJSONNode::internalJSONNode(const json_string & name_t, const json_string & value_t) : _type(), _name_encoded(), _name(JSONWorker::FixString(name_t, NAME_ENCODED)), _string(), _string_encoded(), _value(), Children()
+internalJSONNode::internalJSONNode(const json_string & name_t, const json_string & value_t) :
+    #ifdef JSON_REF_COUNT
+        //initializeRefCount(1)
+        refcount(1),
+    #endif
+        _type(),
+        _name_encoded(),
+        _name(JSONWorker::FixString(name_t, NAME_ENCODED)),
+        _string(),
+        _string_encoded(),
+        _value(),
+        Children()
         initializeMutex(0)
-        initializeRefCount(1)
+        initializeValid()
         initializeFetch()
         initializeComment()
-        initializeValid() {
+{
 
     incinternalAllocCount();
 

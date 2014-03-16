@@ -222,12 +222,22 @@ public:
     #endif
 };
 
-inline internalJSONNode::internalJSONNode(char mytype) : _type(mytype), Children(), _name(), _name_encoded(), _string(), _string_encoded(), _value()
-    initializeMutex(0)  
-    initializeRefCount(1)
-    initializeFetch(true)
+inline internalJSONNode::internalJSONNode(char mytype) :
+  #ifdef JSON_REF_COUNT
+    //initializeRefCount(1)
+    refcount(1)
+  #endif
+    initializeMutex(0)
+    , _type(mytype)
+    , _name_encoded(), _name()
+    , _string()
+    , _string_encoded()
+    , _value()
+    , Children()
     initializeComment()
-    initializeValid(true){
+    initializeValid(true)
+    initializeFetch(true)
+{
 	   
     incinternalAllocCount();
 }
