@@ -43,7 +43,7 @@ public:
 	QTcpSocket *tcpsocket;
 
 	QHash<QString, FCharacter *> characterlist; //< List of all known characters on the server/session.
-	
+	QList<QString> operatorlist; //<List of all known characters that are operators (stored in lower case).
 
 private:
 

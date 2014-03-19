@@ -3319,13 +3319,15 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 		FSession *session = account->getSession(charName);
                 if ( cmd == "ADL" )
                 {
+			//The list of current chat-ops.
+			//{"ops": ["name1", "name2"]}
                         JSONNode childnode = nodes.at ( "ops" );
                         int size = childnode.size();
 
                         for ( int i = 0;i < size;++i )
                         {
                                 QString op = childnode[i].as_string().c_str();
-                                opList.append ( op.toLower() );
+                                session->operatorlist.append ( op.toLower() );
 
 				if(session->isCharacterOnline(op)) {
                                         // Set flag in character
@@ -3349,7 +3351,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         //AOP {"character": "Viona"}
                         //op
                         QString ch = nodes.at ( "character" ).as_string().c_str();
-                        opList.append ( ch.toLower() );
+                        session->operatorlist.append ( ch.toLower() );
 
 			if(session->isCharacterOnline(ch)) {
                                 // Set flag in character
@@ -3372,7 +3374,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         //DOP {"character": "Viona"}
                         //Deop
                         QString ch = nodes.at ( "character" ).as_string().c_str();
-                        opList.removeAll ( ch.toLower() );
+                        session->operatorlist.removeAll ( ch.toLower() );
 
 			if(session->isCharacterOnline(ch)) {
                                 // Set flag in character
@@ -3894,7 +3896,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 QString statusmsg = charnode.at ( 3 ).as_string().c_str();        // Status
                                 character->setStatusMsg ( statusmsg );
 
-                                if ( opList.contains ( addchar.toLower() ) )
+                                if ( session->operatorlist.contains ( addchar.toLower() ) )
                                         character->setIsChatOp ( true );
                         }
                 }
@@ -3989,7 +3991,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         QString status = nodes.at ( "status" ).as_string().c_str();
                         character->setStatus ( status );
 
-                        if ( opList.contains ( addchar.toLower() ) )
+                        if ( session->operatorlist.contains ( addchar.toLower() ) )
                                 character->setIsChatOp ( true );
                 }
                 else if ( cmd == "ORS" )

@@ -414,7 +414,7 @@ private:
 	bool disconnected;
 	static QString settingsPath;
 	bool doingWS;
-	QList<QString> opList;
+	//QList<QString> opList;
 	//QHash<QString, FCharacter*> characterList;
 	QHash<QString, FChannel*> channelList;
 	QHash<QString, QString> serverVariables;

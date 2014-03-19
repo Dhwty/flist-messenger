@@ -15,6 +15,7 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent) :
 	character(character),
 	tcpsocket(0),
 	characterlist(),
+	operatorlist(),
 	wsready(false),
 	socketreadbuffer()
 {
