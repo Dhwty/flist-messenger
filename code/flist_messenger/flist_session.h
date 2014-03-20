@@ -52,6 +52,9 @@ private:
 	std::string socketreadbuffer;
 
 #define COMMAND(name) void cmd##name(std::string &rawpacket, JSONNode &nodes)
+	COMMAND(ADL);
+	COMMAND(AOP);
+	COMMAND(DOP);
 	COMMAND(PIN);
 #undef COMMAND
 	

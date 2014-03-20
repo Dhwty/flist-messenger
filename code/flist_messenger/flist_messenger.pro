@@ -49,7 +49,8 @@ HEADERS += \
            ../libjson/Source/JSONWorker.h \
            ../libjson/Source/NumberToString.h \
     flist_server.h \
-    flist_characterprofile.h
+    flist_characterprofile.h \
+    flist_iuserinterface.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \

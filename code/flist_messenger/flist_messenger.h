@@ -84,6 +84,7 @@
 #include "flist_message.h"
 //#include "flist_account.h"
 #include "flist_channeltab.h"
+#include "flist_iuserinterface.h"
 
 class FAccount;
 class FServer;
@@ -188,7 +189,7 @@ public:
 
 class FChannel;
 
-class flist_messenger : public QMainWindow
+class flist_messenger : public QMainWindow, iUserInterface
 {
 	Q_OBJECT
 
@@ -197,6 +198,10 @@ public:
 	static const QString getSettingsPath() { return settingsPath; }
 	flist_messenger(bool d);
 	~flist_messenger();
+public:
+	virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus);
+
+public:
 	QPushButton* pushButton;
 	FChannelTab* channelTab;
 	QLabel* label;

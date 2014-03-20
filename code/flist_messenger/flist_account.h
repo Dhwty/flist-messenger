@@ -14,6 +14,7 @@
 
 class FSession;
 class FServer;
+class iUserInterface;
 
 class FAccount : public QObject
 {
@@ -64,6 +65,8 @@ private:
 
 public:
 	FServer *server;
+	iUserInterface *ui; //<The interface to the GUI part of the application.
+
 };
 
 #endif // FLIST_ACCOUNT_H

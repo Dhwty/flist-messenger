@@ -5,6 +5,9 @@
 #include "flist_account.h"
 #include "flist_global.h"
 #include "flist_server.h"
+#include "flist_character.h"
+#include "flist_iuserinterface.h"
+
 
 #include "../libjson/libJSON.h"
 
@@ -244,7 +247,10 @@ void FSession::wsRecv(std::string packet)
 			nodes = libJSON::parse(packet.substr(4, packet.length() - 4));
 		}
 #define CMD(name) if(cmd == #name) {cmd##name(packet, nodes); return;}
-		CMD(PIN);
+		CMD(ADL); //List of all chat operators.
+		CMD(AOP); //Add a chat operator.
+		CMD(DOP); //Remove a chat operator.
+		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
 	} catch(std::invalid_argument) {
                 debugMessage("Server returned invalid json in its response: " + packet);
@@ -255,7 +261,61 @@ void FSession::wsRecv(std::string packet)
 
 #define COMMAND(name) void FSession::cmd##name(std::string &rawpacket, JSONNode &nodes)
 
-//void FSession::cmdPIN(std::string &rawpacket, JSONNode &nodes)
+
+//todo: Merge common code in ADL, AOP and DOP into a separate function.
+COMMAND(ADL)
+{
+	(void)rawpacket;
+	//The list of current chat-ops.
+	//ADL {"ops": ["name1", "name2"]}
+	JSONNode childnode = nodes.at("ops");
+	int size = childnode.size();
+
+	for(int i = 0; i < size; ++i) {
+		QString op = childnode[i].as_string().c_str();
+		operatorlist.append(op.toLower());
+
+		if(isCharacterOnline(op)) {
+			// Set flag in character
+			FCharacter* character = characterlist[op];
+			character->setIsChatOp(true);
+		}
+		account->ui->setChatOperator(this, op, true);
+	}
+	
+}
+COMMAND(AOP)
+{
+	(void)rawpacket;
+	//Add a character to the list of known chat-operators.
+	//AOP {"character": "Viona"}
+	QString op = nodes.at("character").as_string().c_str();
+	operatorlist.append(op.toLower());
+	
+	if(isCharacterOnline(op)) {
+		// Set flag in character
+		FCharacter *character = characterlist[op];
+		character->setIsChatOp(true);
+	}
+	account->ui->setChatOperator(this, op, true);
+}
+
+COMMAND(DOP)
+{
+	(void)rawpacket;
+	//Remove a character from the list of  chat operators.
+	//DOP {"character": "Viona"}
+	QString op = nodes.at("character").as_string().c_str();
+	operatorlist.removeAll(op.toLower());
+
+	if(isCharacterOnline(op)) {
+		// Set flag in character
+		FCharacter *character = characterlist[op];
+		character->setIsChatOp(false);
+	}
+	account->ui->setChatOperator(this, op, false);
+}
+
 COMMAND(PIN)
 {
 	(void)rawpacket; (void)nodes;

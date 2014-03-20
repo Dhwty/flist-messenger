@@ -12,7 +12,8 @@ FAccount::FAccount(QObject *parent, FServer *server) :
 	password(),
 	valid(false),
 	ticketvalid(false),
-	server(server)
+	server(server),
+	ui(0)
 {
 }
 

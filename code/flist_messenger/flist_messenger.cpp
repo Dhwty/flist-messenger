@@ -127,6 +127,7 @@ flist_messenger::flist_messenger(bool d)
 {
 	server = new FServer(this);
 	account = server->addAccount();
+	account->ui = this;
 	//account = new FAccount(0, 0);
         versionIsOkay = true;
         doingWS = true;
@@ -2549,7 +2550,11 @@ void flist_messenger::parseInput()
                         debug += root.write().c_str();
                         sendWS( debug );
                         success = true;
-                }
+                } else if(parts[0].toLower() == "/debugrecv") {
+			//Artificially receive a packet from the server. The packet is not validated.
+			session->wsRecv(ownText.mid(11).toStdString());
+			success = true;
+		}
                 else if ( parts[0].toLower() == "/me" )
                 {
                         msg = "<i>*<b>" + charName + "</b> " + ownText.mid ( 4 ).simplified() + "</i>";
@@ -3307,92 +3312,8 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 {
         try
         {
-                //printDebugInfo("<<" + input);
-                //std::string cmd = input.substr ( 0, 3 );
-                //JSONNode nodes;
-
-                //if ( input.length() > 4 )
-                //{
-                //        nodes = libJSON::parse ( input.substr ( 4, input.length() - 4 ) );
-                //}
-
 		FSession *session = account->getSession(charName);
-                if ( cmd == "ADL" )
-                {
-			//The list of current chat-ops.
-			//{"ops": ["name1", "name2"]}
-                        JSONNode childnode = nodes.at ( "ops" );
-                        int size = childnode.size();
-
-                        for ( int i = 0;i < size;++i )
-                        {
-                                QString op = childnode[i].as_string().c_str();
-                                session->operatorlist.append ( op.toLower() );
-
-				if(session->isCharacterOnline(op)) {
-                                        // Set flag in character
-                                        FCharacter* character = session->characterlist[op];
-                                        character->setIsChatOp ( true );
-
-                                        // Sort userlists that contain this user
-                                        FChannel* channel = 0;
-                                        foreach ( channel, channelList )
-                                        {
-                                                if ( channel->charList().contains ( character ) )
-                                                {
-                                                        channel->sortChars();
-                                                }
-                                        }
-                                }
-                        }
-                }
-                else if ( cmd == "AOP" )
-                {
-                        //AOP {"character": "Viona"}
-                        //op
-                        QString ch = nodes.at ( "character" ).as_string().c_str();
-                        session->operatorlist.append ( ch.toLower() );
-
-			if(session->isCharacterOnline(ch)) {
-                                // Set flag in character
-                                FCharacter* character = session->characterlist[ch];
-                                character->setIsChatOp ( true );
-
-                                // Sort userlists that contain this user
-                                FChannel* channel = 0;
-                                foreach ( channel, channelList )
-                                {
-                                        if ( channel->charList().contains ( character ) )
-                                        {
-                                                channel->sortChars();
-                                        }
-                                }
-                        }
-                }
-                else if ( cmd == "DOP" )
-                {
-                        //DOP {"character": "Viona"}
-                        //Deop
-                        QString ch = nodes.at ( "character" ).as_string().c_str();
-                        session->operatorlist.removeAll ( ch.toLower() );
-
-			if(session->isCharacterOnline(ch)) {
-                                // Set flag in character
-                                FCharacter* character = session->characterlist[ch];
-                                character->setIsChatOp ( false );
-
-                                // Sort userlists that contain this user
-                                FChannel* channel = 0;
-                                foreach ( channel, channelList )
-                                {
-                                        if ( channel->charList().contains ( character ) )
-                                        {
-                                                channel->sortChars();
-                                        }
-                                }
-                        }
-                }
-                else if ( cmd == "BRO" )
+                if ( cmd == "BRO" )
                 {
                         QString message(QString::fromUtf8(nodes.at ( "message" ).as_string().c_str()));
                         FMessage fmsg(FMessage::MESSAGETYPE_BROADCAST, currentPanel, 0, message, currentPanel, channelList);
@@ -4018,11 +3939,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 addToProomsDialogList ( chan );
                         }
                 }
-                else if ( cmd == "PIN" )
-                {
-                        std::string msg = "PIN";
-                        sendWS ( msg );
-                }
                 else if ( cmd == "PRD" )
                 {
                         QString type = nodes.at ( "type" ).as_string().c_str();
@@ -4283,4 +4199,23 @@ void flist_messenger::recvMessage(QString type, QString session, QString chan, Q
 	(void) chan;
 	(void) sender;
 	(void) message;
+}
+
+void flist_messenger::setChatOperator(FSession *session, QString characteroperator, bool opstatus)
+{
+	debugMessage((opstatus ? "Added chat operator: " : "Removed chat operator: ") + characteroperator);
+	// Sort userlists that contain this character
+	if(session->isCharacterOnline(characteroperator)) {
+		// Set flag in character
+		FCharacter* character = session->getCharacter(characteroperator);
+		FChannel* channel = 0;
+		foreach(channel, channelList) {
+			//todo: filter by session
+			if(channel->charList().contains(character)) {
+				channel->sortChars();
+			}
+		}
+	}
+	//todo: Maybe queue channel sorting as an idle task?
+	//todo: Update other graphical widgets with the operator status of the given character and session?
 }
