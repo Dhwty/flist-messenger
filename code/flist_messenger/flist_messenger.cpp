@@ -158,7 +158,7 @@ flist_messenger::flist_messenger(bool d)
         loadSettings();
         setupConnectBox();
         FCharacter::initClass();
-        FChannel::initClass();
+	FChannelPanel::initClass();
         FMessage::initClass(se_ping, se_alwaysPing, this);
 }
 void flist_messenger::closeEvent(QCloseEvent *event)
@@ -196,7 +196,7 @@ void flist_messenger::enterPressed()
     if (currentPanel == 0) return;
 
     QString input = plainTextEdit->toPlainText();
-    if (currentPanel->getMode() == FChannel::CHANMODE_ADS && !input.startsWith("/")) {
+    if (currentPanel->getMode() == FChannelPanel::CHANMODE_ADS && !input.startsWith("/")) {
         btnSendAdvClicked();
     } else {
         parseInput();
@@ -611,7 +611,7 @@ bool flist_messenger::setupChannelSettingsDialog()
 {
 	FSession *session = account->getSession(charName);
 
-        if (tb_recent->type() == FChannel::CHANTYPE_PM)
+	if (tb_recent->type() == FChannelPanel::CHANTYPE_PM)
         {
                 // Setup for PM
 		if (!session->isCharacterOnline(tb_recent->recipient())) { // Recipient is offline
@@ -646,7 +646,7 @@ bool flist_messenger::setupChannelSettingsDialog()
                 connect(cs_tbDescription, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
         } else {
                 channelSettingsDialog = new QDialog(this);
-                FChannel* ch = tb_recent;
+		FChannelPanel* ch = tb_recent;
                 cs_chanCurrent = ch;
                 channelSettingsDialog->setWindowTitle(ch->title());
                 channelSettingsDialog->setWindowIcon(ch->pushButton->icon());
@@ -941,11 +941,11 @@ void flist_messenger::tb_closeClicked()
         {
                 current = true;
         }
-        if (tb_recent->type() == FChannel::CHANTYPE_PM)
+	if (tb_recent->type() == FChannelPanel::CHANTYPE_PM)
         {
                 tb_recent->setActive(false);
                 tb_recent->pushButton->setVisible(false);
-                tb_recent->setTyping ( FChannel::TYPINGSTATUS_CLEAR );
+		tb_recent->setTyping ( FChannelPanel::TYPINGSTATUS_CLEAR );
         } else {
 		leaveChannel(tb_recent->getPanelName(), tb_recent->getChannelName(), true);
         }
@@ -1153,7 +1153,7 @@ void flist_messenger::clearLoginBox()
 void flist_messenger::setupRealUI()
 {
         // Setting up console first because it needs to receive server output.
-        console = new FChannel ( "FCHATSYSTEMCONSOLE", "FCHATSYSTEMCONSOLE", FChannel::CHANTYPE_CONSOLE );
+	console = new FChannelPanel ( "FCHATSYSTEMCONSOLE", "FCHATSYSTEMCONSOLE", FChannelPanel::CHANTYPE_CONSOLE );
         QString name = "Console";
         console->setTitle ( name );
         channelList["FCHATSYSTEMCONSOLE"] = console;
@@ -1375,7 +1375,7 @@ void flist_messenger::userListContextMenuRequested ( const QPoint& point )
                 displayCharacterContextMenu ( ch );
         }
 }
-void flist_messenger::displayChannelContextMenu(FChannel *ch)
+void flist_messenger::displayChannelContextMenu(FChannelPanel *ch)
 {
         if (!ch)
         {
@@ -1516,7 +1516,7 @@ void flist_messenger::refreshUserlist()
                 listWidget->addItem ( charitem );
         }
 
-        if ( currentPanel->type() == FChannel::CHANTYPE_PM || currentPanel->type() == FChannel::CHANTYPE_CONSOLE )
+	if ( currentPanel->type() == FChannelPanel::CHANTYPE_PM || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE )
         {
                 listWidget->hide();
         }
@@ -1751,13 +1751,13 @@ FChannelTab* flist_messenger::addToActivePanels ( QString& panelname, QString &c
 }
 void flist_messenger::receivePM ( QString& message, QString& character )
 {
-        FChannel* pmPanel = 0;
+	FChannelPanel* pmPanel = 0;
         QString panelname = "PM|||" + charName + "|||" + character;
 
 	FSession *session = account->getSession(charName);
         if ( channelList.count ( panelname ) == 0 )
         {
-                channelList[panelname] = new FChannel ( panelname, character, FChannel::CHANTYPE_PM );
+		channelList[panelname] = new FChannelPanel ( panelname, character, FChannelPanel::CHANTYPE_PM );
                 FCharacter* charptr = session->characterlist[character];
                 QString paneltitle = charptr->PMTitle();
                 pmPanel = channelList[panelname];
@@ -1771,7 +1771,7 @@ void flist_messenger::receivePM ( QString& message, QString& character )
                 pmPanel->setActive(true);
                 pmPanel->pushButton->setVisible(true);
         }
-        pmPanel->setTyping ( FChannel::TYPINGSTATUS_CLEAR );
+	pmPanel->setTyping ( FChannelPanel::TYPINGSTATUS_CLEAR );
         pmPanel->updateButtonColor();
 
         FMessage msg(FMessage::MESSAGETYPE_PRIVMESSAGE, pmPanel, session->characterlist[character], message, currentPanel);
@@ -2060,24 +2060,24 @@ void flist_messenger::usersCommand()
 }
 void flist_messenger::inputChanged()
 {
-        if ( currentPanel && currentPanel->type() == FChannel::CHANTYPE_PM )
+	if ( currentPanel && currentPanel->type() == FChannelPanel::CHANTYPE_PM )
         {
                 if ( plainTextEdit->toPlainText().simplified() == "" )
                 {
                         typingCleared ( currentPanel );
-                        currentPanel->setTypingSelf ( FChannel::TYPINGSTATUS_CLEAR );
+			currentPanel->setTypingSelf ( FChannelPanel::TYPINGSTATUS_CLEAR );
                 }
                 else
                 {
-                        if ( currentPanel->getTypingSelf() != FChannel::TYPINGSTATUS_TYPING )
+			if ( currentPanel->getTypingSelf() != FChannelPanel::TYPINGSTATUS_TYPING )
                         {
                                 typingContinued ( currentPanel );
-                                currentPanel->setTypingSelf ( FChannel::TYPINGSTATUS_TYPING );
+				currentPanel->setTypingSelf ( FChannelPanel::TYPINGSTATUS_TYPING );
                         }
                 }
         }
 }
-void flist_messenger::typingCleared ( FChannel* channel )
+void flist_messenger::typingCleared ( FChannelPanel* channel )
 {
         // TPN {"character":"Leon Priest","status":"clear"}
         std::string character = channel->recipient().toStdString().c_str();
@@ -2091,7 +2091,7 @@ void flist_messenger::typingCleared ( FChannel* channel )
         std::string msg = "TPN " + node.write();
         sendWS ( msg );
 }
-void flist_messenger::typingContinued ( FChannel* channel )
+void flist_messenger::typingContinued ( FChannelPanel* channel )
 {
         // TPN {"character":"Leon Priest","status":"typing"}
         std::string character = channel->recipient().toStdString().c_str();
@@ -2105,7 +2105,7 @@ void flist_messenger::typingContinued ( FChannel* channel )
         std::string msg = "TPN " + node.write();
         sendWS ( msg );
 }
-void flist_messenger::typingPaused ( FChannel* channel )
+void flist_messenger::typingPaused ( FChannelPanel* channel )
 {
         // TPN {"character":"Leon Priest","status":"paused"}
         std::string character = channel->recipient().toStdString().c_str();
@@ -2333,7 +2333,7 @@ void flist_messenger::switchTab ( QString& tabname )
 
         QString input = plainTextEdit->toPlainText();
 
-        if ( currentPanel && currentPanel->type() == FChannel::CHANTYPE_PM && currentPanel->getTypingSelf() == FChannel::TYPINGSTATUS_TYPING )
+	if ( currentPanel && currentPanel->type() == FChannelPanel::CHANTYPE_PM && currentPanel->getTypingSelf() == FChannelPanel::TYPINGSTATUS_TYPING )
         {
                 typingPaused ( currentPanel );
         }
@@ -2341,7 +2341,7 @@ void flist_messenger::switchTab ( QString& tabname )
         currentPanel->setInput ( input );
 
         currentPanel->pushButton->setChecked ( false );
-        FChannel* chan = 0;
+	FChannelPanel* chan = 0;
 
         if ( tabname == "CONSOLE" )
                 chan = console;
@@ -2360,17 +2360,17 @@ void flist_messenger::switchTab ( QString& tabname )
         refreshUserlist();
         refreshChatLines();
         textEdit->verticalScrollBar()->setSliderPosition(textEdit->verticalScrollBar()->maximum());
-        if (currentPanel->getMode() == FChannel::CHANMODE_CHAT) // disable ads
+	if (currentPanel->getMode() == FChannelPanel::CHANMODE_CHAT) // disable ads
     {
                 btnSendAdv->setDisabled(true);
         btnSendChat->setDisabled(false);
     }
-    else if (currentPanel->getMode() == FChannel::CHANMODE_ADS)
+    else if (currentPanel->getMode() == FChannelPanel::CHANMODE_ADS)
     {
         btnSendAdv->setDisabled(false);
         btnSendChat->setDisabled(true);
     }
-    else if (currentPanel->type() == FChannel::CHANTYPE_PM || currentPanel->type() == FChannel::CHANTYPE_CONSOLE ) // Disable ads
+    else if (currentPanel->type() == FChannelPanel::CHANTYPE_PM || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE ) // Disable ads
     {
                 btnSendAdv->setDisabled(true);
         btnSendChat->setDisabled(false);
@@ -2411,10 +2411,10 @@ void flist_messenger::openPMTab ( QString &character )
         }
         else
         {
-                channelList[panelname] = new FChannel(panelname, character, FChannel::CHANTYPE_PM);
+		channelList[panelname] = new FChannelPanel(panelname, character, FChannelPanel::CHANTYPE_PM);
                 FCharacter* charptr = session->characterlist[character];
                 QString paneltitle = charptr->PMTitle();
-                FChannel* pmPanel = channelList[panelname];
+		FChannelPanel* pmPanel = channelList[panelname];
                 pmPanel->setTitle ( paneltitle );
                 pmPanel->setRecipient ( character );
                 pmPanel->pushButton = addToActivePanels ( panelname, character, paneltitle );
@@ -2451,7 +2451,7 @@ void flist_messenger::btnSendAdvClicked()
                 printDebugInfo("[CLIENT ERROR] currentPanel == 0");
                 return;
         }
-        if ( currentPanel == console || currentPanel->getMode() == FChannel::CHANMODE_CHAT || currentPanel->type() == FChannel::CHANTYPE_PM )
+	if ( currentPanel == console || currentPanel->getMode() == FChannelPanel::CHANMODE_CHAT || currentPanel->type() == FChannelPanel::CHANTYPE_PM )
         {
                 msg = "<b>Error:</b> Can't advertise here.";
                 FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, msg, currentPanel);                return;
@@ -2489,7 +2489,7 @@ void flist_messenger::parseInput()
         if (se_sounds)
                 soundPlayer.play ( soundPlayer.SOUND_CHAT );
 
-        bool pm = ( bool ) ( currentPanel->type() == FChannel::CHANTYPE_PM );
+	bool pm = ( bool ) ( currentPanel->type() == FChannelPanel::CHANTYPE_PM );
         QPlainTextEdit *messagebox = this->findChild<QPlainTextEdit *> ( QString ( "chatinput" ) );
         QString inputText = QString ( messagebox->toPlainText() );
 
@@ -2573,7 +2573,7 @@ void flist_messenger::parseInput()
                 }
                 else if ( parts[0].toLower() == "/leave" )
                 {
-                        if ( currentPanel == console || currentPanel->type() == FChannel::CHANTYPE_PM )
+			if ( currentPanel == console || currentPanel->type() == FChannelPanel::CHANTYPE_PM )
                         {
                                 success = false;
                         }
@@ -2790,10 +2790,10 @@ void flist_messenger::parseInput()
                         QString out = "";
                         switch(currentPanel->type())
                         {
-                        case FChannel::CHANTYPE_NORMAL:
+			case FChannelPanel::CHANTYPE_NORMAL:
                                 out = "Copy this code to your message: [b][noparse][channel]" + currentPanel->getChannelName() + "[/channel][/noparse][/b]";
                                 break;
-                        case FChannel::CHANTYPE_ADHOC:
+			case FChannelPanel::CHANTYPE_ADHOC:
                                 out = "Copy this code to your message: [b][noparse][session=" + currentPanel->title() + "]" + currentPanel->getChannelName() + "[/session][/noparse][/b]";
                                 break;
                         default:
@@ -2944,7 +2944,7 @@ void flist_messenger::parseInput()
                 }
                 else if ( parts[0].toLower() == "/bottle" )
                 {
-                        if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE || currentPanel->type() == FChannel::CHANTYPE_PM)
+			if (currentPanel == 0 || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE || currentPanel->type() == FChannelPanel::CHANTYPE_PM)
                         {
                                 QString err("You can't use that in this panel.");
                                 FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, err, currentPanel);
@@ -2965,7 +2965,7 @@ void flist_messenger::parseInput()
                 }
                 else if ( parts[0].toLower() == "/roll" )
                 {
-                        if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE || currentPanel->type() == FChannel::CHANTYPE_PM)
+			if (currentPanel == 0 || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE || currentPanel->type() == FChannelPanel::CHANTYPE_PM)
                         {
                                 QString err("You can't use that in this panel.");
                                 FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, err, currentPanel);
@@ -3242,10 +3242,10 @@ void flist_messenger::saveSettings()
         }
         settings.setValue("pinglist", pinglist.mid(2));
         QString channels;
-        FChannel* c;
+	FChannelPanel* c;
         foreach(c, channelList)
         {
-                if (c->getActive() && c->type() != FChannel::CHANTYPE_CONSOLE && c->type() != FChannel::CHANTYPE_PM)
+		if (c->getActive() && c->type() != FChannelPanel::CHANTYPE_CONSOLE && c->type() != FChannelPanel::CHANTYPE_PM)
                 {
                         channels.append("|||");
                         channels.append(c->getChannelName());
@@ -3377,7 +3377,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 			} else {
 				panelname = "CHAN|||" + charName + "|||" + chan;
 			}
-                        FChannel* channel = channelList[panelname];
+			FChannelPanel* channel = channelList[panelname];
                         FCharacter* character = session->characterlist[chara];
                         if (!channel)
                         {
@@ -3414,7 +3414,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 			} else {
 				panelname = "CHAN|||" + charName + "|||" + chan;
 			}
-                        FChannel* channel = channelList[panelname];
+			FChannelPanel* channel = channelList[panelname];
                         FCharacter* character = session->characterlist[chara];
                         if (!channel)
                         {
@@ -3457,7 +3457,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 
                         if ( channelList.count ( panelname ) != 0 )
                         {
-                                FChannel* channel = channelList[panelname];
+				FChannelPanel* channel = channelList[panelname];
                                 QStringList ops;
                                 JSONNode childnode = nodes.at ( "oplist" );
                                 int size = childnode.size();
@@ -3527,7 +3527,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         QString pmPanel = "PM|||"+ charName + "|||" + remchar;
                         if (channelList.count(pmPanel))
                         {
-                                channelList[pmPanel]->setTyping ( FChannel::TYPINGSTATUS_CLEAR );
+				channelList[pmPanel]->setTyping ( FChannelPanel::TYPINGSTATUS_CLEAR );
                                 if (posted == false || channelList[pmPanel] != currentPanel)
                                         FMessage fmsg(FMessage::SYSTYPE_ONLINE, channelList[pmPanel], 0, offline, currentPanel);
 
@@ -3542,7 +3542,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 			if(session->isCharacterOnline(remchar)) {
                                 FCharacter* character = session->characterlist[remchar];
 
-                                for ( QHash<QString, FChannel*>::const_iterator iter = channelList.begin();iter != channelList.end(); ++iter )
+				for ( QHash<QString, FChannelPanel*>::const_iterator iter = channelList.begin();iter != channelList.end(); ++iter )
                                 {
                                         if (se_leaveJoin && (*iter)->charList().count(character))
                                         {
@@ -3603,15 +3603,15 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         {
                                 if ( isAdh )
                                 {
-                                        channelList[panelname] = new FChannel(panelname, channelname, FChannel::CHANTYPE_ADHOC);
+					channelList[panelname] = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_ADHOC);
                                 }
                                 else
                                 {
-                                        channelList[panelname] = new FChannel(panelname, channelname, FChannel::CHANTYPE_NORMAL);
+					channelList[panelname] = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_NORMAL);
                                 }
                         }
 
-                        FChannel* channel = channelList[panelname];
+			FChannelPanel* channel = channelList[panelname];
                         JSONNode childnode = nodes.at ( "users" );
 
 			int size = childnode.size();
@@ -3631,11 +3631,11 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
             }
             QString mode = nodes.at("mode").as_string().c_str();
             if (mode == "chat") {
-                channel->setMode(FChannel::CHANMODE_CHAT);
+		channel->setMode(FChannelPanel::CHANMODE_CHAT);
             } else if (mode == "ads") {
-                channel->setMode(FChannel::CHANMODE_ADS);
+		channel->setMode(FChannelPanel::CHANMODE_ADS);
             } else {
-                channel->setMode(FChannel::CHANMODE_BOTH);
+		channel->setMode(FChannelPanel::CHANMODE_BOTH);
             }
                         channel->sortChars();
                         refreshUserlist();
@@ -3688,7 +3688,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         {
                                 if ( channelname.startsWith ( "ADH-" ) )
                                 {
-                                        FChannel* chan = new FChannel(panelname, channelname, FChannel::CHANTYPE_ADHOC);
+					FChannelPanel* chan = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_ADHOC);
                                         channelList[panelname] = chan;
                                         QString channeltitle = nodes.at ( "title" ).as_string().c_str();
                                         chan->setTitle ( channeltitle );
@@ -3696,7 +3696,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 }
                                 else
                                 {
-                                        FChannel* chan = new FChannel(panelname, channelname, FChannel::CHANTYPE_NORMAL);
+					FChannelPanel* chan = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_NORMAL);
                                         channelList[panelname] = chan;
                                         chan->setTitle(channelname);
                                         chan->pushButton = addToActivePanels(panelname, channelname, channelname);
@@ -3831,7 +3831,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         {
                                 return;
                         }
-                        FChannel* channel = channelList[panelname];
+			FChannelPanel* channel = channelList[panelname];
                         QString character = nodes.at ( "character" ).as_string().c_str();
                         if ( selfIgnoreList.count ( character ) )
                         {
@@ -3862,7 +3862,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 return;
                         }
 
-                        FChannel* channel = channelList[panelname];
+			FChannelPanel* channel = channelList[panelname];
 
                         QString character = nodes.at ( "character" ).as_string().c_str();
 
@@ -3984,7 +3984,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         QString channelname = nodes.at ( "channel" ).as_string().c_str();
 			QString panelname = PANELNAME(channelname, charName);
 
-                        FChannel* channel = channelList[panelname];
+			FChannelPanel* channel = channelList[panelname];
                         FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, channel, 0, output, currentPanel);
                 }
                 else if ( cmd == "RTB" )
@@ -4062,7 +4062,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 
                                 if ( channelList.count ( "PM|||"+ charName + "|||" + stachar ) )
                                 {
-                                        FChannel* pmPanel = channelList["PM|||"+ charName + "|||" + stachar];
+					FChannelPanel* pmPanel = channelList["PM|||"+ charName + "|||" + stachar];
                                         QString paneltitle = character->PMTitle();
                                         pmPanel->setTitle ( paneltitle );
                                 }
@@ -4081,7 +4081,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         QString message = nodes.at("message").as_string().c_str();
                         QString channelname = nodes.at("channel").as_string().c_str();
 			QString panelname = PANELNAME(channelname, charName);
-                        FChannel* channel;
+			FChannelPanel* channel;
                         if (channelList.contains(panelname))
                         {
 				channel = channelList[panelname];
@@ -4107,19 +4107,19 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 
                         if ( channelList.count ( panelName ) != 0 )
                         {
-                                FChannel* panel = channelList[panelName];
+				FChannelPanel* panel = channelList[panelName];
 
                                 if ( status == "typing" )
                                 {
-                                        panel->setTyping ( FChannel::TYPINGSTATUS_TYPING );
+					panel->setTyping ( FChannelPanel::TYPINGSTATUS_TYPING );
                                 }
                                 else if ( status == "paused" )
                                 {
-                                        panel->setTyping ( FChannel::TYPINGSTATUS_PAUSED );
+					panel->setTyping ( FChannelPanel::TYPINGSTATUS_PAUSED );
                                 }
                                 else // if (status == "clear")
                                 {
-                                        panel->setTyping ( FChannel::TYPINGSTATUS_CLEAR );
+					panel->setTyping ( FChannelPanel::TYPINGSTATUS_CLEAR );
                                 }
 
                                 panel->updateButtonColor();
@@ -4141,22 +4141,22 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 			QString mode = nodes.at("mode").as_string().c_str();
                         QString channelname = nodes.at("channel").as_string().c_str();
 			QString panelname = PANELNAME(channelname, charName);
-                        FChannel* chan = channelList[panelname];
+			FChannelPanel* chan = channelList[panelname];
                         if (chan==0) return;
                         QString name = channelList[panelname]->title();
                         if (mode == "ads")
                         {
-                                chan->setMode(FChannel::CHANMODE_ADS);
+				chan->setMode(FChannelPanel::CHANMODE_ADS);
                                 output = name + "'s mode was changed to: Ads only.";
                         }
                         else if (mode == "chat")
                         {
-                                chan->setMode(FChannel::CHANMODE_CHAT);
+				chan->setMode(FChannelPanel::CHANMODE_CHAT);
                                 output = name + "'s mode was changed to: Chat only.";
                         }
                         else
                         {
-                                chan->setMode(FChannel::CHANMODE_BOTH);
+				chan->setMode(FChannelPanel::CHANMODE_BOTH);
                                 output = name + "'s mode was changed to: Chat and ads.";
 			}
                         FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, chan, 0, output, currentPanel);
@@ -4208,7 +4208,7 @@ void flist_messenger::setChatOperator(FSession *session, QString characteroperat
 	if(session->isCharacterOnline(characteroperator)) {
 		// Set flag in character
 		FCharacter* character = session->getCharacter(characteroperator);
-		FChannel* channel = 0;
+		FChannelPanel* channel = 0;
 		foreach(channel, channelList) {
 			//todo: filter by session
 			if(channel->charList().contains(character)) {

@@ -23,7 +23,7 @@
 #define FLIST_MESSAGE_H
 
 #include"flist_parser.h"
-#include"flist_channel.h"
+#include"flist_channelpanel.h"
 #include"flist_character.h"
 #include"flist_messenger.h"
 #include"flist_sound.h"
@@ -34,7 +34,7 @@
 #include<QTextBrowser>
 
 class flist_messenger;
-class FChannel;
+class FChannelPanel;
 class FMessage
 {
 public:
@@ -46,9 +46,9 @@ public:
 	static BBCodeParser* bbparser;
 	static FSound* sound;
 	static QStringList pingList;
-	static FChannel* console;
-	static QHash<QString, FChannel*> channelList;
-	static FChannel* currentPanel;
+	static FChannelPanel* console;
+	static QHash<QString, FChannelPanel*> channelList;
+	static FChannelPanel* currentPanel;
 	static QString selfName;
 	static QTextBrowser* textField;
 
@@ -75,9 +75,9 @@ public:
 		SYSTYPE_DICE, // Rolling dice, etc.
 		SYSTYPE_MAX
 	};
-	FMessage(MessageType msgType,		FChannel* channel, FCharacter* character, QString& msg, FChannel* currentPanel);
-	FMessage(MessageType msgType,		FChannel* channel, FCharacter* character, QString& msg, FChannel* currentPanel, QHash<QString, FChannel*>& channelList);
-	FMessage(SystemMessageType sysType, FChannel* channel, FCharacter* character, QString& msg, FChannel* currentPanel);
+	FMessage(MessageType msgType,		FChannelPanel* channel, FCharacter* character, QString& msg, FChannelPanel* currentPanel);
+	FMessage(MessageType msgType,		FChannelPanel* channel, FCharacter* character, QString& msg, FChannelPanel* currentPanel, QHash<QString, FChannelPanel*>& channelList);
+	FMessage(SystemMessageType sysType, FChannelPanel* channel, FCharacter* character, QString& msg, FChannelPanel* currentPanel);
 	~FMessage();
 private:
 	void parse();
@@ -90,7 +90,7 @@ private:
 	SystemMessageType systemType;
 	QString message;
 	FCharacter* sender;
-	FChannel* channel;
+	FChannelPanel* channel;
 	bool doesPing;
 	bool done;
 	QString output;

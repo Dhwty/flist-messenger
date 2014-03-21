@@ -25,7 +25,6 @@ INCLUDEPATH += \
 HEADERS += \
            flist_account.h \
            flist_avatar.h \
-           flist_channel.h \
            flist_channeltab.h \
            flist_character.h \
            flist_common.h \
@@ -50,11 +49,11 @@ HEADERS += \
            ../libjson/Source/NumberToString.h \
     flist_server.h \
     flist_characterprofile.h \
-    flist_iuserinterface.h
+    flist_iuserinterface.h \
+    flist_channelpanel.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
-           flist_channel.cpp \
            flist_channeltab.cpp \
            flist_character.cpp \
            flist_global.cpp \
@@ -75,5 +74,6 @@ SOURCES += \
            ../libjson/Source/JSONWorker.cpp \
            ../libjson/Source/JSONWriter.cpp \
     flist_characterprofile.cpp \
-    flist_server.cpp
+    flist_server.cpp \
+    flist_channelpanel.cpp
 RESOURCES += resources.qrc

@@ -28,9 +28,9 @@ bool						FMessage::doSounds = true;
 BBCodeParser*				FMessage::bbparser = 0;
 FSound*						FMessage::sound = 0;
 QStringList					FMessage::pingList;
-FChannel*					FMessage::console = 0;
-QHash<QString, FChannel*>	FMessage::channelList;
-FChannel*					FMessage::currentPanel = 0;
+FChannelPanel*					FMessage::console = 0;
+QHash<QString, FChannelPanel*>	FMessage::channelList;
+FChannelPanel*					FMessage::currentPanel = 0;
 QString						FMessage::selfName = "";
 QTextBrowser*				FMessage::textField = 0;
 flist_messenger*			FMessage::window = 0;
@@ -44,7 +44,7 @@ void FMessage::initClass(bool ping, bool alwaysPing, flist_messenger *window)
 	doAlwaysPing = alwaysPing;
 }
 
-FMessage::FMessage(MessageType msgType, FChannel* channel, FCharacter* character, QString& msg, FChannel* currentPanel)
+FMessage::FMessage(MessageType msgType, FChannelPanel* channel, FCharacter* character, QString& msg, FChannelPanel* currentPanel)
 {
 	type = msgType;
 	sender = character;
@@ -54,7 +54,7 @@ FMessage::FMessage(MessageType msgType, FChannel* channel, FCharacter* character
 
 	parse();
 }
-FMessage::FMessage(MessageType msgType, FChannel *channel, FCharacter *character, QString &msg, FChannel *currentPanel, QHash<QString, FChannel *> &channelList)
+FMessage::FMessage(MessageType msgType, FChannelPanel *channel, FCharacter *character, QString &msg, FChannelPanel *currentPanel, QHash<QString, FChannelPanel *> &channelList)
 {
 	FMessage::channelList = channelList;
 	type = msgType;
@@ -65,7 +65,7 @@ FMessage::FMessage(MessageType msgType, FChannel *channel, FCharacter *character
 
 	parse();
 }
-FMessage::FMessage(SystemMessageType sysType, FChannel* channel, FCharacter* character, QString& msg, FChannel* currentPanel)
+FMessage::FMessage(SystemMessageType sysType, FChannelPanel* channel, FCharacter* character, QString& msg, FChannelPanel* currentPanel)
 {
 	systemType = sysType;
 	type = MESSAGETYPE_SYSTEM;
@@ -105,12 +105,12 @@ void FMessage::parse()
 	}
 
 	//find out what channels it should be sent to
-	FChannel* outputChannel = 0;
+	FChannelPanel* outputChannel = 0;
 	switch(type)
 	{
 	case MESSAGETYPE_BROADCAST:
 	case MESSAGETYPE_REPORT:
-		foreach(FChannel* c, channelList)
+		foreach(FChannelPanel* c, channelList)
 			if (c->getActive())
 				c->addLine(output, true);
 		textField->append(output);

@@ -61,7 +61,7 @@
 
 class QStringList;
 
-class FChannel
+class FChannelPanel
 {
 
 public:
@@ -90,8 +90,8 @@ public:
 		CHANMODE_MAX
 	};
 
-	FChannel(QString panelname, QString channelname, channelType type);
-	~FChannel() {}
+	FChannelPanel(QString panelname, QString channelname, channelType type);
+	~FChannelPanel() {}
 	static void initClass();
 	void setRecipient ( QString& name ){recipientName = name;}
 	QString& recipient(){return recipientName;}

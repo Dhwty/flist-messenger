@@ -19,7 +19,7 @@
 * DAMAGE.
 */
 
-#include "flist_channel.h"
+#include "flist_channelpanel.h"
 #include <iostream>
 #include <fstream>
 #include <QDir>
@@ -27,17 +27,17 @@
 #include <QtCore/QSettings>
 #include <QDateTime>
 
-BBCodeParser* FChannel::bbparser = 0;
-QColor FChannel::colorInactive(255, 255, 255);
-QColor FChannel::colorHighlighted(0, 255, 0);
-QColor FChannel::colorNewMessages(204, 255, 153);
-QColor FChannel::colorTyping(255, 153, 0);
-QColor FChannel::colorPaused(128, 128, 255);
-QString FChannel::cssStyle;
+BBCodeParser* FChannelPanel::bbparser = 0;
+QColor FChannelPanel::colorInactive(255, 255, 255);
+QColor FChannelPanel::colorHighlighted(0, 255, 0);
+QColor FChannelPanel::colorNewMessages(204, 255, 153);
+QColor FChannelPanel::colorTyping(255, 153, 0);
+QColor FChannelPanel::colorPaused(128, 128, 255);
+QString FChannelPanel::cssStyle;
 
-void FChannel::initClass()
+void FChannelPanel::initClass()
 {
-        FChannel::bbparser = new BBCodeParser();
+        FChannelPanel::bbparser = new BBCodeParser();
 
         QFile stylefile("default.css");
         stylefile.open(QFile::ReadOnly);
@@ -72,7 +72,7 @@ void FChannel::initClass()
         }
 }
 
-FChannel::FChannel (QString panelname, QString channelname, channelType type)
+FChannelPanel::FChannelPanel (QString panelname, QString channelname, channelType type)
 {
 	mode = CHANMODE_BOTH;
 	this->panelname = panelname;
@@ -95,33 +95,33 @@ FChannel::FChannel (QString panelname, QString channelname, channelType type)
         }
 }
 
-void FChannel::setDescription ( QString& desc )
+void FChannelPanel::setDescription ( QString& desc )
 {
         chanDesc = desc;
 }
 
-void FChannel::setName ( QString& name )
+void FChannelPanel::setName ( QString& name )
 {
         chanName = name;
 }
 
-void FChannel::setTitle ( QString& title )
+void FChannelPanel::setTitle ( QString& title )
 {
         chanTitle = title;
 }
 
-void FChannel::setTyping ( typingStatus status )
+void FChannelPanel::setTyping ( typingStatus status )
 {
         typing = status;
 }
 
-void FChannel::emptyCharList()
+void FChannelPanel::emptyCharList()
 {
         while ( chanChars.size() )
                 chanChars.pop_back();
 }
 
-void FChannel::addChar ( FCharacter* character, bool sort_list )
+void FChannelPanel::addChar ( FCharacter* character, bool sort_list )
 {
         if ( character == 0 )
         {
@@ -144,7 +144,7 @@ void FChannel::addChar ( FCharacter* character, bool sort_list )
         }
 }
 
-void FChannel::remChar ( FCharacter* character )
+void FChannelPanel::remChar ( FCharacter* character )
 {
         if ( chanChars.count ( character ) != 0 )
         {
@@ -152,7 +152,7 @@ void FChannel::remChar ( FCharacter* character )
         }
 }
 
-void FChannel::sortChars()
+void FChannelPanel::sortChars()
 {
         // Gnome Sort. :3
         int i = 0;
@@ -183,7 +183,7 @@ void FChannel::sortChars()
         //std::cout << "Gnome sorted userlist~." << std::endl;
 }
 
-bool FChannel::isOp ( FCharacter* character )
+bool FChannelPanel::isOp ( FCharacter* character )
 {
         if ( character == 0 )
         {
@@ -200,7 +200,7 @@ bool FChannel::isOp ( FCharacter* character )
         return false;
 }
 
-bool FChannel::isOwner ( FCharacter* character )
+bool FChannelPanel::isOwner ( FCharacter* character )
 {
         if ( character == 0 )
         {
@@ -216,7 +216,7 @@ bool FChannel::isOwner ( FCharacter* character )
         return false;
 }
 
-void FChannel::setType ( FChannel::channelType type )
+void FChannelPanel::setType ( FChannelPanel::channelType type )
 {
         if ( type > 0 && type < CHANTYPE_MAX )
         {
@@ -228,7 +228,7 @@ void FChannel::setType ( FChannel::channelType type )
         }
 }
 
-void FChannel::setOps ( QStringList& oplist )
+void FChannelPanel::setOps ( QStringList& oplist )
 {
         chanOps.clear();
 
@@ -238,7 +238,7 @@ void FChannel::setOps ( QStringList& oplist )
         }
 }
 
-void FChannel::addLine(QString chanLine, bool log, bool parse)
+void FChannelPanel::addLine(QString chanLine, bool log, bool parse)
 {
         (void) parse; //todo: check what this was intended for
         // if (parse) chanLine = bbparser->parse(chanLine);
@@ -255,7 +255,7 @@ void FChannel::addLine(QString chanLine, bool log, bool parse)
                 logLine        ( chanLine );
 }
 
-void FChannel::logLine ( QString &chanLine )
+void FChannelPanel::logLine ( QString &chanLine )
 {
 
         QString logName, dirName;
@@ -311,7 +311,7 @@ void FChannel::logLine ( QString &chanLine )
         logfile.write(chanLine.toUtf8());
         logfile.close();
 }
-void FChannel::updateButtonColor()
+void FChannelPanel::updateButtonColor()
 {
         QString rv;
 
@@ -343,7 +343,7 @@ void FChannel::updateButtonColor()
         pushButton->setStyleSheet( rv );
 }
 
-void FChannel::printChannel ( QTextBrowser* textEdit )
+void FChannelPanel::printChannel ( QTextBrowser* textEdit )
 {
         if ( textEdit == 0 )
         {
@@ -375,7 +375,7 @@ void FChannel::printChannel ( QTextBrowser* textEdit )
         }
 }
 
-JSONNode* FChannel::toJSON()
+JSONNode* FChannelPanel::toJSON()
 {
         JSONNode* rv = new JSONNode(JSON_ARRAY);
         JSONNode node;
@@ -395,7 +395,7 @@ JSONNode* FChannel::toJSON()
         return rv;
 }
 
-QString* FChannel::toString()
+QString* FChannelPanel::toString()
 {
         QString* rv = new QString("Channel: ");
         *rv += chanTitle;

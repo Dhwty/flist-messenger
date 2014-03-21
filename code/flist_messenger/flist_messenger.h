@@ -78,7 +78,7 @@
 #include "../libjson/Source/NumberToString.h"
 
 #include "flist_character.h"
-#include "flist_channel.h"
+#include "flist_channelpanel.h"
 #include "flist_sound.h"
 #include "flist_avatar.h"
 #include "flist_message.h"
@@ -187,7 +187,7 @@ public:
 
 // This is a complete mess, login should be pulled out into another class somehow, and decoupled from the UI.
 
-class FChannel;
+class FChannelPanel;
 
 class flist_messenger : public QMainWindow, iUserInterface
 {
@@ -354,7 +354,7 @@ private slots:
 	void openPMTab();
 	void openPMTab ( QString& character );
 	void displayCharacterContextMenu ( FCharacter* ch );
-	void displayChannelContextMenu ( FChannel* ch );
+	void displayChannelContextMenu ( FChannelPanel* ch );
 
 
 public:
@@ -387,9 +387,9 @@ private:
 	void refreshChatLines();							// Refreshes the GUI's chat lines, based on what the current panel is
 	void usersCommand();								// Does the /users thing.
 	void receivePM ( QString& message, QString& character );
-	void typingPaused ( FChannel* channel );
-	void typingContinued ( FChannel* channel );
-	void typingCleared ( FChannel* channel );
+	void typingPaused ( FChannelPanel* channel );
+	void typingContinued ( FChannelPanel* channel );
+	void typingCleared ( FChannelPanel* channel );
 	QString* usernameToHtml ( QString& name );
 	void addToChannelsDialogList ( ChannelListItem* cli );
 	void addToProomsDialogList ( ChannelListItem* cli );
@@ -405,8 +405,8 @@ private:
 	QUrlQuery lparam;
 
 	unsigned int loginStep;
-	FChannel* console;	// We could just put this into the channel list, but the console needs to be accessed quite often. So here we go...
-	FChannel* currentPanel;
+	FChannelPanel* console;	// We could just put this into the channel list, but the console needs to be accessed quite often. So here we go...
+	FChannelPanel* currentPanel;
 	FSound soundPlayer;
 	BBCodeParser bbparser;
 	QList<QString> selfFriendsList;
@@ -421,10 +421,10 @@ private:
 	bool doingWS;
 	//QList<QString> opList;
 	//QHash<QString, FCharacter*> characterList;
-	QHash<QString, FChannel*> channelList;
+	QHash<QString, FChannelPanel*> channelList;
 	QHash<QString, QString> serverVariables;
 	FCharacter* ul_recent;
-	FChannel* tb_recent;
+	FChannelPanel* tb_recent;
 	QMenu* recentCharMenu;
 	QMenu* recentChannelMenu;
 	//========================================
@@ -545,7 +545,7 @@ private:
 	QPushButton* cs_btnSave;
 	QString cs_qsPlainDescription;
 	QCheckBox* cs_chbAlwaysPing;
-	FChannel* cs_chanCurrent;
+	FChannelPanel* cs_chanCurrent;
 
 	/* The following GUIs still need to be made:
 	QDialog* kinkSearchDialog;
