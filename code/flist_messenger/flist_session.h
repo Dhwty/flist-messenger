@@ -22,7 +22,7 @@ public:
 	void wsRecv(std::string packet);
 
 	bool isCharacterOnline(QString name) {return characterlist.contains(name);}
-	FCharacter *getCharacter(QString name) {return characterlist[name];}
+	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);
