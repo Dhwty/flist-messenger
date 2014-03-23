@@ -200,6 +200,11 @@ public:
 	~flist_messenger();
 public:
 	virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus);
+	virtual void addChannel(FSession *session, QString name, QString title);
+	virtual void removeChannel(FSession *session, QString name);
+	virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername);
+	virtual void removeChannelCharacter(FSession *session, QString channelname, QString charactername);
+	virtual void setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus);
 
 public:
 	QPushButton* pushButton;

@@ -7,6 +7,7 @@
 #include "flist_server.h"
 #include "flist_character.h"
 #include "flist_iuserinterface.h"
+#include "flist_channel.h"
 
 
 #include "../libjson/libJSON.h"
@@ -31,6 +32,23 @@ FSession::~FSession()
 		tcpsocket = 0;
 	}
 }
+
+FChannel *FSession::addChannel(QString name, QString title)
+{
+	if(channellist.contains(name)) {
+		//todo: reset title?
+		return channellist[name];
+	}
+	FChannel *channel = new FChannel(this, this, name, title);
+	channellist[name] = channel;
+	return channel;
+	
+}
+FChannel *FSession::getChannel(QString name)
+{
+	return channellist.contains(name) ? channellist[name] : 0;
+}
+
 
 //todo: All the web socket stuff should really go into its own class.
 void FSession::connectSession()
@@ -250,6 +268,10 @@ void FSession::wsRecv(std::string packet)
 		CMD(ADL); //List of all chat operators.
 		CMD(AOP); //Add a chat operator.
 		CMD(DOP); //Remove a chat operator.
+
+		CMD(ICH); //Initial channel data.
+		CMD(JCH); //Join channel.
+
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
 	} catch(std::invalid_argument) {
@@ -314,6 +336,68 @@ COMMAND(DOP)
 		character->setIsChatOp(false);
 	}
 	account->ui->setChatOperator(this, op, false);
+}
+
+COMMAND(ICH)
+{
+	(void)rawpacket;
+	//Initial channel/room data. Sent when this session joins a channel.
+	//ICH { "users": [object], "channnel": "Channel Name", "title": "Channel Title", "mode": enum }
+	//Where object is: {"identity":"Character Name"}
+	//Where enum is: "ads", "chat", "both"
+	//ICH {"users": [{"identity": "Shadlor"}, {"identity": "Bunnie Patcher"}, {"identity": "DemonNeko"}, {"identity": "Desbreko"}, {"identity": "Robert Bell"}, {"identity": "Jayson"}, {"identity": "Valoriel Talonheart"}, {"identity": "Jordan Costa"}, {"identity": "Skip Weber"}, {"identity": "Niruka"}, {"identity": "Jake Brian Purplecat"}, {"identity": "Hexxy"}], "channel": "Frontpage", "mode": "chat"}
+	FChannel *channel;
+	QString channelname = nodes.at("channel").as_string().c_str();;
+	QString channelmode = nodes.at("mode").as_string().c_str();;
+	JSONNode childnode = nodes.at("users");
+	QString channeltitle;
+	if(channelname.startsWith("ADH-")) {
+		channeltitle = nodes.at("title").as_string().c_str();
+	} else {
+		channeltitle = channelname;
+	}
+	channel = addChannel(channelname, channeltitle);
+	account->ui->addChannel(this, channelname, channeltitle);
+	if(channelmode == "both") {
+		channel->mode = FChannel::CHANMODE_BOTH;
+	} else if(channelmode == "ads") {
+		channel->mode = FChannel::CHANMODE_ADS;
+	} else if(channelmode == "chat") {
+		channel->mode = FChannel::CHANMODE_CHAT;
+	} else {
+		debugMessage("[SERVER BUG]: Received unknown channel mode '" + channelmode + "' for channel '" + channelname + "'. <<" + QString::fromStdString(rawpacket));
+	}
+
+	int size = childnode.size();
+	for(int i = 0; i < size; i++) {
+		QString charactername = childnode.at(i).at("identity").as_string().c_str();
+		if(!isCharacterOnline(charactername)) {
+			debugMessage("[SERVER BUG] Server gave us a character in the channel user list that we don't know about yet: " + charactername.toStdString() + ", " + rawpacket);
+			continue;
+		}
+		channel->addCharacter(charactername);
+	}
+}
+COMMAND(JCH)
+{
+	(void)rawpacket;
+	//Join channel notification. Sent when a character joins a channel.
+	//JCH {"character": {"identity": "Character Name"}, "channel": "Channel Name", "title": "Channel Title"}
+	FChannel *channel;
+	QString channelname = nodes.at("channel").as_string().c_str();;
+	QString channeltitle;
+	QString charactername = nodes.at("character").at("identity").as_string().c_str();
+	if(channelname.startsWith("ADH-")) {
+		channeltitle = nodes.at("title").as_string().c_str();
+	} else {
+		channeltitle = channelname;
+	}
+	channel = addChannel(channelname, channeltitle);
+	account->ui->addChannel(this, channelname, channeltitle);
+	channel->addCharacter(charactername);
+	if(charactername == character) {
+		channel->join();
+	}
 }
 
 COMMAND(PIN)

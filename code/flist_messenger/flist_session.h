@@ -6,6 +6,7 @@
 #include <QTcpSocket>
 
 class FAccount;
+class FChannel;
 class FCharacter;
 class JSONNode;
 
@@ -23,6 +24,9 @@ public:
 
 	bool isCharacterOnline(QString name) {return characterlist.contains(name);}
 	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
+
+	FChannel *addChannel(QString name, QString title);
+	FChannel *getChannel(QString name);
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);
@@ -43,7 +47,8 @@ public:
 	QTcpSocket *tcpsocket;
 
 	QHash<QString, FCharacter *> characterlist; //< List of all known characters on the server/session.
-	QList<QString> operatorlist; //<List of all known characters that are operators (stored in lower case).
+	QList<QString> operatorlist; //<List of all known characters that are chat operators (stored in lower case).
+	QHash<QString, FChannel *> channellist; //<List of channels that this session has joined (or was previously joined to).
 
 private:
 
@@ -55,6 +60,10 @@ private:
 	COMMAND(ADL);
 	COMMAND(AOP);
 	COMMAND(DOP);
+
+	COMMAND(ICH);
+	COMMAND(JCH);
+
 	COMMAND(PIN);
 #undef COMMAND
 	

@@ -3588,58 +3588,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 joinChannel(s);
                         }
                 }
-                else if ( cmd == "ICH" )
-                {
-                        QString channelname = nodes.at ( "channel" ).as_string().c_str();
-                        bool isAdh = channelname.startsWith ( "ADH-" );
-			QString panelname;
-			if(channelname.startsWith("ADH-")) {
-				panelname = "ADH|||" + charName + "|||" + channelname;
-			} else {
-				panelname = "CHAN|||" + charName + "|||" + channelname;
-			}
-
-                        if ( channelList.count ( panelname ) == 0 )
-                        {
-                                if ( isAdh )
-                                {
-					channelList[panelname] = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_ADHOC);
-                                }
-                                else
-                                {
-					channelList[panelname] = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_NORMAL);
-                                }
-                        }
-
-			FChannelPanel* channel = channelList[panelname];
-                        JSONNode childnode = nodes.at ( "users" );
-
-			int size = childnode.size();
-
-                        for ( int i = 0;i < size; ++i )
-                        {
-                                QString charname = childnode.at ( i ).at ( "identity" ).as_string().c_str();
-                                FCharacter* character = 0;
-
-				if(!session->isCharacterOnline(charname)) {
-                                        printDebugInfo("[SERVER BUG] Server gave us a character in the channel user list that we don't know about yet: " + charname.toStdString() + ", " + input);
-                                        continue;
-                                }
-
-                                character = session->characterlist[charname];
-                                channel->addChar ( character, false );
-            }
-            QString mode = nodes.at("mode").as_string().c_str();
-            if (mode == "chat") {
-		channel->setMode(FChannelPanel::CHANMODE_CHAT);
-            } else if (mode == "ads") {
-		channel->setMode(FChannelPanel::CHANMODE_ADS);
-            } else {
-		channel->setMode(FChannelPanel::CHANMODE_BOTH);
-            }
-                        channel->sortChars();
-                        refreshUserlist();
-                }
                 else if ( cmd == "IDN" )
                 {
                         QString msg = "<B>";
@@ -3678,62 +3626,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         }
                         if (friendsDialog)
                                 refreshFriendLists();
-                }
-                else if ( cmd == "JCH" )
-                {
-                        QString channelname = nodes.at ( "channel" ).as_string().c_str();
-			QString panelname = PANELNAME(channelname, charName);
-
-                        if ( channelList.count ( panelname ) == 0 )
-                        {
-                                if ( channelname.startsWith ( "ADH-" ) )
-                                {
-					FChannelPanel* chan = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_ADHOC);
-                                        channelList[panelname] = chan;
-                                        QString channeltitle = nodes.at ( "title" ).as_string().c_str();
-                                        chan->setTitle ( channeltitle );
-                                        chan->pushButton = addToActivePanels(panelname, channelname, channeltitle);
-                                }
-                                else
-                                {
-					FChannelPanel* chan = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_NORMAL);
-                                        channelList[panelname] = chan;
-                                        chan->setTitle(channelname);
-                                        chan->pushButton = addToActivePanels(panelname, channelname, channelname);
-                                }
-                        }
-                        else if ( channelList[panelname]->getActive() == false )
-                        {
-                                channelList[panelname]->setActive ( true );
-                                channelList[panelname]->pushButton->setVisible(true);
-                        }
-
-                        QString charname = nodes.at ( "character" ).at ( "identity" ).as_string().c_str();
-
-                        FCharacter* character = 0;
-
-			if(!session->isCharacterOnline(charname)) {
-                                printDebugInfo("[SERVER BUG]: Server told us about a character joining, but we don't know about them yet. " + charname.toStdString());
-                                return;
-                        }
-                        character = session->characterlist[charname];
-                        channelList[panelname]->addChar ( character );
-                        if ( charname == this->charName )
-                        {
-                                switchTab ( panelname );
-                        }
-                        else
-                        {
-                                if ( currentPanel->getChannelName() == channelname )
-                                        refreshUserlist();
-                                if (se_leaveJoin)
-                                {
-                                        QString output = "<b>";
-                                        output += charname;
-                                        output += "</b> has joined the channel.";
-                                        FMessage fmsg(FMessage::SYSTYPE_JOIN, channelList[panelname], 0, output, currentPanel);
-                                }
-                        }
                 }
                 else if ( cmd == "KID" )
                 {
@@ -4218,4 +4110,72 @@ void flist_messenger::setChatOperator(FSession *session, QString characteroperat
 	}
 	//todo: Maybe queue channel sorting as an idle task?
 	//todo: Update other graphical widgets with the operator status of the given character and session?
+}
+
+void flist_messenger::addChannel(FSession *session, QString channelname, QString title)
+{
+	debugMessage("addChannel(\"" + channelname + "\", \"" + title + "\")");
+	FChannelPanel* channelpanel;
+	QString panelname = PANELNAME(channelname, session->character);
+	if(!channelList.contains(panelname)) {
+		if(channelname.startsWith("ADH-")) {
+			channelpanel = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_ADHOC);
+		} else {
+			channelpanel = new FChannelPanel(panelname, channelname, FChannelPanel::CHANTYPE_NORMAL);
+		}
+		channelList[panelname] = channelpanel;
+		channelpanel->setTitle(title);
+		channelpanel->pushButton = addToActivePanels(panelname, channelname, title);
+	} else {
+		channelpanel = channelList[panelname];
+		if(channelpanel->getActive() == false) {
+			channelpanel->setActive(true);
+			channelpanel->pushButton->setVisible(true);
+		}
+	}
+	//todo: Update UI elements with base on channel mode? (chat/RP AD/both)
+}
+void flist_messenger::removeChannel(FSession *session, QString channelname)
+{
+	(void)session; (void) channelname;
+}
+void flist_messenger::addChannelCharacter(FSession *session, QString channelname, QString charactername)
+{
+	FChannelPanel* channelpanel;
+	QString panelname = PANELNAME(channelname, session->character);
+	if(!session->isCharacterOnline(charactername)) {
+		printDebugInfo("[SERVER BUG]: Server told us about a character joining, but we don't know about them yet. " + charactername.toStdString());
+		return;
+	}
+	if(!channelList.contains(panelname)) {
+		printDebugInfo("[BUG]: Told about a character joining a channel, but the panel for the channel doesn't exist. " + charactername.toStdString());
+		return;
+	}
+	channelpanel = channelList[panelname];
+	//todo: Sorting should only be done for singlely added characters.
+	channelpanel->addChar(session->characterlist[charactername]);
+	if(charactername == session->character) {
+		switchTab(panelname);
+	} else {
+		if(currentPanel->getChannelName() == channelname) {
+			refreshUserlist();
+		}
+		//todo: Should the join message be generated here?
+		if(se_leaveJoin) {
+			QString output = "<b>";
+			output += charactername;
+			output += "</b> has joined the channel.";
+			FMessage fmsg(FMessage::SYSTYPE_JOIN, channelList[panelname], 0, output, currentPanel);
+		}
+
+	}
+
+}
+void flist_messenger::removeChannelCharacter(FSession *session, QString channelname, QString charactername)
+{
+	(void)session; (void) channelname; (void) charactername;
+}
+void flist_messenger::setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus)
+{
+	(void)session; (void) channelname; (void) charactername; (void) opstatus;
 }

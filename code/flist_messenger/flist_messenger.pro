@@ -50,7 +50,8 @@ HEADERS += \
     flist_server.h \
     flist_characterprofile.h \
     flist_iuserinterface.h \
-    flist_channelpanel.h
+    flist_channelpanel.h \
+    flist_channel.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -75,5 +76,6 @@ SOURCES += \
            ../libjson/Source/JSONWriter.cpp \
     flist_characterprofile.cpp \
     flist_server.cpp \
-    flist_channelpanel.cpp
+    flist_channelpanel.cpp \
+    flist_channel.cpp
 RESOURCES += resources.qrc
