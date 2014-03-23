@@ -271,6 +271,7 @@ void FSession::wsRecv(std::string packet)
 
 		CMD(ICH); //Initial channel data.
 		CMD(JCH); //Join channel.
+		CMD(LCH); //Leave channel.
 
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
@@ -398,6 +399,26 @@ COMMAND(JCH)
 	if(charactername == character) {
 		channel->join();
 	}
+}
+COMMAND(LCH)
+{
+	(void)rawpacket;
+	//Leave a channel. Sent when a character leaves a channel.
+	//LCH {"channel": "Channel Name", "character", "Character Name"}
+	FChannel *channel;
+	QString channelname = nodes.at("channel").as_string().c_str();;
+	QString charactername = nodes.at("character").as_string().c_str();
+	channel = getChannel(channelname);
+	if(!channel) {
+		debugMessage("[SERVER BUG] Was told about character '" + charactername + "' leaving unknown channel '" + channelname + "'.  " + QString::fromStdString(rawpacket));
+		return;
+	}
+	channel->removeCharacter(charactername);
+	if(charactername == character) {
+		channel->leave();
+		//todo: ui->removeChannel() ?
+	}
+	
 }
 
 COMMAND(PIN)

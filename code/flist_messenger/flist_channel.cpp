@@ -47,7 +47,7 @@ void FChannel::removeOperator(QString charactername) {
 void FChannel::join()
 {
 	joined = true;
-	//todo: session->account->ui->joinChannel(this);	
+	session->account->ui->joinChannel(session, name);
 }
 
 void FChannel::leave()
@@ -55,5 +55,5 @@ void FChannel::leave()
 	joined = false;
 	characterlist.clear();
 	operatorlist.clear();
-	//todo: session->account->ui->leaveChannel(this);	
+	session->account->ui->leaveChannel(session, name);	
 }

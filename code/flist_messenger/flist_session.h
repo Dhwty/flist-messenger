@@ -63,6 +63,7 @@ private:
 
 	COMMAND(ICH);
 	COMMAND(JCH);
+	COMMAND(LCH);
 
 	COMMAND(PIN);
 #undef COMMAND

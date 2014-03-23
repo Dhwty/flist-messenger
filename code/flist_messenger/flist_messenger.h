@@ -205,6 +205,8 @@ public:
 	virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername);
 	virtual void removeChannelCharacter(FSession *session, QString channelname, QString charactername);
 	virtual void setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus);
+	virtual void joinChannel(FSession *session, QString channelname);
+	virtual void leaveChannel(FSession *session, QString channelname);
 
 public:
 	QPushButton* pushButton;

@@ -13,6 +13,8 @@ public:
 	virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername) = 0;
 	virtual void removeChannelCharacter(FSession *session, QString channelname, QString charactername) = 0;
 	virtual void setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus) = 0;
+	virtual void joinChannel(FSession *session, QString channelname) = 0;
+	virtual void leaveChannel(FSession *session, QString channelname) = 0;
 
 };
 

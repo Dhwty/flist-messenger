@@ -3650,41 +3650,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 ci_teKinks->append ( out );
                         }
                 }
-                else if ( cmd == "LCH" )
-                {
-                        QString channelname = nodes.at ( "channel" ).as_string().c_str();
-			QString panelname = PANELNAME(channelname, charName);
-
-                        if ( channelList.count ( panelname ) == 0 )
-                        {
-				//todo: print bug message
-                                return;
-                        }
-
-                        QString charname = nodes.at ( "character" ).as_string().c_str();
-                        FCharacter* character = 0;
-			if(!session->isCharacterOnline(charname)) {
-                                return;
-                        }
-
-                        if ( charname == charName )
-                        {
-				leaveChannel(panelname, channelname, false);
-                                return;
-                        }
-                        else
-                        {
-                                character = session->characterlist[charname];
-                                channelList[panelname]->remChar ( character );
-                                if (se_leaveJoin)
-                                {
-                                        QString output = "<b>";
-                                        output += charname;
-                                        output += "</b> has left the channel.";
-                                        FMessage fmsg(FMessage::SYSTYPE_JOIN, channelList[panelname], 0, output, currentPanel);
-                                }
-                        }
-                }
                 else if ( cmd == "LIS" )
                 {
                         nodes.preparse();
@@ -4144,11 +4109,11 @@ void flist_messenger::addChannelCharacter(FSession *session, QString channelname
 	FChannelPanel* channelpanel;
 	QString panelname = PANELNAME(channelname, session->character);
 	if(!session->isCharacterOnline(charactername)) {
-		printDebugInfo("[SERVER BUG]: Server told us about a character joining, but we don't know about them yet. " + charactername.toStdString());
+		printDebugInfo("[SERVER BUG]: Server told us about a character joining a channel, but we don't know about them yet. " + charactername.toStdString());
 		return;
 	}
 	if(!channelList.contains(panelname)) {
-		printDebugInfo("[BUG]: Told about a character joining a channel, but the panel for the channel doesn't exist. " + charactername.toStdString());
+		printDebugInfo("[BUG]: Told about a character joining a channel, but the panel for the channel doesn't exist. " + channelname.toStdString());
 		return;
 	}
 	channelpanel = channelList[panelname];
@@ -4169,13 +4134,48 @@ void flist_messenger::addChannelCharacter(FSession *session, QString channelname
 		}
 
 	}
-
 }
 void flist_messenger::removeChannelCharacter(FSession *session, QString channelname, QString charactername)
 {
-	(void)session; (void) channelname; (void) charactername;
+	FChannelPanel* channelpanel;
+	QString panelname = PANELNAME(channelname, session->character);
+	if(!session->isCharacterOnline(charactername)) {
+		printDebugInfo("[SERVER BUG]: Server told us about a character leaving a channel, but we don't know about them yet. " + charactername.toStdString());
+		return;
+	}
+	if(!channelList.contains(panelname)) {
+		printDebugInfo("[BUG]: Told about a character leaving a channel, but the panel for the channel doesn't exist. " + channelname.toStdString());
+		return;
+	}
+	channelpanel = channelList[panelname];
+	channelpanel->remChar(session->characterlist[charactername]);
+	if(currentPanel->getChannelName() == channelname) {
+		refreshUserlist();
+	}
+	//todo: Should the leave message be generated here?
+	if(se_leaveJoin) {
+		QString output = "<b>";
+		output += charactername;
+		output += "</b> has left the channel.";
+		FMessage fmsg(FMessage::SYSTYPE_JOIN, channelList[panelname], 0, output, currentPanel);
+	}
 }
 void flist_messenger::setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus)
 {
 	(void)session; (void) channelname; (void) charactername; (void) opstatus;
+}
+
+void flist_messenger::joinChannel(FSession *session, QString channelname)
+{
+	//todo:
+	(void) session; (void) channelname;
+}
+void flist_messenger::leaveChannel(FSession *session, QString channelname)
+{
+	QString panelname = PANELNAME(channelname, session->character);
+	if(!channelList.contains(panelname)) {
+		printDebugInfo("[BUG]: Told to leave a channel, but the panel for the channel doesn't exist. " + channelname.toStdString());
+		return;
+	}
+	leaveChannel(panelname, channelname, false);
 }
