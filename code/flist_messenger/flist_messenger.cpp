@@ -3515,52 +3515,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 sendWS ( idenStr );
                         }
                 }
-                else if ( cmd == "FLN" )
-                {
-                        QString remchar = nodes.at ( "character" ).as_string().c_str();
-                        bool posted = false;
-                        QString offline = "<b>" + remchar + "</b> has disconnected.";
-                        if ( se_onlineOffline && session->friendslist.contains ( remchar ) )
-                        {
-                                FMessage fmsg(FMessage::SYSTYPE_ONLINE, currentPanel, 0, offline, currentPanel);
-                                posted = true;
-                        }
-                        QString pmPanel = "PM|||"+ charName + "|||" + remchar;
-                        if (channelList.count(pmPanel))
-                        {
-				channelList[pmPanel]->setTyping ( FChannelPanel::TYPINGSTATUS_CLEAR );
-                                if (posted == false || channelList[pmPanel] != currentPanel)
-                                        FMessage fmsg(FMessage::SYSTYPE_ONLINE, channelList[pmPanel], 0, offline, currentPanel);
-
-
-                                QString paneltitle = remchar;
-                                paneltitle += " (Offline)";
-                                channelList[pmPanel]->setTitle ( paneltitle );
-                                QString empty = "";
-                                channelList[pmPanel]->setRecipient(empty);
-                        }
-
-			if(session->isCharacterOnline(remchar)) {
-                                FCharacter* character = session->characterlist[remchar];
-
-				for ( QHash<QString, FChannelPanel*>::const_iterator iter = channelList.begin();iter != channelList.end(); ++iter )
-                                {
-                                        if (se_leaveJoin && (*iter)->charList().count(character))
-                                        {
-                                                QString output = "[b]";
-                                                output += remchar;
-                                                output += "[/b] has left the channel.";
-                                                FMessage fmsg(FMessage::SYSTYPE_JOIN, *iter, 0, output, currentPanel);
-                                        }
-                                        ( *iter )->remChar ( character );
-                                }
-
-                                character = 0;
-
-                                delete session->characterlist[remchar];
-                                session->characterlist.remove ( remchar );
-                        }
-                }
                 else if ( cmd == "FRL" )
                 {
                         JSONNode childnode = nodes.at ( "characters" );
@@ -3651,34 +3605,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 ci_teKinks->append ( out );
                         }
                 }
-                else if ( cmd == "LIS" )
-                {
-                        nodes.preparse();
-                        JSONNode childnode = nodes.at ( "characters" );
-                        int size = childnode.size();
-
-                        for ( int i = 0;i < size;++i )
-                        {
-                                JSONNode charnode = childnode.at ( i );
-                                QString addchar = charnode.at ( 0 ).as_string().c_str();        // Identity
-
-				if(!session->isCharacterOnline(addchar)) {
-                                        session->characterlist[addchar] = new FCharacter ( addchar, session->friendslist.count(addchar) > 0 ? true : false );
-                                }
-
-                                FCharacter* character = session->characterlist[addchar];
-
-                                QString gender = charnode.at ( 1 ).as_string().c_str();        // Gender
-                                character->setGender ( gender );
-                                QString status = charnode.at ( 2 ).as_string().c_str();        // Status
-                                character->setStatus ( status );
-                                QString statusmsg = charnode.at ( 3 ).as_string().c_str();        // Status
-                                character->setStatusMsg ( statusmsg );
-
-                                if ( session->operatorlist.contains ( addchar.toLower() ) )
-                                        character->setIsChatOp ( true );
-                        }
-                }
                 else if ( cmd == "LRP" )
                 {
                         //<<LRP {"message":":3","character":"Prison","channel":"Sex Driven LFRP"}
@@ -3738,40 +3664,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         }
 
                         FMessage fmsg(FMessage::MESSAGETYPE_CHANMESSAGE, channel, chanchar, message, currentPanel);
-                }
-                else if ( cmd == "NLN" )
-                {
-                        QString addchar = nodes.at ( "identity" ).as_string().c_str();
-
-			if(!session->isCharacterOnline(addchar)) {
-                                session->characterlist[addchar] = new FCharacter ( addchar, session->friendslist.count(addchar) > 0 ? true : false );
-                        }
-
-                        bool posted = false;
-                        QString online = "<b>" + addchar + "</b> has connected.";
-                        if ( se_onlineOffline && session->friendslist.contains ( addchar ) )
-                        {
-                                FMessage fmsg(FMessage::SYSTYPE_ONLINE, currentPanel, 0, online, currentPanel);
-                                posted = true;
-                        }
-                        QString pmPanel = "PM|||"+ charName + "|||" + addchar;
-                        if (channelList.count(pmPanel))
-                        {
-                                if (posted == false || channelList[pmPanel] != currentPanel)
-                                        FMessage fmsg(FMessage::SYSTYPE_ONLINE, channelList[pmPanel], 0, online, currentPanel);
-                                channelList[pmPanel]->setRecipient(addchar);
-                                QString paneltitle = session->characterlist[addchar]->PMTitle();
-                                channelList[pmPanel]->setTitle ( paneltitle );
-                        }
-                        FCharacter* character = session->characterlist[addchar];
-
-                        QString gender = nodes.at ( "gender" ).as_string().c_str();
-                        character->setGender ( gender );
-                        QString status = nodes.at ( "status" ).as_string().c_str();
-                        character->setStatus ( status );
-
-                        if ( session->operatorlist.contains ( addchar.toLower() ) )
-                                character->setIsChatOp ( true );
                 }
                 else if ( cmd == "ORS" )
                 {

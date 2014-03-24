@@ -414,7 +414,6 @@ COMMAND(JCH)
 	channel = addChannel(channelname, channeltitle);
 	account->ui->addChannel(this, channelname, channeltitle);
 	channel->addCharacter(charactername, true);
-	//account->ui->messageChannel(this, channelname, "<b>" + charactername +"</b> has joined the channel", MESSAGE_TYPE_JOIN);
 	if(charactername == character) {
 		channel->join();
 	}
@@ -432,7 +431,6 @@ COMMAND(LCH)
 		debugMessage("[SERVER BUG] Was told about character '" + charactername + "' leaving unknown channel '" + channelname + "'.  " + QString::fromStdString(rawpacket));
 		return;
 	}
-	//account->ui->messageChannel(this, channelname, "<b>" + charactername +"</b> has left the channel", MESSAGE_TYPE_LEAVE);
 	channel->removeCharacter(charactername);
 	if(charactername == character) {
 		channel->leave();
@@ -505,11 +503,9 @@ COMMAND(FLN)
 	//Iterate over all channels and make the chracacter leave them if they're present.
 	for(QHash<QString, FChannel *>::const_iterator iter = channellist.begin(); iter != channellist.end(); iter++) {
 		if((*iter)->isCharacterPresent(charactername)) {
-			//account->ui->messageChannel(this, (*iter)->name, "<b>" + charactername +"</b> has left the channel", MESSAGE_TYPE_LEAVE);
 			(*iter)->removeCharacter(charactername);
 		}
 	}
-	//account->ui->messageCharacter(this, charactername, "<b>" + charactername +"</b> is now offline.", MESSAGE_TYPE_OFFLINE);
 	account->ui->notifyCharacterOnline(this, charactername, false);
 }
 
