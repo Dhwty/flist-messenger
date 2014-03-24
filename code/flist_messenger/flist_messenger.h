@@ -202,11 +202,19 @@ public:
 	virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus);
 	virtual void addChannel(FSession *session, QString name, QString title);
 	virtual void removeChannel(FSession *session, QString name);
-	virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername);
+	virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername, bool notify);
 	virtual void removeChannelCharacter(FSession *session, QString channelname, QString charactername);
 	virtual void setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus);
 	virtual void joinChannel(FSession *session, QString channelname);
 	virtual void leaveChannel(FSession *session, QString channelname);
+	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
+	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype);
+	virtual void messageAll(FSession *session, QString message, MessageType messagetype);
+	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype);
+	virtual void messageCharacter(FSession *session, QString charactername, QString message, MessageType messagetype);
+	virtual void messageSystem(FSession *session, QString message, MessageType messagetype);
+
+	void messageMany(QList<QString> &panelnames, QString message, MessageType messagetype);
 
 public:
 	QPushButton* pushButton;
@@ -416,7 +424,6 @@ private:
 	FChannelPanel* currentPanel;
 	FSound soundPlayer;
 	BBCodeParser bbparser;
-	QList<QString> selfFriendsList;
 	QList<QString> selfIgnoreList;
 	QStringList selfPingList;
 	QStringList defaultChannels;

@@ -19,6 +19,8 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent) :
 	character(character),
 	tcpsocket(0),
 	characterlist(),
+	friendslist(),
+	bookmarklist(),
 	operatorlist(),
 	wsready(false),
 	socketreadbuffer()
@@ -31,6 +33,16 @@ FSession::~FSession()
 		delete tcpsocket;
 		tcpsocket = 0;
 	}
+}
+
+FCharacter *FSession::addCharacter(QString name)
+{
+	FCharacter *character = getCharacter(name);
+	if(!character) {
+		character = new FCharacter(name, friendslist.contains(name));
+		characterlist[name] = character;
+	}
+	return character;
 }
 
 FChannel *FSession::addChannel(QString name, QString title)
@@ -273,6 +285,10 @@ void FSession::wsRecv(std::string packet)
 		CMD(JCH); //Join channel.
 		CMD(LCH); //Leave channel.
 
+		CMD(LIS); //List of online characters.
+		CMD(NLN); //Character is now online.
+		CMD(FLN); //Character is now offline.
+
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
 	} catch(std::invalid_argument) {
@@ -370,13 +386,15 @@ COMMAND(ICH)
 	}
 
 	int size = childnode.size();
+	debugMessage("Initial channel data for '" + channelname + "', charcter count: " + QString::number(size));
 	for(int i = 0; i < size; i++) {
 		QString charactername = childnode.at(i).at("identity").as_string().c_str();
 		if(!isCharacterOnline(charactername)) {
 			debugMessage("[SERVER BUG] Server gave us a character in the channel user list that we don't know about yet: " + charactername.toStdString() + ", " + rawpacket);
 			continue;
 		}
-		channel->addCharacter(charactername);
+		debugMessage("Add character '" + charactername + "' to channel '" + channelname + "'.");
+		channel->addCharacter(charactername, false);
 	}
 }
 COMMAND(JCH)
@@ -395,7 +413,8 @@ COMMAND(JCH)
 	}
 	channel = addChannel(channelname, channeltitle);
 	account->ui->addChannel(this, channelname, channeltitle);
-	channel->addCharacter(charactername);
+	channel->addCharacter(charactername, true);
+	//account->ui->messageChannel(this, channelname, "<b>" + charactername +"</b> has joined the channel", MESSAGE_TYPE_JOIN);
 	if(charactername == character) {
 		channel->join();
 	}
@@ -413,12 +432,85 @@ COMMAND(LCH)
 		debugMessage("[SERVER BUG] Was told about character '" + charactername + "' leaving unknown channel '" + channelname + "'.  " + QString::fromStdString(rawpacket));
 		return;
 	}
+	//account->ui->messageChannel(this, channelname, "<b>" + charactername +"</b> has left the channel", MESSAGE_TYPE_LEAVE);
 	channel->removeCharacter(charactername);
 	if(charactername == character) {
 		channel->leave();
 		//todo: ui->removeChannel() ?
 	}
 	
+}
+
+COMMAND(NLN)
+{
+	(void)rawpacket;
+	//Character is now online.
+	//NLN {"identity": "Character Name", "gender": genderenum, "status": statusenum}
+	//Where 'statusenum' is one of: "online"
+	//Where 'genderenum' is one of: "Male", "Female", 
+	QString charactername = nodes.at("identity").as_string().c_str();
+	QString gender = nodes.at("gender").as_string().c_str();
+	QString status = nodes.at("status").as_string().c_str();
+	FCharacter *character = addCharacter(charactername);
+	character->setGender(gender);
+	character->setStatus(status);
+	if(operatorlist.contains(charactername.toLower())) {
+		character->setIsChatOp(true);
+	}
+	account->ui->notifyCharacterOnline(this, charactername, true);
+}
+COMMAND(LIS)
+{
+	(void)rawpacket;
+	//List of online characters. This can be sent in multiple blocks.
+	//LIS {"characters": [character, character]
+	//Where 'character' is: ["Character Name", genderenum, statusenum, "Status Message"]
+	nodes.preparse();
+	JSONNode childnode = nodes.at("characters");
+	int size = childnode.size();
+	//debugMessage("Character list count: " + QString::number(size));
+	//debugMessage(childnode.write());
+	for(int i = 0; i < size; i++) {
+		JSONNode characternode = childnode.at(i);
+		//debugMessage("char #" + QString::number(i) + " : " + QString::fromStdString(characternode.write()));
+		QString charactername = characternode.at(0).as_string().c_str();
+		//debugMessage("charactername: " + charactername);
+		QString gender = characternode.at(1).as_string().c_str();
+		//debugMessage("gender: " + gender);
+		QString status = characternode.at(2).as_string().c_str();
+		//debugMessage("status: " + status);
+		QString statusmessage = characternode.at(3).as_string().c_str();
+		//debugMessage("statusmessage: " + statusmessage);
+		FCharacter *character;
+		character = addCharacter(charactername);
+		character->setGender(gender);
+		character->setStatus(status);
+		character->setStatusMsg(statusmessage);
+		if(operatorlist.contains(charactername.toLower())) {
+			character->setIsChatOp(true);
+		}
+		account->ui->notifyCharacterOnline(this, charactername, true);
+	}
+}
+COMMAND(FLN)
+{
+	(void)rawpacket;
+	//Character is now offline.
+	//FLN {"character": "Character Name"}
+	QString charactername = nodes.at("character").as_string().c_str();
+	if(!isCharacterOnline(charactername)) {
+		debugMessage("[SERVER BUG] Received offline message for '" + charactername + "' but they're not listed as being online.");
+		return;
+	}
+	//Iterate over all channels and make the chracacter leave them if they're present.
+	for(QHash<QString, FChannel *>::const_iterator iter = channellist.begin(); iter != channellist.end(); iter++) {
+		if((*iter)->isCharacterPresent(charactername)) {
+			//account->ui->messageChannel(this, (*iter)->name, "<b>" + charactername +"</b> has left the channel", MESSAGE_TYPE_LEAVE);
+			(*iter)->removeCharacter(charactername);
+		}
+	}
+	//account->ui->messageCharacter(this, charactername, "<b>" + charactername +"</b> is now offline.", MESSAGE_TYPE_OFFLINE);
+	account->ui->notifyCharacterOnline(this, charactername, false);
 }
 
 COMMAND(PIN)

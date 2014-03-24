@@ -20,11 +20,11 @@ FChannel::FChannel(QObject *parent, FSession *session, QString name, QString tit
 	}
 }
 
-void FChannel::addCharacter(QString charactername) {
+void FChannel::addCharacter(QString charactername, bool notify) {
 	if(!characterlist.contains(charactername)) {
 		characterlist.append(charactername);
 	}
-	session->account->ui->addChannelCharacter(session, name, charactername);
+	session->account->ui->addChannelCharacter(session, name, charactername, notify);
 }
 void FChannel::removeCharacter(QString charactername) {
 	characterlist.removeAll(charactername);

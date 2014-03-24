@@ -1611,9 +1611,10 @@ void flist_messenger::refreshFriendLists()
         QListWidgetItem* lwi = 0;
         fr_lwFriends->clear();
 
-        foreach ( s, selfFriendsList )
+	FSession *session = account->getSession(charName);
+
+        foreach ( s, session->friendslist )
         {
-		FSession *session = account->getSession(charName);
 		if(session->isCharacterOnline(s)) {
                         f = session->characterlist[s];
                         lwi = new QListWidgetItem ( * ( f->statusIcon() ), f->name() );
@@ -3519,7 +3520,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         QString remchar = nodes.at ( "character" ).as_string().c_str();
                         bool posted = false;
                         QString offline = "<b>" + remchar + "</b> has disconnected.";
-                        if ( se_onlineOffline && selfFriendsList.contains ( remchar ) )
+                        if ( se_onlineOffline && session->friendslist.contains ( remchar ) )
                         {
                                 FMessage fmsg(FMessage::SYSTYPE_ONLINE, currentPanel, 0, offline, currentPanel);
                                 posted = true;
@@ -3570,9 +3571,9 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         {
                                 QString addchar = childnode.at(i).as_string().c_str();
 
-                                if ( !selfFriendsList.contains ( addchar ) )
+                                if ( !session->friendslist.contains ( addchar ) )
                                 {
-                                        selfFriendsList.append ( addchar );
+                                        session->friendslist.append ( addchar );
                                 }
                         }
                 }
@@ -3662,7 +3663,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 QString addchar = charnode.at ( 0 ).as_string().c_str();        // Identity
 
 				if(!session->isCharacterOnline(addchar)) {
-                                        session->characterlist[addchar] = new FCharacter ( addchar, selfFriendsList.count(addchar) > 0 ? true : false );
+                                        session->characterlist[addchar] = new FCharacter ( addchar, session->friendslist.count(addchar) > 0 ? true : false );
                                 }
 
                                 FCharacter* character = session->characterlist[addchar];
@@ -3743,12 +3744,12 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         QString addchar = nodes.at ( "identity" ).as_string().c_str();
 
 			if(!session->isCharacterOnline(addchar)) {
-                                session->characterlist[addchar] = new FCharacter ( addchar, selfFriendsList.count(addchar) > 0 ? true : false );
+                                session->characterlist[addchar] = new FCharacter ( addchar, session->friendslist.count(addchar) > 0 ? true : false );
                         }
 
                         bool posted = false;
                         QString online = "<b>" + addchar + "</b> has connected.";
-                        if ( se_onlineOffline && selfFriendsList.contains ( addchar ) )
+                        if ( se_onlineOffline && session->friendslist.contains ( addchar ) )
                         {
                                 FMessage fmsg(FMessage::SYSTYPE_ONLINE, currentPanel, 0, online, currentPanel);
                                 posted = true;
@@ -3907,7 +3908,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                         statmsg = "";
                                 }
 
-                                if ( se_onlineOffline && selfFriendsList.contains ( stachar ) )
+                                if ( se_onlineOffline && session->friendslist.contains ( stachar ) )
                                 {
                                         QString statusline = "<b>" + stachar + "</b> is now " + character->statusString();
 
@@ -4069,12 +4070,14 @@ void flist_messenger::setChatOperator(FSession *session, QString characteroperat
 		foreach(channel, channelList) {
 			//todo: filter by session
 			if(channel->charList().contains(character)) {
+				//todo: Maybe queue channel sorting as an idle task?
 				channel->sortChars();
+				if(currentPanel == channel) {
+					refreshUserlist();
+				}
 			}
 		}
 	}
-	//todo: Maybe queue channel sorting as an idle task?
-	//todo: Update other graphical widgets with the operator status of the given character and session?
 }
 
 void flist_messenger::addChannel(FSession *session, QString channelname, QString title)
@@ -4104,7 +4107,7 @@ void flist_messenger::removeChannel(FSession *session, QString channelname)
 {
 	(void)session; (void) channelname;
 }
-void flist_messenger::addChannelCharacter(FSession *session, QString channelname, QString charactername)
+void flist_messenger::addChannelCharacter(FSession *session, QString channelname, QString charactername, bool notify)
 {
 	FChannelPanel* channelpanel;
 	QString panelname = PANELNAME(channelname, session->character);
@@ -4117,22 +4120,17 @@ void flist_messenger::addChannelCharacter(FSession *session, QString channelname
 		return;
 	}
 	channelpanel = channelList[panelname];
-	//todo: Sorting should only be done for singlely added characters.
 	channelpanel->addChar(session->characterlist[charactername]);
 	if(charactername == session->character) {
 		switchTab(panelname);
 	} else {
-		if(currentPanel->getChannelName() == channelname) {
-			refreshUserlist();
+		if(notify) {
+			if(currentPanel->getChannelName() == channelname) {
+				//Only refresh the userlist if the panel has focus and notify is set.
+				refreshUserlist();
+			}
+			messageChannel(session, channelname, "<b>" + charactername +"</b> has joined the channel", MESSAGE_TYPE_JOIN);
 		}
-		//todo: Should the join message be generated here?
-		if(se_leaveJoin) {
-			QString output = "<b>";
-			output += charactername;
-			output += "</b> has joined the channel.";
-			FMessage fmsg(FMessage::SYSTYPE_JOIN, channelList[panelname], 0, output, currentPanel);
-		}
-
 	}
 }
 void flist_messenger::removeChannelCharacter(FSession *session, QString channelname, QString charactername)
@@ -4152,23 +4150,24 @@ void flist_messenger::removeChannelCharacter(FSession *session, QString channeln
 	if(currentPanel->getChannelName() == channelname) {
 		refreshUserlist();
 	}
-	//todo: Should the leave message be generated here?
-	if(se_leaveJoin) {
-		QString output = "<b>";
-		output += charactername;
-		output += "</b> has left the channel.";
-		FMessage fmsg(FMessage::SYSTYPE_JOIN, channelList[panelname], 0, output, currentPanel);
-	}
+	messageChannel(session, channelname, "<b>" + charactername +"</b> has left the channel", MESSAGE_TYPE_LEAVE);
 }
 void flist_messenger::setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus)
 {
-	(void)session; (void) channelname; (void) charactername; (void) opstatus;
+	(void)session; (void) charactername; (void) opstatus;
+	//todo: Update other elements?
+	if(currentPanel->getChannelName() == channelname) {
+		refreshUserlist();
+	}
 }
 
 void flist_messenger::joinChannel(FSession *session, QString channelname)
 {
-	//todo:
-	(void) session; (void) channelname;
+	(void) session;
+	if(currentPanel->getChannelName() == channelname) {
+		refreshUserlist();
+	}
+	//todo: Refresh any elements in a half prepared state.
 }
 void flist_messenger::leaveChannel(FSession *session, QString channelname)
 {
@@ -4178,4 +4177,126 @@ void flist_messenger::leaveChannel(FSession *session, QString channelname)
 		return;
 	}
 	leaveChannel(panelname, channelname, false);
+}
+
+void flist_messenger::notifyCharacterOnline(FSession *session, QString charactername, bool online)
+{
+	QString panelname = "PM|||" + session->character + "|||" + charactername;
+	QList<QString> channels;
+	QList<QString> characters;
+	bool system = session->friendslist.contains(charactername);
+	if(channelList.contains(panelname)) {
+		characters.append(charactername);
+		system = true;
+		//todo: Update panel with changed online/offline status.
+	}
+	if(characters.count() > 0 || channels.count() > 0 || system) {
+		messageMany(session, channels, characters, system, "<b>" + charactername +"</b> is now " + (online ? "online." : "offline."), online ? MESSAGE_TYPE_ONLINE : MESSAGE_TYPE_OFFLINE);
+	}
+}
+
+
+void flist_messenger::messageMany(QList<QString> &panelnames, QString message, MessageType messagetype)
+{
+	//Put the message on all the given channel panels.
+	QString panelname;
+	QString messageout = "<small>[" + QTime::currentTime().toString("hh:mm:ss AP") + "]</small> " + message;
+	foreach(panelname, panelnames) {
+		if(!channelList.contains(panelname)) {
+			debugMessage("[BUG] Tried to put a message on '" + panelname + "' but there is no channel panel for it. message:" + message);
+			continue;
+		}
+		//Filter based on message type.
+		switch(messagetype) {
+		case MESSAGE_TYPE_ONLINE:
+		case MESSAGE_TYPE_OFFLINE:
+			if(!se_onlineOffline) {
+				continue;
+			}
+			break;
+		case MESSAGE_TYPE_JOIN:
+		case MESSAGE_TYPE_LEAVE:
+			if(!se_leaveJoin) {
+				continue;
+			}
+			break;
+		case MESSAGE_TYPE_RPAD:
+		case MESSAGE_TYPE_CHAT:
+			//todo: trigger highlighting
+			break;
+		default:
+			debugMessage("Unhandled message type " + QString::number(messagetype) + " for message '" + message + "'.");
+		}
+		FChannelPanel *channelpanel;
+		channelpanel = channelList[panelname];
+		channelpanel->addLine(messageout, true);
+		if(channelpanel == currentPanel) {
+			textEdit->append(messageout);
+		}
+	}
+}
+void flist_messenger::messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype)
+{
+	QList<QString> panelnames;
+	QString charactername;
+	QString channelname;
+	QString panelnamemidfix = "|||" + session->character + "|||";
+	if(system) {
+		//todo: session based consoles?
+		panelnames.append("FCHATSYSTEMCONSOLE");
+	}
+	foreach(charactername, characters) {
+		panelnames.append("PM" + panelnamemidfix + charactername);
+	}
+	foreach(channelname, channels) {
+		if(channelname.startsWith("ADH-")) {
+			panelnames.append("ADH" + panelnamemidfix + channelname);
+		} else {
+			panelnames.append("CHAN" + panelnamemidfix + channelname);
+		}
+	}
+	if(system) {
+		if(!panelnames.contains(currentPanel->getPanelName())) {
+			panelnames.append(currentPanel->getPanelName());
+		}
+	}
+	messageMany(panelnames, message, messagetype);
+}
+void flist_messenger::messageAll(FSession *session, QString message, MessageType messagetype)
+{
+	QList<QString> panelnames;
+	FChannelPanel *channelpanel;
+	//todo: session based consoles?
+	panelnames.append("FCHATSYSTEMCONSOLE");
+	QString match = "|||" + session->character + "|||";
+	//Extract all panels that are relevant to this session.
+	foreach(channelpanel, channelList) {
+		QString panelname = channelpanel->getPanelName();
+		if(panelname.contains(match)) {
+			panelnames.append(panelname);
+		}
+	}
+	messageMany(panelnames, message, messagetype);
+}
+void flist_messenger::messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype)
+{
+	QList<QString> panelnames;
+	panelnames.append(PANELNAME(channelname, session->character));
+	messageMany(panelnames, message, messagetype);
+}
+void flist_messenger::messageCharacter(FSession *session, QString charactername, QString message, MessageType messagetype)
+{
+	QList<QString> panelnames;
+	panelnames.append("PM|||" + session->character + "|||" + charactername);
+	messageMany(panelnames, message, messagetype);
+}
+void flist_messenger::messageSystem(FSession *session, QString message, MessageType messagetype)
+{
+	(void) session; //todo: session based consoles?
+	QList<QString> panelnames;
+	panelnames.append("FCHATSYSTEMCONSOLE");
+	if(!panelnames.contains(currentPanel->getPanelName())) {
+		panelnames.append(currentPanel->getPanelName());
+	}
+	messageMany(panelnames, message, messagetype);
 }

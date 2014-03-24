@@ -23,6 +23,7 @@ public:
 	void wsRecv(std::string packet);
 
 	bool isCharacterOnline(QString name) {return characterlist.contains(name);}
+	FCharacter *addCharacter(QString name);
 	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
 
 	FChannel *addChannel(QString name, QString title);
@@ -47,6 +48,8 @@ public:
 	QTcpSocket *tcpsocket;
 
 	QHash<QString, FCharacter *> characterlist; //< List of all known characters on the server/session.
+	QList<QString> friendslist; //<List of friends for this session's character.
+	QList<QString> bookmarklist; //<List of friends for this session's character.
 	QList<QString> operatorlist; //<List of all known characters that are chat operators (stored in lower case).
 	QHash<QString, FChannel *> channellist; //<List of channels that this session has joined (or was previously joined to).
 
@@ -65,6 +68,10 @@ private:
 	COMMAND(JCH);
 	COMMAND(LCH);
 
+	COMMAND(LIS);
+	COMMAND(NLN);
+	COMMAND(FLN);
+	
 	COMMAND(PIN);
 #undef COMMAND
 	

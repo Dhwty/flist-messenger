@@ -41,7 +41,7 @@ public:
 	//todo: Figure out a better function name than 'isJoined'.
 	bool isJoined() {return joined;}
 
-	void addCharacter(QString charactername);
+	void addCharacter(QString charactername, bool notify);
 	void removeCharacter(QString charactername);
 
 	void addOperator(QString charactername);
