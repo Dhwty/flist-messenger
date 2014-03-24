@@ -289,6 +289,9 @@ void FSession::wsRecv(std::string packet)
 		CMD(NLN); //Character is now online.
 		CMD(FLN); //Character is now offline.
 
+		CMD(BRO); //Broadcast message.
+		CMD(SYS); //System message.
+
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
 	} catch(std::invalid_argument) {
@@ -508,6 +511,24 @@ COMMAND(FLN)
 	}
 	account->ui->notifyCharacterOnline(this, charactername, false);
 }
+
+COMMAND(BRO)
+{
+	(void)rawpacket;
+	//Broadcast message.
+	//BRO {"message": "Message Text"}
+	QString message = nodes.at("message").as_string().c_str();
+	account->ui->messageAll(this, QString("<b>Broadcast message:</b> %1").arg(message), MESSAGE_TYPE_SYSTEM);
+}
+COMMAND(SYS)
+{
+	(void)rawpacket;
+	//System message
+	//SYS {"message": "Message Text"}
+	QString message = nodes.at("message").as_string().c_str();
+	account->ui->messageSystem(this, QString("<b>System message:</b> %1").arg(message), MESSAGE_TYPE_SYSTEM);
+}
+
 
 COMMAND(PIN)
 {

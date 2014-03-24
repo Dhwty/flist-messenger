@@ -72,6 +72,9 @@ private:
 	COMMAND(NLN);
 	COMMAND(FLN);
 	
+	COMMAND(BRO);
+	COMMAND(SYS);
+
 	COMMAND(PIN);
 #undef COMMAND
 	

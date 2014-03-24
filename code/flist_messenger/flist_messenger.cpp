@@ -3314,12 +3314,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
         try
         {
 		FSession *session = account->getSession(charName);
-                if ( cmd == "BRO" )
-                {
-                        QString message(QString::fromUtf8(nodes.at ( "message" ).as_string().c_str()));
-                        FMessage fmsg(FMessage::MESSAGETYPE_BROADCAST, currentPanel, 0, message, currentPanel, channelList);
-                }
-                else if ( cmd == "CDS" )
+                if ( cmd == "CDS" )
                 {
                         QString channelname = nodes.at ( "channel" ).as_string().c_str();
 			QString panelname = PANELNAME(channelname, charName);
@@ -3839,13 +3834,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 FMessage fmsg(FMessage::SYSTYPE_DICE, channel, 0, output, currentPanel);
                         }
                 }
-                else if ( cmd == "SYS" )
-                {
-                        QString output;
-                        QString message = nodes.at ( "message" ).as_string().c_str();
-                        output = "<b>System message:</b> " + message;
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
-                }
                 else if ( cmd == "TPN" )
                 {
                         // Unparsed command: TPN {"status": "clear", "character": "Becca Greene"}
@@ -4115,6 +4103,9 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 		case MESSAGE_TYPE_RPAD:
 		case MESSAGE_TYPE_CHAT:
 			//todo: trigger highlighting
+			break;
+		case MESSAGE_TYPE_SYSTEM:
+		case MESSAGE_TYPE_BROADCAST:
 			break;
 		default:
 			debugMessage("Unhandled message type " + QString::number(messagetype) + " for message '" + message + "'.");
