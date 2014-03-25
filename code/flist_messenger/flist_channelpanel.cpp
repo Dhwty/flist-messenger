@@ -237,6 +237,17 @@ void FChannelPanel::setOps ( QStringList& oplist )
                 chanOps.append ( oplist[i] );
         }
 }
+void FChannelPanel::addOp(QString &charactername)
+{
+	if(chanOps.contains(charactername)) {
+		return;
+	}
+	chanOps.append(charactername);
+}
+void FChannelPanel::removeOp(QString &charactername)
+{
+	chanOps.removeAll(charactername);
+}
 
 void FChannelPanel::addLine(QString chanLine, bool log, bool parse)
 {

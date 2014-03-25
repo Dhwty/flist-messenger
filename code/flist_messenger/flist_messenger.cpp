@@ -3360,40 +3360,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         output = "<b>" + sender + "</b> has invited you to join the room <a href=\"#AHI-" + name + "\">" + title + "</a>.";
                         FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
                 }
-                else if ( cmd == "COA" )
-                {
-                        // COA {"channel": "Diapers/Infantilism"}
-                }
-                else if ( cmd == "COR" )
-                {
-                        // COR {"channel": "Diapers/Infantilism"}
-                }
-                else if ( cmd == "COL" )
-                {
-                        QString channelname = nodes.at ( "channel" ).as_string().c_str();
-			QString panelname;
-			if(channelname.startsWith("ADH-")) {
-				panelname = "ADH|||" + charName + "|||" + channelname;
-			} else {
-				panelname = "CHAN|||" + charName + "|||" + channelname;
-			}
-
-                        if ( channelList.count ( panelname ) != 0 )
-                        {
-				FChannelPanel* channel = channelList[panelname];
-                                QStringList ops;
-                                JSONNode childnode = nodes.at ( "oplist" );
-                                int size = childnode.size();
-
-                                for ( int i = 0; i < size; ++i )
-                                {
-                                        QString username = childnode.at ( i ).as_string().c_str();
-                                        ops.push_back ( username );
-                                }
-
-                                channel->setOps ( ops );
-                        }
-                }
                 else if ( cmd == "CON" )
                 {
                         QString msg;
@@ -3961,10 +3927,17 @@ void flist_messenger::removeChannelCharacter(FSession *session, QString channeln
 }
 void flist_messenger::setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus)
 {
-	(void)session; (void) charactername; (void) opstatus;
-	//todo: Update other elements?
-	if(currentPanel->getChannelName() == channelname) {
-		refreshUserlist();
+	QString panelname = PANELNAME(channelname, session->character);
+	FChannelPanel *channelpanel = channelList.value(panelname);
+	if(channelpanel) {
+		if(opstatus) {
+			channelpanel->addOp(charactername);
+		} else {
+			channelpanel->removeOp(charactername);
+		}
+		if(currentPanel == channelpanel) {
+			refreshUserlist();
+		}
 	}
 }
 

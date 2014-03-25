@@ -292,6 +292,10 @@ void FSession::wsRecv(std::string packet)
 		CMD(CBU); //kick and ban character from channel.
 		CMD(CKU); //Kick character from channel.
 
+		CMD(COL); //Channel operator list.
+		CMD(COA); //Channel operator add.
+		CMD(COR); //Channel operator remove.
+
 		CMD(BRO); //Broadcast message.
 		CMD(SYS); //System message.
 
@@ -561,6 +565,53 @@ COMMAND(CKU)
 	//Kick character from channel.
 	//CKU {"operator": "Character Name", "channel": "Channel Name", "character": "Character Name"}
 	cmdCBUCKU(rawpacket, nodes);
+}
+
+COMMAND(COL)
+{
+	//Channel operator list.
+	//COL {"channel":"Channel Name", "oplist":["Character Name"]}
+	QString channelname = nodes.at("channel").as_string().c_str();
+	FChannel *channel = getChannel(channelname);
+	if(!channel) {
+		debugMessage(QString("[SERVER BUG] Was given the channel operator list for the channel '%1', but the channel '%1' is unknown (or never joined).  %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	JSONNode childnode = nodes.at("oplist");
+	//todo: clear the existing operator list first
+	int size = childnode.size();
+	for(int i = 0; i < size; i++) {
+		QString charactername = childnode.at(i).as_string().c_str();
+		channel->addOperator(charactername);
+	}
+}
+COMMAND(COA)
+{
+	//Channel operator add.
+	//COA {"channel":"Channel Name", "character":"Character Name"}
+	QString channelname = nodes.at("channel").as_string().c_str();
+	QString charactername = nodes.at("character").as_string().c_str();
+	FChannel *channel = getChannel(channelname);
+	if(!channel) {
+		debugMessage(QString("[SERVER BUG] Was told to add '%2' as a channel operator for channel '%1', but the channel '%1' is unknown (or never joined).  %3").arg(channelname).arg(charactername).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	//todo: Print a BUG message about adding operators twice.
+	channel->addOperator(charactername);
+}
+COMMAND(COR)
+{
+	//Channel operator remove.
+	//COR {"channel":"Channel Name", "character":"Character Name"}
+	QString channelname = nodes.at("channel").as_string().c_str();
+	QString charactername = nodes.at("character").as_string().c_str();
+	FChannel *channel = getChannel(channelname);
+	if(!channel) {
+		debugMessage(QString("[SERVER BUG] Was told to remove '%2' from the list of channel operators for channel '%1', but the channel '%1' is unknown (or never joined).  %3").arg(channelname).arg(charactername).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	//todo: Print a bug message  if we're removing someone not on the operator list and skip the whole removal process.
+	channel->removeOperator(charactername);
 }
 
 COMMAND(BRO)

@@ -108,6 +108,8 @@ public:
 	QString& title(){return chanTitle;}
 	void updateButtonColor();
 	void setOps ( QStringList& oplist );
+	void addOp(QString &charactername);
+	void removeOp(QString &charactername);
 	QList<QString> opList(){return chanOps;}
 	void setTyping ( typingStatus status );
 	typingStatus getTyping(){return typing;}
