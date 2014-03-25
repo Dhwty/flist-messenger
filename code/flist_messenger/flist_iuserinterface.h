@@ -9,6 +9,8 @@ enum MessageType {
 	MESSAGE_TYPE_OFFLINE,
 	MESSAGE_TYPE_JOIN,
 	MESSAGE_TYPE_LEAVE,
+	MESSAGE_TYPE_KICK,
+	MESSAGE_TYPE_KICKBAN,
 	MESSAGE_TYPE_SYSTEM,
 	MESSAGE_TYPE_BROADCAST,
 	MESSAGE_TYPE_RPAD,
@@ -31,7 +33,7 @@ public:
 
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype) = 0;
 	virtual void messageAll(FSession *session, QString message, MessageType messagetype) = 0;
-	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype) = 0;
+	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console = false, bool notify = false) = 0;
 	virtual void messageCharacter(FSession *session, QString charactername, QString message, MessageType messagetype) = 0;
 	virtual void messageSystem(FSession *session, QString message, MessageType messagetype) = 0;
 };

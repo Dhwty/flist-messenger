@@ -23,6 +23,7 @@ public:
 	void wsRecv(std::string packet);
 
 	bool isCharacterOnline(QString name) {return characterlist.contains(name);}
+	bool isCharacterOperator(QString name) {return operatorlist.contains(name);}
 	FCharacter *addCharacter(QString name);
 	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
 
@@ -71,6 +72,10 @@ private:
 	COMMAND(LIS);
 	COMMAND(NLN);
 	COMMAND(FLN);
+
+	COMMAND(CBUCKU);
+	COMMAND(CBU);
+	COMMAND(CKU);
 	
 	COMMAND(BRO);
 	COMMAND(SYS);

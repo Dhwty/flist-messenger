@@ -289,6 +289,9 @@ void FSession::wsRecv(std::string packet)
 		CMD(NLN); //Character is now online.
 		CMD(FLN); //Character is now offline.
 
+		CMD(CBU); //kick and ban character from channel.
+		CMD(CKU); //Kick character from channel.
+
 		CMD(BRO); //Broadcast message.
 		CMD(SYS); //System message.
 
@@ -510,6 +513,54 @@ COMMAND(FLN)
 		}
 	}
 	account->ui->notifyCharacterOnline(this, charactername, false);
+}
+
+COMMAND(CBUCKU)
+{
+	//CBU and CKU commands commoned up. Except for their messages, their behaviour is identical.
+	FChannel *channel;
+	QString channelname = nodes.at("channel").as_string().c_str();
+	QString charactername = nodes.at("character").as_string().c_str();
+	QString operatorname = nodes.at("operator").as_string().c_str();
+	bool banned = rawpacket.substr(0, 3) == "CBU";
+	QString kicktype = banned ? "kicked and banned" : "kicked";
+	channel = getChannel(channelname);
+	if(!channel) {
+		debugMessage(QString("[SERVER BUG] Was told about character '%1' being %4 from channel '%2' by '%3', but the channel '%2' is unknown (or never joined).  %5").arg(charactername).arg(channelname).arg(operatorname).arg(kicktype).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	if(!channel->isJoined()) {
+		debugMessage(QString("[SERVER BUG] Was told about character '%1' being %4 from channel '%2' by '%3', but this session is no longer joined with channel '%2'.  %5").arg(charactername).arg(channelname).arg(operatorname).arg(kicktype).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	if(!channel->isCharacterPresent(charactername)) {
+		debugMessage(QString("[SERVER BUG] Was told about character '%1' being %4 from channel '%2' by '%3', but '%1' is not present in the channel.  %5").arg(charactername).arg(channelname).arg(operatorname).arg(kicktype).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	if(!channel->isCharacterOperator(operatorname) && !isCharacterOperator(operatorname)) {
+		debugMessage(QString("[SERVER BUG] Was told about character '%1' being %4 from channel '%2' by '%3', but '%3' is not a channel operator or a server operator!  %5").arg(charactername).arg(channelname).arg(operatorname).arg(kicktype).arg(QString::fromStdString(rawpacket)));
+	}
+	QString message = QString("<b>%1</b> has %4 <b>%2</b> from %3.").arg(operatorname).arg(charactername).arg(channel->getTitle()).arg(kicktype);
+	if(charactername == character) {
+		account->ui->messageChannel(this, channelname, message, banned ? MESSAGE_TYPE_KICKBAN : MESSAGE_TYPE_KICK, true, true);
+		channel->removeCharacter(charactername);
+		channel->leave();
+	} else {
+		account->ui->messageChannel(this, channelname, message, banned ? MESSAGE_TYPE_KICKBAN : MESSAGE_TYPE_KICK, channel->isCharacterOperator(character), false);
+		channel->removeCharacter(charactername);
+	}
+}
+COMMAND(CBU)
+{
+	//Kick and ban character from channel.
+	//CBU {"operator": "Character Name", "channel": "Channel Name", "character": "Character Name"}
+	cmdCBUCKU(rawpacket, nodes);
+}
+COMMAND(CKU)
+{
+	//Kick character from channel.
+	//CKU {"operator": "Character Name", "channel": "Channel Name", "character": "Character Name"}
+	cmdCBUCKU(rawpacket, nodes);
 }
 
 COMMAND(BRO)

@@ -3360,79 +3360,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         output = "<b>" + sender + "</b> has invited you to join the room <a href=\"#AHI-" + name + "\">" + title + "</a>.";
                         FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
                 }
-                else if ( cmd == "CKU" )
-                {
-                        // CKU {"operator": "Maeve", "character": "Viona", "channel": "ADH-ad41f30904d30b529d08"}
-                        // Channel kick
-                        QString op = nodes.at("operator").as_string().c_str();
-                        QString chara = nodes.at("character").as_string().c_str();
-                        QString chan = nodes.at("channel").as_string().c_str();
-			QString panelname;
-			if(chan.startsWith("ADH-")) {
-				panelname = "ADH|||" + charName + "|||" + chan;
-			} else {
-				panelname = "CHAN|||" + charName + "|||" + chan;
-			}
-			FChannelPanel* channel = channelList[panelname];
-                        FCharacter* character = session->characterlist[chara];
-                        if (!channel)
-                        {
-                                printDebugInfo("[SERVER ERROR] Server tells us about a kick, but the channel doesn't exist.");
-                        } else if (!character){
-                                printDebugInfo("[SERVER ERROR] Server tells us about a kick, but the recipient doesn't exist.");
-                        } else {
-                                QString output;
-                                output = QString("<b>");
-                                output+= op;
-                                output+= QString("</b> has kicked <b>");
-                                output+= chara;
-                                output+= QString("</b> from ");
-                                output+= channel->title();
-                                if (chara == charName)
-                                {
-					leaveChannel(channel->getPanelName(), channel->getChannelName(), false);
-                                        FMessage fmsg(FMessage::SYSTYPE_KICKBAN, currentPanel, 0, output, currentPanel);
-                                } else {
-                                        FMessage fmsg(FMessage::SYSTYPE_KICKBAN, channel, 0, output, currentPanel);
-                                }
-                        }
-                }
-                else if ( cmd == "CBU" )
-                {
-                        // CBU {"operator": "Maximilian Paton", "character": "Viona", "channel": "ADH-0e67e06da606b550020b"}
-                        // Channel ban
-                        QString op = nodes.at("operator").as_string().c_str();
-                        QString chara = nodes.at("character").as_string().c_str();
-                        QString chan = nodes.at("channel").as_string().c_str();
-			QString panelname;
-			if(chan.startsWith("ADH-")) {
-				panelname = "ADH|||" + charName + "|||" + chan;
-			} else {
-				panelname = "CHAN|||" + charName + "|||" + chan;
-			}
-			FChannelPanel* channel = channelList[panelname];
-                        FCharacter* character = session->characterlist[chara];
-                        if (!channel)
-                        {
-                                printDebugInfo("[ERROR] Server tells us about a ban, but the channel doesn't exist.");
-                        } else if (!character){
-                                printDebugInfo("[ERROR] Server tells us about a ban, but the recipient doesn't exist.");
-                        } else {
-                                QString output("<b>");
-                                output+= op;
-                                output+= "</b> has kicked and banned <b>";
-                                output+= chara;
-                                output+= "</b> from ";
-                                output+= channel->title();
-                                if (chara == charName)
-                                {
-					leaveChannel(channel->getPanelName(), channel->getChannelName(), false);
-                                        FMessage fmsg(FMessage::SYSTYPE_KICKBAN, currentPanel, 0, output, currentPanel);
-                                } else {
-                                        FMessage fmsg(FMessage::SYSTYPE_KICKBAN, channel, 0, output, currentPanel);
-                                }
-                        }
-                }
                 else if ( cmd == "COA" )
                 {
                         // COA {"channel": "Diapers/Infantilism"}
@@ -4107,6 +4034,9 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 		case MESSAGE_TYPE_SYSTEM:
 		case MESSAGE_TYPE_BROADCAST:
 			break;
+		case MESSAGE_TYPE_KICK:
+		case MESSAGE_TYPE_KICKBAN:
+			break;
 		default:
 			debugMessage("Unhandled message type " + QString::number(messagetype) + " for message '" + message + "'.");
 		}
@@ -4161,10 +4091,19 @@ void flist_messenger::messageAll(FSession *session, QString message, MessageType
 	}
 	messageMany(panelnames, message, messagetype);
 }
-void flist_messenger::messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype)
+void flist_messenger::messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console, bool notify)
 {
 	QList<QString> panelnames;
 	panelnames.append(PANELNAME(channelname, session->character));
+	if(console) {
+		panelnames.append("FCHATSYSTEMCONSOLE");
+	}
+	if(notify) {
+		QString panelname = currentPanel->getPanelName();
+		if(!panelnames.contains(panelname)) {
+			panelnames.append(panelname);
+		}
+	}
 	messageMany(panelnames, message, messagetype);
 }
 void flist_messenger::messageCharacter(FSession *session, QString charactername, QString message, MessageType messagetype)

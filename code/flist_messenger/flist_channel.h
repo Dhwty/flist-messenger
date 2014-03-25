@@ -50,6 +50,8 @@ public:
 	void join();
 	void leave();
 
+	QString getTitle() {return title;}
+
 signals:
 
 public slots:
