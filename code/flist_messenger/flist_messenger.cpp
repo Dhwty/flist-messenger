@@ -3314,24 +3314,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
         try
         {
 		FSession *session = account->getSession(charName);
-                if ( cmd == "CDS" )
-                {
-                        QString channelname = nodes.at ( "channel" ).as_string().c_str();
-			QString panelname = PANELNAME(channelname, charName);
-
-                        if ( channelList.count ( panelname ) == 0 )
-                        {
-                                printDebugInfo("[SERVER BUG] Server gave us the description of a channel we don't know about yet: " + input);
-                                return;
-                        }
-
-                        QString desc(QString::fromUtf8(nodes.at ( "description" ).as_string().c_str()));
-
-                        channelList[panelname]->setDescription ( desc );
-                        QString msg = "You have joined <b>" + channelList[panelname]->title() + "</b>: " + desc;
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, channelList[panelname], 0, msg, currentPanel);
-                }
-                else if ( cmd == "CHA" )
+		if ( cmd == "CHA" )
                 {
                         cd_channelsList->clear();
                         JSONNode childnode = nodes.at ( "channels" );
@@ -3958,6 +3941,18 @@ void flist_messenger::leaveChannel(FSession *session, QString channelname)
 	}
 	leaveChannel(panelname, channelname, false);
 }
+void flist_messenger::setChannelDescription(FSession *session, QString channelname, QString description)
+{
+	QString panelname = PANELNAME(channelname, session->character);
+	FChannelPanel *channelpanel = channelList.value(panelname);
+	if(!channelpanel) {
+		printDebugInfo(QString("[BUG]: Was told the description of the channel '%1', but the panel for the channel doesn't exist.").arg(channelname).toStdString());
+		return;
+	}
+	channelpanel->setDescription(description);
+	QString message = QString("You have joined <b>%1</b>: %2").arg(channelpanel->title()).arg(bbparser.parse(description));
+	messageChannel(session, channelname, message, MESSAGE_TYPE_CHANNEL_DESCRIPTION, true, false);
+}
 
 void flist_messenger::notifyCharacterOnline(FSession *session, QString charactername, bool online)
 {
@@ -3993,6 +3988,8 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			if(!se_onlineOffline) {
 				continue;
 			}
+			break;
+		case MESSAGE_TYPE_CHANNEL_DESCRIPTION:
 			break;
 		case MESSAGE_TYPE_JOIN:
 		case MESSAGE_TYPE_LEAVE:

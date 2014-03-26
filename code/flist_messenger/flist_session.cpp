@@ -281,6 +281,7 @@ void FSession::wsRecv(std::string packet)
 		CMD(AOP); //Add a chat operator.
 		CMD(DOP); //Remove a chat operator.
 
+		CMD(CDS); //Channel description.
 		CMD(ICH); //Initial channel data.
 		CMD(JCH); //Join channel.
 		CMD(LCH); //Leave channel.
@@ -365,6 +366,20 @@ COMMAND(DOP)
 	account->ui->setChatOperator(this, op, false);
 }
 
+COMMAND(CDS)
+{
+	//Channel description.
+	//CDS {"channel": "Channel Name", "description": "Description Text"}
+	QString channelname = nodes.at("channel").as_string().c_str();
+	QString description = nodes.at("description").as_string().c_str();
+	FChannel *channel = channellist.value(channelname);
+	if(!channel) {
+		debugMessage(QString("[SERVER BUG] Was give the description for the channel '%1', but the channel '%1' is unknown (or never joined).  %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	channel->setDescription(description);
+	account->ui->setChannelDescription(this, channelname, description);
+}
 COMMAND(ICH)
 {
 	(void)rawpacket;

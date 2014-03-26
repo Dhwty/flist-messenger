@@ -7,6 +7,7 @@ class FSession;
 enum MessageType {
 	MESSAGE_TYPE_ONLINE,
 	MESSAGE_TYPE_OFFLINE,
+	MESSAGE_TYPE_CHANNEL_DESCRIPTION,
 	MESSAGE_TYPE_JOIN,
 	MESSAGE_TYPE_LEAVE,
 	MESSAGE_TYPE_KICK,
@@ -29,6 +30,7 @@ public:
 	virtual void setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus) = 0;
 	virtual void joinChannel(FSession *session, QString channelname) = 0;
 	virtual void leaveChannel(FSession *session, QString channelname) = 0;
+	virtual void setChannelDescription(FSession *session, QString channelname, QString description) = 0;
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online) = 0;
 
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype) = 0;

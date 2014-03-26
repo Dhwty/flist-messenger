@@ -207,6 +207,7 @@ public:
 	virtual void setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus);
 	virtual void joinChannel(FSession *session, QString channelname);
 	virtual void leaveChannel(FSession *session, QString channelname);
+	virtual void setChannelDescription(FSession *session, QString channelname, QString description);
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype);
 	virtual void messageAll(FSession *session, QString message, MessageType messagetype);

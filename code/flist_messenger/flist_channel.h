@@ -52,6 +52,9 @@ public:
 
 	QString getTitle() {return title;}
 
+	QString getDescription() {return description;}
+	void setDescription(QString &newdescription) {description = newdescription;}
+
 signals:
 
 public slots:
