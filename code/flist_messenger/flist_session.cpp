@@ -22,6 +22,8 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent) :
 	friendslist(),
 	bookmarklist(),
 	operatorlist(),
+	channellist(),
+	servervariables(),
 	wsready(false),
 	socketreadbuffer()
 {
@@ -299,6 +301,10 @@ void FSession::wsRecv(std::string packet)
 
 		CMD(BRO); //Broadcast message.
 		CMD(SYS); //System message.
+
+		CMD(CON); //User count.
+		CMD(IDN); //Identity acknowledged.
+		CMD(VAR); //Server variable.
 
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
@@ -646,6 +652,38 @@ COMMAND(SYS)
 	account->ui->messageSystem(this, QString("<b>System message:</b> %1").arg(message), MESSAGE_TYPE_SYSTEM);
 }
 
+COMMAND(CON)
+{
+	(void)rawpacket;
+	//User count.
+	//CON {"count": usercount}
+	QString count = nodes.at("count").as_string().c_str();
+	//The message doesn't handle the plural case correctly, but that only happens on the test server.
+	account->ui->messageSystem(this, QString("%1 users are currently connected.").arg(count), MESSAGE_TYPE_LOGIN);
+}
+COMMAND(IDN)
+{
+	//Identity acknowledged.
+	//IDN {"character": "Character Name"}
+	QString charactername = nodes.at("character").as_string().c_str();
+
+	QString message = QString("<b>%1</b> connected.").arg(charactername);
+	account->ui->messageSystem(this, message, MESSAGE_TYPE_LOGIN);
+	if(charactername != character) {
+		debugMessage(QString("[SERVER BUG] Received IDN response for '%1', but this session is for '%2'. %3").arg(charactername).arg(character).arg(QString::fromStdString(rawpacket)));
+	}
+}
+COMMAND(VAR)
+{
+	(void)rawpacket;
+	//Server variable
+	//VAR {"value":value, "variable":"Variable_Name"}
+	QString value = nodes.at("value").as_string().c_str();
+	QString variable = nodes.at("variable").as_string().c_str();
+	servervariables[variable] = value;
+	debugMessage(QString("Server variable: %1 = '%2'").arg(variable).arg(value));
+	//todo: Parse and store variables of interest.
+}
 
 COMMAND(PIN)
 {

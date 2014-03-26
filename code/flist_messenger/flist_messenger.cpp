@@ -3343,13 +3343,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         output = "<b>" + sender + "</b> has invited you to join the room <a href=\"#AHI-" + name + "\">" + title + "</a>.";
                         FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
                 }
-                else if ( cmd == "CON" )
-                {
-                        QString msg;
-                        msg += nodes["count"].as_string().c_str();
-                        msg += " users are currently connected.";
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, msg, currentPanel);
-                }
                 else if ( cmd == "ERR" )
                 {
                         QString output;
@@ -3413,13 +3406,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         {
                                 joinChannel(s);
                         }
-                }
-                else if ( cmd == "IDN" )
-                {
-                        QString msg = "<B>";
-                        msg += nodes["character"].as_string().c_str();
-                        msg += "</B> Connected.";
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, console, 0, msg, console);
                 }
                 else if ( cmd == "IGN" )
                 {
@@ -3739,13 +3725,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 panel->updateButtonColor();
                         }
                 }
-                else if ( cmd == "VAR" )
-                {
-                        // <<VAR {"value":4096,"variable":"chat_max"}
-                        QString value = nodes.at("value").as_string().c_str();
-                        QString variable = nodes.at("value").as_string().c_str();
-                        serverVariables[variable] = value;
-                }
                 else if ( cmd == "RMO" )
                 {
                         //                        [12:15 AM] Unparsed command: RMO {"mode":"chat","channel":"ADH-af9c1cd5e1bf31220ab2"}
@@ -3983,6 +3962,8 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 		}
 		//Filter based on message type.
 		switch(messagetype) {
+		case MESSAGE_TYPE_LOGIN:
+			break;
 		case MESSAGE_TYPE_ONLINE:
 		case MESSAGE_TYPE_OFFLINE:
 			if(!se_onlineOffline) {

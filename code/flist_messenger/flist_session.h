@@ -53,6 +53,7 @@ public:
 	QList<QString> bookmarklist; //<List of friends for this session's character.
 	QList<QString> operatorlist; //<List of all known characters that are chat operators (stored in lower case).
 	QHash<QString, FChannel *> channellist; //<List of channels that this session has joined (or was previously joined to).
+	QHash<QString, QString> servervariables; //<List of variables as reported by the server.
 
 private:
 
@@ -84,6 +85,10 @@ private:
 	
 	COMMAND(BRO);
 	COMMAND(SYS);
+
+	COMMAND(CON);
+	COMMAND(IDN);
+	COMMAND(VAR);
 
 	COMMAND(PIN);
 #undef COMMAND

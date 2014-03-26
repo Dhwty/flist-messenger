@@ -5,6 +5,7 @@ class FSession;
 
 //todo: move this elsewhere
 enum MessageType {
+	MESSAGE_TYPE_LOGIN,
 	MESSAGE_TYPE_ONLINE,
 	MESSAGE_TYPE_OFFLINE,
 	MESSAGE_TYPE_CHANNEL_DESCRIPTION,

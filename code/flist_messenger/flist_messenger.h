@@ -437,7 +437,6 @@ private:
 	//QList<QString> opList;
 	//QHash<QString, FCharacter*> characterList;
 	QHash<QString, FChannelPanel*> channelList;
-	QHash<QString, QString> serverVariables;
 	FCharacter* ul_recent;
 	FChannelPanel* tb_recent;
 	QMenu* recentCharMenu;
