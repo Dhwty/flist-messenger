@@ -772,9 +772,10 @@ void flist_messenger::ai_btnCancelClicked()
 }
 void flist_messenger::ai_btnSubmitClicked()
 {
+	FSession *session = account->getSession(charName);
         QString character = ai_leName->text().simplified();
 
-        if ( character != "" && selfIgnoreList.count ( character ) == 0 )
+        if(character != "" && !session->isCharacterIgnored(character))
         {
                 sendIgnoreAdd(character);
                 addIgnoreDialog->hide();
@@ -1404,11 +1405,11 @@ void flist_messenger::displayCharacterContextMenu ( FCharacter* ch )
                 menu->addAction ( QIcon ( ":/images/users.png" ), QString ( "Private Message" ), this, SLOT ( ul_pmRequested() ) );
                 menu->addAction ( QIcon ( ":/images/book-open-list.png" ), QString ( "F-list Profile"), this, SLOT ( ul_profileRequested() ) );
                 menu->addAction ( QIcon ( ":/images/tag-label.png" ), QString ( "Quick Profile" ), this, SLOT ( ul_infoRequested() ) );
-                if (selfIgnoreList.contains(ch->name()))
+		FSession *session = account->getSession(charName);
+                if (session->isCharacterIgnored(ch->name()))
                         menu->addAction ( QIcon ( ":/images/heart.png" ), QString ( "Unignore" ), this, SLOT(ul_ignoreRemove()) );
                 else
                         menu->addAction ( QIcon ( ":/images/heart-break.png" ), QString ( "Ignore" ), this, SLOT(ul_ignoreAdd()) );
-		FSession *session = account->getSession(charName);
                 bool op = session->characterlist[charName]->isChatOp();
                 if (op)
                 {
@@ -1624,7 +1625,7 @@ void flist_messenger::refreshFriendLists()
 
         fr_lwIgnore->clear();
 
-        foreach ( s, selfIgnoreList )
+        foreach ( s, session->ignorelist )
         {
                 lwi = new QListWidgetItem ( s );
                 addToIgnoreList ( lwi );
@@ -2132,7 +2133,8 @@ void flist_messenger::ul_ignoreAdd()
 {
         FCharacter* c = ul_recent;
         QString name = c->name();
-        if (selfIgnoreList.contains(name))
+	FSession *session = account->getSession(charName);
+        if (session->isCharacterIgnored(name))
         {
                 printDebugInfo("[CLIENT BUG] Tried to ignore somebody who is already on the ignorelist.");
         } else {
@@ -2143,7 +2145,8 @@ void flist_messenger::ul_ignoreRemove()
 {
         FCharacter* c = ul_recent;
         QString name = c->name();
-        if (!selfIgnoreList.contains(name))
+	FSession *session = account->getSession(charName);
+        if (!session->isCharacterIgnored(name))
         {
                 printDebugInfo("[CLIENT BUG] Tried to unignore somebody who is not on the ignorelist.");
         } else {
@@ -2620,7 +2623,7 @@ void flist_messenger::parseInput()
 
                         if ( character != "" )
                         {
-                                if ( selfIgnoreList.count ( character ) == 0 )
+                                if (!session->isCharacterIgnored(character))
                                 {
                                         QString out = QString ( "This character is not in your ignore list." );
                                         FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, out, currentPanel);
@@ -3379,22 +3382,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 sendWS ( idenStr );
                         }
                 }
-                else if ( cmd == "FRL" )
-                {
-                        JSONNode childnode = nodes.at ( "characters" );
-
-                        int children = childnode.size();
-
-                        for ( int i = 0; i < children; ++i )
-                        {
-                                QString addchar = childnode.at(i).as_string().c_str();
-
-                                if ( !session->friendslist.contains ( addchar ) )
-                                {
-                                        session->friendslist.append ( addchar );
-                                }
-                        }
-                }
                 else if ( cmd == "HLO" )
                 {
                         QString msg = "<B>";
@@ -3406,38 +3393,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         {
                                 joinChannel(s);
                         }
-                }
-                else if ( cmd == "IGN" )
-                {
-//                        [12:38 PM]<<IGN {"character":"Kalyra","action":"add"}
-//                        [12:38 PM]<<IGN {"character":"Kalyra","action":"delete"}
-                        if ( nodes["action"].as_string() == "init" )
-                        {
-                                JSONNode childnode = nodes.at("characters");
-                                int count = childnode.size();
-                                for ( int i = 0 ; i < count ; ++i )
-                                {
-                                        QString charname = childnode.at( i ).as_string().c_str();
-                                        if ( !selfIgnoreList.contains( charname ) )
-                                                selfIgnoreList.append( charname );
-                                }
-                        }
-                        if ( nodes["action"].as_string() == "add" )
-                        {
-                                QString character = nodes["character"].as_string().c_str();
-                                selfIgnoreList.append ( character );
-                                QString out = character + QString ( " has been added to your ignore list." );
-                                FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, out, currentPanel);
-                        }
-                        if ( nodes["action"].as_string() == "delete" )
-                        {
-                                QString character = nodes["character"].as_string().c_str();
-                                selfIgnoreList.removeAll ( character );
-                                QString out = character + QString ( " has been removed from your ignore list." );
-                                FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, out, currentPanel);
-                        }
-                        if (friendsDialog)
-                                refreshFriendLists();
                 }
                 else if ( cmd == "KID" )
                 {
@@ -3474,7 +3429,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         }
 			FChannelPanel* channel = channelList[panelname];
                         QString character = nodes.at ( "character" ).as_string().c_str();
-                        if ( selfIgnoreList.count ( character ) )
+                        if (session->isCharacterIgnored(character))
                         {
                                 // Ignore message
                                 return;
@@ -3507,7 +3462,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 
                         QString character = nodes.at ( "character" ).as_string().c_str();
 
-                        if ( selfIgnoreList.count ( character.toLower() ) )
+                        if(session->isCharacterIgnored(character))
                         {
                                 // Ignore message
                                 return;
@@ -3567,7 +3522,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                 {
                         QString character = nodes.at ( "character" ).as_string().c_str();
 
-                        if ( selfIgnoreList.count ( character.toLower() ) )
+                        if (session->isCharacterIgnored(character))
             {
 //                                std::string out = "IGN ";
 //                                JSONNode notify;
@@ -3949,6 +3904,20 @@ void flist_messenger::notifyCharacterOnline(FSession *session, QString character
 	}
 }
 
+void flist_messenger::notifyIgnoreUpdate(FSession *session)
+{
+	(void) session;
+	if(friendsDialog) {
+		refreshFriendLists();
+	}
+}
+void flist_messenger::setIgnoreCharacter(FSession *session, QString charactername, bool ignore)
+{
+	(void) session; (void) charactername; (void) ignore;
+	if(friendsDialog) {
+		refreshFriendLists();
+	}
+}
 
 void flist_messenger::messageMany(QList<QString> &panelnames, QString message, MessageType messagetype)
 {
@@ -3987,6 +3956,8 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			break;
 		case MESSAGE_TYPE_KICK:
 		case MESSAGE_TYPE_KICKBAN:
+			break;
+		case MESSAGE_TYPE_IGNORE_UPDATE:
 			break;
 		default:
 			debugMessage("Unhandled message type " + QString::number(messagetype) + " for message '" + message + "'.");

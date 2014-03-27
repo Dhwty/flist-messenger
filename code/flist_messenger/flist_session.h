@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QTcpSocket>
 
 class FAccount;
@@ -24,6 +25,7 @@ public:
 
 	bool isCharacterOnline(QString name) {return characterlist.contains(name);}
 	bool isCharacterOperator(QString name) {return operatorlist.contains(name);}
+	bool isCharacterIgnored(QString name) {return ignorelist.contains(name.toLower(), Qt::CaseInsensitive);}
 	FCharacter *addCharacter(QString name);
 	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
 
@@ -52,6 +54,7 @@ public:
 	QList<QString> friendslist; //<List of friends for this session's character.
 	QList<QString> bookmarklist; //<List of friends for this session's character.
 	QList<QString> operatorlist; //<List of all known characters that are chat operators (stored in lower case).
+	QStringList ignorelist; //<List of all characters that are being ignored.
 	QHash<QString, FChannel *> channellist; //<List of channels that this session has joined (or was previously joined to).
 	QHash<QString, QString> servervariables; //<List of variables as reported by the server.
 
@@ -89,6 +92,9 @@ private:
 	COMMAND(CON);
 	COMMAND(IDN);
 	COMMAND(VAR);
+
+	COMMAND(FRL);
+	COMMAND(IGN);
 
 	COMMAND(PIN);
 #undef COMMAND

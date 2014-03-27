@@ -22,6 +22,7 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent) :
 	friendslist(),
 	bookmarklist(),
 	operatorlist(),
+	ignorelist(),
 	channellist(),
 	servervariables(),
 	wsready(false),
@@ -305,6 +306,9 @@ void FSession::wsRecv(std::string packet)
 		CMD(CON); //User count.
 		CMD(IDN); //Identity acknowledged.
 		CMD(VAR); //Server variable.
+
+		CMD(FRL); //Friends and bookmarks list.
+		CMD(IGN); //Ignore list update.
 
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
@@ -683,6 +687,63 @@ COMMAND(VAR)
 	servervariables[variable] = value;
 	debugMessage(QString("Server variable: %1 = '%2'").arg(variable).arg(value));
 	//todo: Parse and store variables of interest.
+}
+
+COMMAND(FRL)
+{
+	(void) rawpacket;
+	//Friends and bookmarks list.
+	//FRL {"characters":["Character Name"]}
+	JSONNode childnode = nodes.at("characters");
+	int size = childnode.size();
+	for(int i = 0; i < size; i++) {
+		QString charactername = nodes.at(i).as_string().c_str();
+		if(!friendslist.contains(charactername)) {
+			friendslist.append(charactername);
+		}
+	}
+	
+}
+COMMAND(IGN)
+{
+	//Ignore list update. Behaviour of the command depends on the "action" field.
+	//IGN {"action": "init", "characters":, ["Character Name"]}
+	//IGN {"action": "add", "characters":, "Character Name"}
+	//IGN {"action": "delete", "characters":, "Character Name"}
+	QString action = nodes.at("action").as_string().c_str();
+	if(action == "init") {
+		JSONNode childnode = nodes.at("characters");
+		ignorelist.clear();
+		int size = childnode.size();
+		for(int i = 0; i < size; i++) {
+			QString charactername = childnode.at(i).as_string().c_str();
+			if(!ignorelist.contains(charactername, Qt::CaseInsensitive)) {
+				ignorelist.append(charactername.toLower());
+			}
+		}
+		account->ui->notifyIgnoreUpdate(this);
+	} else if(action == "add") {
+		QString charactername = nodes.at("character").as_string().c_str();
+		if(ignorelist.contains(charactername, Qt::CaseInsensitive)) {
+			debugMessage(QString("[BUG] Was told to add '%1' to our ignore list, but '%1' is already on our ignore list. %2").arg(charactername).arg(QString::fromStdString(rawpacket)));
+		} else {
+			ignorelist.append(charactername.toLower());
+		}
+		account->ui->messageSystem(this, QString("%1 has been added to your ignore list.").arg(charactername), MESSAGE_TYPE_IGNORE_UPDATE);
+		account->ui->setIgnoreCharacter(this, charactername, true);
+	} else if(action =="delete") {
+		QString charactername = nodes.at("character").as_string().c_str();
+		if(!ignorelist.contains(charactername, Qt::CaseInsensitive)) {
+			debugMessage(QString("[BUG] Was told to remove '%1' from our ignore list, but '%1' is not on our ignore list. %2").arg(charactername).arg(QString::fromStdString(rawpacket)));
+		} else {
+			ignorelist.removeAll(charactername.toLower());
+		}
+		account->ui->messageSystem(this, QString("%1 has been removed from your ignore list.").arg(charactername), MESSAGE_TYPE_IGNORE_UPDATE);
+		account->ui->setIgnoreCharacter(this, charactername, false);
+	} else {
+		debugMessage(QString("[SERVER BUG] Received ignore command(IGN) but the action '%1' is unknown. %2").arg(action).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
 }
 
 COMMAND(PIN)
