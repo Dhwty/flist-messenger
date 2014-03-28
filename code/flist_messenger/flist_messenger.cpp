@@ -1130,6 +1130,8 @@ void flist_messenger::loginClicked()
         FMessage::selfName = charName;
 	FSession *session = account->getSession(charName);
 
+	session->autojoinchannels = defaultChannels;
+
         clearLoginBox();
 
         setupRealUI();
@@ -1448,7 +1450,8 @@ void flist_messenger::anchorClicked ( QUrl link )
                 if (cmd == "#AHI-")
                 {
                         QString channel = ls.right ( ls.length() - 5 );
-                        joinChannel ( channel );
+			FSession *session = account->getSession(charName);
+                        session->joinChannel(channel);
                 }
                 else if (cmd == "#CSA-")
                 {
@@ -1880,15 +1883,6 @@ bool ReturnLogin::eventFilter(QObject *obj, QEvent *event)
         } else {
                 return QObject::eventFilter(obj, event);
         }
-}
-void flist_messenger::joinChannel ( QString& channel )
-{
-        JSONNode joinnode;
-        JSONNode channode ( "channel", channel.toStdString() );
-        joinnode.push_back ( channode );
-        std::string msg = "JCH " + joinnode.write();
-
-        sendWS ( msg );
 }
 void flist_messenger::leaveChannel(QString &panelname, QString &channelname, bool toServer)
 {
@@ -2572,7 +2566,7 @@ void flist_messenger::parseInput()
                 else if ( parts[0].toLower() == "/join" )
                 {
                         QString channel = inputText.mid ( 6, -1 ).simplified();
-                        joinChannel ( channel );
+                        session->joinChannel(channel);
                         success = true;
                 }
                 else if ( parts[0].toLower() == "/leave" )
@@ -3178,6 +3172,7 @@ void flist_messenger::cd_btnJoinClicked()
 {
         QList<QListWidgetItem *> cliList = cd_channelsList->selectedItems();
         ChannelListItem* cli = 0;
+	FSession *session = account->getSession(charName);
 
         for ( int i = 0;i < cliList.count();i++ )
         {
@@ -3185,13 +3180,14 @@ void flist_messenger::cd_btnJoinClicked()
                 QString name = cli->getName();
 
                 if ( channelList.count ( name ) == 0 || !channelList[name]->getActive() )
-                        joinChannel ( name );
+                        session->joinChannel(name);
         }
 }
 void flist_messenger::cd_btnProomsJoinClicked()
 {
         QList<QListWidgetItem *> cliList = cd_proomsList->selectedItems();
         ChannelListItem* cli = 0;
+	FSession *session = account->getSession(charName);
 
         for ( int i = 0;i < cliList.count();i++ )
         {
@@ -3199,7 +3195,7 @@ void flist_messenger::cd_btnProomsJoinClicked()
                 QString name = cli->getName();
 
                 if ( channelList.count ( name ) == 0 || !channelList[name]->getActive() )
-                        joinChannel ( name );
+                        session->joinChannel(name);
         }
 }
 void flist_messenger::ss_btnCancelClicked()
@@ -3391,7 +3387,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 
                         foreach (QString s, defaultChannels)
                         {
-                                joinChannel(s);
+                                session->joinChannel(s);
                         }
                 }
                 else if ( cmd == "KID" )

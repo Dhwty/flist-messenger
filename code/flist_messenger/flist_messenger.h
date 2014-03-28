@@ -392,7 +392,6 @@ private:
 	void createTrayIcon();
 	void setupConsole();								// Makes the console channel.
 	void sendWS ( std::string& input );					// Sends messages to the server
-	void joinChannel ( QString& channel );				// Adds the joined channel to the channel list
 	FChannelTab* addToActivePanels ( QString& channel, QString &channelname, QString& tooltip );	// Adds the newly joined channel to the displayed list of channels
 	void leaveChannel(QString &panelname, QString &channelname, bool toServer = true);		// Leaves the channel
 	void messageChannel ( std::string& channel, std::string& message );	// Sends a message to the specified channel

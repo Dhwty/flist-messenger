@@ -20,6 +20,8 @@ public:
 
 	void connectSession();
 	
+	void wsSend(const char *command);
+	void wsSend(const char *command, JSONNode &nodes);
 	void wsSend(std::string &data);
 	void wsRecv(std::string packet);
 
@@ -29,6 +31,7 @@ public:
 	FCharacter *addCharacter(QString name);
 	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
 
+	void joinChannel(QString name);
 	FChannel *addChannel(QString name, QString title);
 	FChannel *getChannel(QString name);
 
@@ -56,6 +59,7 @@ public:
 	QList<QString> operatorlist; //<List of all known characters that are chat operators (stored in lower case).
 	QStringList ignorelist; //<List of all characters that are being ignored.
 	QHash<QString, FChannel *> channellist; //<List of channels that this session has joined (or was previously joined to).
+	QStringList autojoinchannels; //<List of channels the client should join upon connecting.
 	QHash<QString, QString> servervariables; //<List of variables as reported by the server.
 
 private:
@@ -90,6 +94,7 @@ private:
 	COMMAND(SYS);
 
 	COMMAND(CON);
+	COMMAND(HLO);
 	COMMAND(IDN);
 	COMMAND(VAR);
 

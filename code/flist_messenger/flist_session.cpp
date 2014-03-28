@@ -24,6 +24,7 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent) :
 	operatorlist(),
 	ignorelist(),
 	channellist(),
+	autojoinchannels(),
 	servervariables(),
 	wsready(false),
 	socketreadbuffer()
@@ -46,6 +47,16 @@ FCharacter *FSession::addCharacter(QString name)
 		characterlist[name] = character;
 	}
 	return character;
+}
+
+/**
+Tell the server that we wish to join the given channel.
+ */
+void FSession::joinChannel(QString name)
+{
+	JSONNode joinnode;
+	joinnode.push_back(JSONNode("channel", name.toStdString()));
+	wsSend("JCH", joinnode);
 }
 
 FChannel *FSession::addChannel(QString name, QString title)
@@ -220,6 +231,18 @@ void FSession::socketReadReady()
 	}	
 }
 
+void FSession::wsSend(const char *command)
+{
+	std::string cmd = command;
+	wsSend(cmd);
+}
+
+void FSession::wsSend(const char *command, JSONNode &nodes)
+{
+	std::string cmd = command + (" " + nodes.write());
+	wsSend(cmd);
+}
+
 void FSession::wsSend(std::string &input)
 {
 	if(!connected) {
@@ -304,6 +327,7 @@ void FSession::wsRecv(std::string packet)
 		CMD(SYS); //System message.
 
 		CMD(CON); //User count.
+		CMD(HLO); //Server hello.
 		CMD(IDN); //Identity acknowledged.
 		CMD(VAR); //Server variable.
 
@@ -664,6 +688,17 @@ COMMAND(CON)
 	QString count = nodes.at("count").as_string().c_str();
 	//The message doesn't handle the plural case correctly, but that only happens on the test server.
 	account->ui->messageSystem(this, QString("%1 users are currently connected.").arg(count), MESSAGE_TYPE_LOGIN);
+}
+COMMAND(HLO)
+{
+	(void) rawpacket;
+	//Server hello. Sent during the initial connection traffic after identification.
+	//HLO {"message": "Server Message"}
+	QString message = nodes.at("message").as_string().c_str();
+	account->ui->messageSystem(this, QString("<b>%1</b>").arg(message), MESSAGE_TYPE_LOGIN);
+	foreach(QString channelname, autojoinchannels) {
+		joinChannel(channelname);
+	}
 }
 COMMAND(IDN)
 {
