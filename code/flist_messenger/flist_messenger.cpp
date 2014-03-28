@@ -3378,18 +3378,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 sendWS ( idenStr );
                         }
                 }
-                else if ( cmd == "HLO" )
-                {
-                        QString msg = "<B>";
-                        msg += nodes.at ( "message" ).as_string().c_str();
-                        msg += "</B>";
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, msg, currentPanel);
-
-                        foreach (QString s, defaultChannels)
-                        {
-                                session->joinChannel(s);
-                        }
-                }
                 else if ( cmd == "KID" )
                 {
                         // [19:41 PM]>>KIN {"character":"Cinnamon Flufftail"}
