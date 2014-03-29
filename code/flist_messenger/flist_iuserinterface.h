@@ -24,7 +24,9 @@ class iUserInterface
 {
 public:
 	virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus) = 0;
-	
+
+	virtual void addCharacterChat(FSession *session, QString charactername) = 0;
+
 	virtual void addChannel(FSession *session, QString name, QString title) = 0;
 	virtual void removeChannel(FSession *session, QString name) = 0;
 	virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername, bool notify) = 0;

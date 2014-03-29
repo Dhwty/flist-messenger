@@ -21,6 +21,7 @@
 
 #include <QApplication>
 #include <QFile>
+#include <QTextCodec>
 #include "flist_messenger.h"
 #include "flist_global.h"
 
@@ -28,6 +29,7 @@ int main(int argc, char** argv)
 {
 	bool d = (argc > 1 && strcmp(argv[1], "-d") == 0) ? true : false;
 	QApplication *app = new QApplication(argc, argv);
+	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 	app->setOrganizationName("F-list.net");
 	app->setOrganizationDomain("www.f-list.net");
 	app->setApplicationName("F-list Messenger");

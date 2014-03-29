@@ -3401,66 +3401,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 ci_teKinks->append ( out );
                         }
                 }
-                else if ( cmd == "LRP" )
-                {
-                        //<<LRP {"message":":3","character":"Prison","channel":"Sex Driven LFRP"}
-                        QString channelname = nodes.at ( "channel" ).as_string().c_str();
-			QString panelname = PANELNAME(channelname, charName);
-
-                        if ( channelList.count ( panelname ) == 0 )
-                        {
-                                return;
-                        }
-			FChannelPanel* channel = channelList[panelname];
-                        QString character = nodes.at ( "character" ).as_string().c_str();
-                        if (session->isCharacterIgnored(character))
-                        {
-                                // Ignore message
-                                return;
-                        }
-                        QString message(QString::fromUtf8(nodes.at ( "message" ).as_string().c_str()));
-
-                        QString genderColor = "#FFFFFF";
-                        bool isOp = false;
-
-
-                        FCharacter* chanchar = 0;
-			if(session->isCharacterOnline(character)) {
-                                chanchar = session->characterlist[character];
-                                genderColor = chanchar->genderColor().name();
-                                isOp = ( chanchar->isChatOp() || channel->isOp( chanchar ) || channel->isOwner( chanchar ) );
-                        }
-                        FMessage fmsg(FMessage::MESSAGETYPE_ROLEPLAYAD, channel, chanchar, message, currentPanel);
-                }
-                else if ( cmd == "MSG" )
-                {
-                        QString channelname = nodes.at ( "channel" ).as_string().c_str();
-			QString panelname = PANELNAME(channelname, charName);
-
-                        if ( channelList.count ( panelname ) == 0 )
-                        {
-                                return;
-                        }
-
-			FChannelPanel* channel = channelList[panelname];
-
-                        QString character = nodes.at ( "character" ).as_string().c_str();
-
-                        if(session->isCharacterIgnored(character))
-                        {
-                                // Ignore message
-                                return;
-                        }
-
-                        QString message(QString::fromUtf8(nodes.at ( "message" ).as_string().c_str()));
-
-                        FCharacter* chanchar = 0;
-			if(session->isCharacterOnline(character)) {
-                                chanchar = session->characterlist[character];
-                        }
-
-                        FMessage fmsg(FMessage::MESSAGETYPE_CHANMESSAGE, channel, chanchar, message, currentPanel);
-                }
                 else if ( cmd == "ORS" )
                 {
                         /* ORS
@@ -3500,27 +3440,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 QString key = nodes.at ( "key" ).as_string().c_str();
                                 out = QString ( "<b>" ) + key + QString ( ":</b> " ) + value;
                                 ci_teProfile->append ( out );
-                        }
-                }
-                else if ( cmd == "PRI" )
-                {
-                        QString character = nodes.at ( "character" ).as_string().c_str();
-
-                        if (session->isCharacterIgnored(character))
-            {
-//                                std::string out = "IGN ";
-//                                JSONNode notify;
-//                                JSONNode ch ( "character", character.toStdString() );
-//                                JSONNode ac ( "action", "notify" );
-//                                notify.push_back ( ch );
-//                                notify.push_back ( ac );
-//                                out += notify.write();
-//                                sendWS ( out );
-                        }
-                        else
-                        {
-                                QString message(QString::fromUtf8(nodes.at ( "message" ).as_string().c_str()));
-                                receivePM ( message, character );
                         }
                 }
                 else if ( cmd == "RLL" )
@@ -3754,6 +3673,27 @@ void flist_messenger::setChatOperator(FSession *session, QString characteroperat
 	}
 }
 
+void flist_messenger::addCharacterChat(FSession *session, QString charactername)
+{
+	QString panelname = "PM|||" + session->character + "|||" + charactername;
+	FChannelPanel *channelpanel = channelList[panelname];
+	if(!channelpanel) {
+		channelpanel = new FChannelPanel (panelname, charactername, FChannelPanel::CHANTYPE_PM);
+		channelList[panelname] = channelpanel;
+		channelpanel->setTitle(charactername);
+		channelpanel->setRecipient(charactername);
+		FCharacter *character = session->getCharacter(charactername);
+		QString title = character->PMTitle();
+		channelpanel->pushButton = addToActivePanels(panelname, charactername, title);
+	}
+	if(channelpanel->getActive() == false) {
+		channelpanel->setActive(true);
+		channelpanel->pushButton->setVisible(true);
+	}
+	channelpanel->setTyping(FChannelPanel::TYPINGSTATUS_CLEAR);
+	channelpanel->updateButtonColor();
+}
+
 void flist_messenger::addChannel(FSession *session, QString channelname, QString title)
 {
 	debugMessage("addChannel(\"" + channelname + "\", \"" + title + "\")");
@@ -3909,7 +3849,9 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 	QString panelname;
 	QString messageout = "<small>[" + QTime::currentTime().toString("hh:mm:ss AP") + "]</small> " + message;
 	foreach(panelname, panelnames) {
-		if(!channelList.contains(panelname)) {
+		FChannelPanel *channelpanel;
+		channelpanel = channelList[panelname];
+		if(!channelpanel) {
 			debugMessage("[BUG] Tried to put a message on '" + panelname + "' but there is no channel panel for it. message:" + message);
 			continue;
 		}
@@ -3933,7 +3875,12 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			break;
 		case MESSAGE_TYPE_RPAD:
 		case MESSAGE_TYPE_CHAT:
-			//todo: trigger highlighting
+			//todo: trigger sounds
+			channelpanel->setHasNewMessages(true);
+			if(panelname.startsWith("PM")) {
+				channelpanel->setHighlighted(true);
+			}
+			channelpanel->updateButtonColor();
 			break;
 		case MESSAGE_TYPE_SYSTEM:
 		case MESSAGE_TYPE_BROADCAST:
@@ -3946,8 +3893,6 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 		default:
 			debugMessage("Unhandled message type " + QString::number(messagetype) + " for message '" + message + "'.");
 		}
-		FChannelPanel *channelpanel;
-		channelpanel = channelList[panelname];
 		channelpanel->addLine(messageout, true);
 		if(channelpanel == currentPanel) {
 			textEdit->append(messageout);

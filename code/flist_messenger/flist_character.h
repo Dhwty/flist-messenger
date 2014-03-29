@@ -109,6 +109,8 @@ public:
 	QColor& genderColor();
 	QString PMTitle();
 
+	QString getUrl() {return "https://www.f-list.net/c/" + charName + "/";} //todo: HTTP request character encoding. //todo: Get server address from FServer?
+
 	static void initClass();
 
 private:

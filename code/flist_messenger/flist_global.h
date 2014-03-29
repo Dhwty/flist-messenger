@@ -3,7 +3,11 @@
 
 #include <QNetworkAccessManager>
 
+class BBCodeParser; 
+
 extern QNetworkAccessManager *networkaccessmanager;
+extern BBCodeParser *bbcodeparser;
+
 
 void debugMessage(QString str);
 void debugMessage(std::string str);

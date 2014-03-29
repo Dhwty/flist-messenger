@@ -1,8 +1,10 @@
 #include "flist_global.h"
 #include <QApplication>
 #include <iostream>
+#include "flist_parser.h"
 
-QNetworkAccessManager *networkaccessmanager;
+QNetworkAccessManager *networkaccessmanager = 0;
+BBCodeParser *bbcodeparser = 0;
 
 void debugMessage(QString str) {
 	std::cout << str.toUtf8().data() << std::endl;
@@ -19,6 +21,7 @@ void debugMessage(const char *str) {
 void globalInit()
 {
 	networkaccessmanager = new QNetworkAccessManager(qApp);
+	bbcodeparser = new BBCodeParser();
 }
 
 void globalQuit()

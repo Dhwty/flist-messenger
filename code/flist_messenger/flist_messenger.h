@@ -200,6 +200,9 @@ public:
 	~flist_messenger();
 public:
 	virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus);
+
+	virtual void addCharacterChat(FSession *session, QString charactername);
+
 	virtual void addChannel(FSession *session, QString name, QString title);
 	virtual void removeChannel(FSession *session, QString name);
 	virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername, bool notify);

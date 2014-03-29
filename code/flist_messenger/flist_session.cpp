@@ -8,6 +8,7 @@
 #include "flist_character.h"
 #include "flist_iuserinterface.h"
 #include "flist_channel.h"
+#include "flist_parser.h"
 
 
 #include "../libjson/libJSON.h"
@@ -333,6 +334,10 @@ void FSession::wsRecv(std::string packet)
 
 		CMD(FRL); //Friends and bookmarks list.
 		CMD(IGN); //Ignore list update.
+
+		CMD(LRP); //Looking for RP message.
+		CMD(MSG); //Channel message.
+		CMD(PRI); //Private message.
 
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
@@ -779,6 +784,126 @@ COMMAND(IGN)
 		debugMessage(QString("[SERVER BUG] Received ignore command(IGN) but the action '%1' is unknown. %2").arg(action).arg(QString::fromStdString(rawpacket)));
 		return;
 	}
+}
+
+QString FSession::makeMessage(QString message, QString charactername, FCharacter *character, FChannel *channel, QString prefix, QString postfix)
+{
+	QString characterprefix;
+	QString characterpostfix;
+	if(isCharacterOperator(charactername)) {
+		//todo: choose a different icon
+		characterprefix += "<img src=\":/images/auction-hammer.png\" />";
+	}
+	if(isCharacterOperator(charactername) || (channel && channel->isCharacterOperator(charactername))) {
+		characterprefix += "<img src=\":/images/auction-hammer.png\" />";
+	}
+	QString messagebody;
+	if(message.startsWith("/me 's ")) {
+		messagebody = message.mid(7, -1);
+		messagebody = bbcodeparser->parse(messagebody);
+		characterpostfix += "'s"; //todo: HTML escape
+	} else if(message.startsWith("/me ")) {
+		messagebody = message.mid(4, -1);
+		messagebody = bbcodeparser->parse(messagebody);
+	} else if(message.startsWith("/warn ")) {
+		messagebody = message.mid(6, -1);
+		messagebody = QString("<span id=\"warning\">%1</span>").arg(bbcodeparser->parse(messagebody));
+	} else {
+		messagebody = bbcodeparser->parse(message);
+	}
+	QString messagefinal;
+	messagefinal = QString("<b><a style=\"color: %1\" href=\"%2\">%3%4%5</a></b> %6")
+		.arg(character->genderColor().name())
+		.arg(character->getUrl())
+		.arg(characterprefix)
+		.arg(charactername) //todo: HTML escape
+		.arg(characterpostfix)
+		.arg(messagebody);
+	if(message.startsWith("/me")) {
+		messagefinal = QString("%1<i>*%2</i>%3")
+			.arg(prefix)
+			.arg(messagefinal)
+			.arg(postfix);
+	} else {
+		messagefinal = QString("%1%2%3")
+			.arg(prefix)
+			.arg(messagefinal)
+			.arg(postfix);
+	}
+
+	return messagefinal;
+}
+
+COMMAND(LRP)
+{
+	//Looking for RP message.
+	//LRP {"channel": "Channel Name", "character": "Character Name", "message": "Message Text"}
+	QString channelname = nodes.at("channel").as_string().c_str();
+	QString charactername = nodes.at("character").as_string().c_str();
+	QString message = nodes.at("message").as_string().c_str();
+	FChannel *channel = getChannel(channelname);
+	FCharacter *character = getCharacter(charactername);
+	if(!channel) {
+		debugMessage(QString("[SERVER BUG] Received an RP ad from the channel '%1' but the channel '%1' is unknown. %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	if(!character) {
+		debugMessage(QString("[SERVER BUG] Received an RP ad from '%1' in the channel '%2' but the character '%1' is unknown. %3").arg(charactername).arg(channelname).arg(QString::fromStdString(rawpacket)));
+		//todo: Allow it to be displayed anyway?
+		return;
+	}
+	if(isCharacterIgnored(charactername)) {
+		//Ignore message
+		return;
+	}
+	QString messagefinal = makeMessage(message, charactername, character, channel, "<font color=\"green\"><b>Roleplay ad by</font> ", "");
+	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_RPAD);
+}
+COMMAND(MSG)
+{
+	//Channel message.
+	//MSG {"channel": "Channel Name", "character": "Character Name", "message": "Message Text"}
+	QString channelname = nodes.at("channel").as_string().c_str();
+	QString charactername = nodes.at("character").as_string().c_str();
+	QString message = nodes.at("message").as_string().c_str();
+	FChannel *channel = getChannel(channelname);
+	FCharacter *character = getCharacter(charactername);
+	if(!channel) {
+		debugMessage(QString("[SERVER BUG] Received a message from the channel '%1' but the channel '%1' is unknown. %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	if(!character) {
+		debugMessage(QString("[SERVER BUG] Received a message from '%1' in the channel '%2' but the character '%1' is unknown. %3").arg(charactername).arg(channelname).arg(QString::fromStdString(rawpacket)));
+		//todo: Allow it to be displayed anyway?
+		return;
+	}
+	if(isCharacterIgnored(charactername)) {
+		//Ignore message
+		return;
+	}
+	QString messagefinal = makeMessage(message, charactername, character, channel);
+	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_CHAT);
+}
+COMMAND(PRI)
+{
+	//Private message.
+	//PRI {"character": "Character Name", "message": "Message Text"}
+	QString charactername = nodes.at("character").as_string().c_str();
+	QString message = nodes.at("message").as_string().c_str();
+	FCharacter *character = getCharacter(charactername);
+	if(!character) {
+		debugMessage(QString("[SERVER BUG] Received a message from the character '%1', but the character '%1' is unknown. %2").arg(charactername).arg(QString::fromStdString(rawpacket)));
+		//todo: Allow it to be displayed anyway?
+		return;
+	}
+	if(isCharacterIgnored(charactername)) {
+		//Ignore message
+		return;
+	}
+	
+	QString messagefinal = makeMessage(message, charactername, character);
+	account->ui->addCharacterChat(this, charactername);
+	account->ui->messageCharacter(this, charactername, messagefinal, MESSAGE_TYPE_CHAT);
 }
 
 COMMAND(PIN)
