@@ -737,9 +737,10 @@ COMMAND(FRL)
 	JSONNode childnode = nodes.at("characters");
 	int size = childnode.size();
 	for(int i = 0; i < size; i++) {
-		QString charactername = nodes.at(i).as_string().c_str();
+		QString charactername = childnode.at(i).as_string().c_str();
 		if(!friendslist.contains(charactername)) {
 			friendslist.append(charactername);
+			//debugMessage(QString("Added friend '%1'.").arg(charactername));
 		}
 	}
 	
