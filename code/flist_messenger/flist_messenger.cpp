@@ -3667,6 +3667,10 @@ void flist_messenger::addChannel(FSession *session, QString channelname, QString
 		channelpanel->pushButton = addToActivePanels(panelname, channelname, title);
 	} else {
 		channelpanel = channelList[panelname];
+		//Ensure that the channel's title is set correctly for ad-hoc channels.
+		if(channelname != title && channelpanel->title() != title) {
+			channelpanel->setTitle(title);
+		}
 		if(channelpanel->getActive() == false) {
 			channelpanel->setActive(true);
 			channelpanel->pushButton->setVisible(true);

@@ -64,11 +64,16 @@ void FSession::joinChannel(QString name)
 
 FChannel *FSession::addChannel(QString name, QString title)
 {
+	FChannel *channel;
 	if(channellist.contains(name)) {
-		//todo: reset title?
-		return channellist[name];
+		channel = channellist[name];
+		//Ensure that the channel's title is set correctly for ad-hoc channels.
+		if(name != title && channel->getTitle() != title) {
+			channel->setTitle(title);
+		}
+		return channel;
 	}
-	FChannel *channel = new FChannel(this, this, name, title);
+	channel = new FChannel(this, this, name, title);
 	channellist[name] = channel;
 	return channel;
 	
@@ -434,11 +439,19 @@ COMMAND(ICH)
 	//ICH {"users": [{"identity": "Shadlor"}, {"identity": "Bunnie Patcher"}, {"identity": "DemonNeko"}, {"identity": "Desbreko"}, {"identity": "Robert Bell"}, {"identity": "Jayson"}, {"identity": "Valoriel Talonheart"}, {"identity": "Jordan Costa"}, {"identity": "Skip Weber"}, {"identity": "Niruka"}, {"identity": "Jake Brian Purplecat"}, {"identity": "Hexxy"}], "channel": "Frontpage", "mode": "chat"}
 	FChannel *channel;
 	QString channelname = nodes.at("channel").as_string().c_str();;
+	//debugMessage(QString("ICH: channel: %1").arg(channelname));
 	QString channelmode = nodes.at("mode").as_string().c_str();;
+	//debugMessage(QString("ICH: mode: %1").arg(channelmode));
 	JSONNode childnode = nodes.at("users");
+	//debugMessage(QString("ICH: users: #%1").arg(childnode.size()));
 	QString channeltitle;
 	if(channelname.startsWith("ADH-")) {
-		channeltitle = nodes.at("title").as_string().c_str();
+		try {
+			//todo: Wiki says to expect "title" in the ICH command, but none is received
+			channeltitle = nodes.at("title").as_string().c_str();
+		} catch(std::out_of_range) {
+			channeltitle = channelname;
+		}
 	} else {
 		channeltitle = channelname;
 	}

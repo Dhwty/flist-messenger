@@ -51,6 +51,7 @@ public:
 	void leave();
 
 	QString getTitle() {return title;}
+	void setTitle(QString title) {this->title = title;}
 
 	QString getDescription() {return description;}
 	void setDescription(QString &newdescription) {description = newdescription;}
