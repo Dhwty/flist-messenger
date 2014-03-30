@@ -6,6 +6,8 @@
 #include <QStringList>
 #include <QTcpSocket>
 
+#include "flist_channelsummary.h"
+
 class FAccount;
 class FChannel;
 class FCharacter;
@@ -62,6 +64,9 @@ public:
 	QStringList autojoinchannels; //<List of channels the client should join upon connecting.
 	QHash<QString, QString> servervariables; //<List of variables as reported by the server.
 
+	QList<FChannelSummary> knownchannellist; //<List of known public channels, as reported by the server.
+	QList<FChannelSummary> knownopenroomlist; //<List of known open rooms, as reported by the server.
+
 private:
 
 
@@ -105,6 +110,9 @@ private:
 	COMMAND(LRP);
 	COMMAND(MSG);
 	COMMAND(PRI);
+
+	COMMAND(CHA);
+	COMMAND(ORS);
 
 	COMMAND(PIN);
 #undef COMMAND

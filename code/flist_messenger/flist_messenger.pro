@@ -51,7 +51,8 @@ HEADERS += \
     flist_characterprofile.h \
     flist_iuserinterface.h \
     flist_channelpanel.h \
-    flist_channel.h
+    flist_channel.h \
+    flist_channelsummary.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \

@@ -3313,26 +3313,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
         try
         {
 		FSession *session = account->getSession(charName);
-		if ( cmd == "CHA" )
-                {
-                        cd_channelsList->clear();
-                        JSONNode childnode = nodes.at ( "channels" );
-                        int size = childnode.size();
-
-                        for ( int i = 0;i < size; ++i )
-                        {
-                                JSONNode channelnode = childnode.at ( i );
-                                QString name = channelnode.at ( "name" ).as_string().c_str();
-                                int characters;
-                                QString cs = channelnode.at ( "characters" ).as_string().c_str();
-                                characters = cs.toInt();
-                                printDebugInfo("Channel with characters: " + characters);
-                                // QString mode = channelnode.at("mode").as_string().c_str();
-                                ChannelListItem* chan = new ChannelListItem ( name, characters );
-                                addToChannelsDialogList ( chan );
-                        }
-                }
-                else if ( cmd == "CIU" )
+                if ( cmd == "CIU" )
                 {
                         //CIU {"sender": "EagerToPlease", "name": "ADH-085bcf60bef81b0790b7", "title": "Domination and Degradation"}
                         QString output;
@@ -3399,30 +3380,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 QString key = nodes.at ( "key" ).as_string().c_str();
                                 out = QString ( "<b>" ) + key + QString ( ":</b> " ) + value;
                                 ci_teKinks->append ( out );
-                        }
-                }
-                else if ( cmd == "ORS" )
-                {
-                        /* ORS
-        {"channels": [
-         {"name": "ADH-29a2ec641d78e5bd197e", "characters": "1", "title": "Eifania's Little Room"},
-         {"name": "ADH-74e4caef2965f4b33dd4", "characters": "1", "title": "Acrophobia"},
-         {"name": "ADH-fa132c6f2740c5ebaed7", "characters": "10", "title": "Femboy Faggot Fucksluts"}
-        ]}
-*/
-                        cd_proomsList->clear();
-                        JSONNode childnode = nodes.at ( "channels" );
-                        int size = childnode.size();
-
-                        for ( int i = 0;i < size; ++i )
-                        {
-                                JSONNode channelnode = childnode.at ( i );
-                                QString name = channelnode.at ( "name" ).as_string().c_str();
-                                QString cs = channelnode.at ( "characters" ).as_string().c_str();
-                                int characters = cs.toInt();
-                                QString title = channelnode.at ( "title" ).as_string().c_str();
-                                ChannelListItem* chan = new ChannelListItem ( name, title, characters );
-                                addToProomsDialogList ( chan );
                         }
                 }
                 else if ( cmd == "PRD" )
@@ -3972,4 +3929,29 @@ void flist_messenger::messageSystem(FSession *session, QString message, MessageT
 		panelnames.append(currentPanel->getPanelName());
 	}
 	messageMany(panelnames, message, messagetype);
+}
+
+void flist_messenger::updateKnownChannelList(FSession *session)
+{
+	if(!cd_channelsList) {
+		return;
+	}
+	cd_channelsList->clear();
+	for(int i = 0; i < session->knownchannellist.size(); i++) {
+		FChannelSummary *channelsummary = &session->knownchannellist[i];
+		ChannelListItem *channellistitem = new ChannelListItem(channelsummary->name, channelsummary->count);
+		addToChannelsDialogList(channellistitem);
+	}
+}
+void flist_messenger::updateKnownOpenRoomList(FSession *session)
+{
+	if(!cd_proomsList) {
+		return;
+	}
+	cd_proomsList->clear();
+	for(int i = 0; i < session->knownopenroomlist.size(); i++) {
+		FChannelSummary *channelsummary = &session->knownopenroomlist[i];
+		ChannelListItem *channellistitem = new ChannelListItem(channelsummary->name, channelsummary->title, channelsummary->count);
+		addToProomsDialogList(channellistitem);
+	}
 }

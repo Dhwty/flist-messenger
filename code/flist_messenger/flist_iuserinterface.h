@@ -44,6 +44,9 @@ public:
 	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console = false, bool notify = false) = 0;
 	virtual void messageCharacter(FSession *session, QString charactername, QString message, MessageType messagetype) = 0;
 	virtual void messageSystem(FSession *session, QString message, MessageType messagetype) = 0;
+
+	virtual void updateKnownChannelList(FSession *session) = 0;
+	virtual void updateKnownOpenRoomList(FSession *session) = 0;
 };
 
 #endif // FLIST_IUSERINTERFACE_H

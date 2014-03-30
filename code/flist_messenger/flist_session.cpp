@@ -27,6 +27,8 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent) :
 	channellist(),
 	autojoinchannels(),
 	servervariables(),
+	knownchannellist(),
+	knownopenroomlist(),
 	wsready(false),
 	socketreadbuffer()
 {
@@ -338,6 +340,9 @@ void FSession::wsRecv(std::string packet)
 		CMD(LRP); //Looking for RP message.
 		CMD(MSG); //Channel message.
 		CMD(PRI); //Private message.
+
+		CMD(CHA); //Channel list.
+		CMD(ORS); //Open room list.
 
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
@@ -905,6 +910,43 @@ COMMAND(PRI)
 	QString messagefinal = makeMessage(message, charactername, character);
 	account->ui->addCharacterChat(this, charactername);
 	account->ui->messageCharacter(this, charactername, messagefinal, MESSAGE_TYPE_CHAT);
+}
+
+COMMAND(CHA)
+{
+	(void)rawpacket;
+	//Channel list.
+	//CHA {"channels": [{"name": "Channel Name", "characters": character_count}]}
+	knownchannellist.clear();
+	JSONNode childnode = nodes.at("channels");
+	int size = childnode.size();
+	for(int i = 0; i < size; i++) {
+		JSONNode channelnode = childnode.at(i);
+		QString channelname = channelnode.at("name").as_string().c_str();
+		QString channelcountstring = channelnode.at("characters").as_string().c_str();
+		//todo: Verify the count string can be converted properly.
+		int channelcount = channelcountstring.toInt();
+		knownchannellist.append(FChannelSummary(channelname, channelcount));
+	}
+	account->ui->updateKnownChannelList(this);
+}
+COMMAND(ORS)
+{
+	(void)rawpacket;
+	//Open room list.
+	//CHA {"channels": [{"name": "Channel Name", "title": "Channel Title", "characters": character_count}]}
+	knownopenroomlist.clear();
+	JSONNode childnode = nodes.at("channels");
+	int size = childnode.size();
+	for(int i = 0; i < size; i++) {
+		JSONNode channelnode = childnode.at(i);
+		QString channelname = channelnode.at("name").as_string().c_str();
+		QString channeltitle = channelnode.at("title").as_string().c_str();
+		QString channelcountstring = channelnode.at("characters").as_string().c_str();
+		int channelcount = channelcountstring.toInt();
+		knownopenroomlist.append(FChannelSummary(channelname, channeltitle, channelcount));
+	}
+	account->ui->updateKnownOpenRoomList(this);
 }
 
 COMMAND(PIN)

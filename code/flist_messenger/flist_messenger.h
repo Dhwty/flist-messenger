@@ -220,7 +220,11 @@ public:
 	virtual void messageCharacter(FSession *session, QString charactername, QString message, MessageType messagetype);
 	virtual void messageSystem(FSession *session, QString message, MessageType messagetype);
 
+	virtual void updateKnownChannelList(FSession *session);
+	virtual void updateKnownOpenRoomList(FSession *session);
+
 	void messageMany(QList<QString> &panelnames, QString message, MessageType messagetype);
+
 
 public:
 	QPushButton* pushButton;
