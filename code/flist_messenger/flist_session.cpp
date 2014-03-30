@@ -349,6 +349,8 @@ void FSession::wsRecv(std::string packet)
 		CMD(CHA); //Channel list.
 		CMD(ORS); //Open room list.
 
+		CMD(RTB); //Real time bridge.
+
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
 	} catch(std::invalid_argument) {
@@ -960,6 +962,15 @@ COMMAND(ORS)
 		knownopenroomlist.append(FChannelSummary(channelname, channeltitle, channelcount));
 	}
 	account->ui->updateKnownOpenRoomList(this);
+}
+
+COMMAND(RTB)
+{
+	(void)rawpacket; (void)nodes;
+	//Real time bridge.
+	//RTB {"type":typeenum, ???, "sender": "Character Name", "subject": "Subject Text"}
+	//todo:
+	debugMessage(QString("Real time bridge: %1").arg(QString::fromStdString(rawpacket)));
 }
 
 COMMAND(PIN)

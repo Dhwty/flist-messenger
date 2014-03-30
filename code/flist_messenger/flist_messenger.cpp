@@ -1172,7 +1172,7 @@ void flist_messenger::setupRealUI()
         actionDisconnect->setText ( "Disconnect (WIP)" );
         actionQuit = new QAction ( this );
         actionQuit->setObjectName ( "actionQuit" );
-        actionQuit->setText ( "Quit" );
+        actionQuit->setText ( "&Quit" );
         actionHelp = new QAction ( this );
         actionHelp->setObjectName ( "actionHelp" );
         actionHelp->setText ( "Help" );
@@ -3408,10 +3408,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 
 			FChannelPanel* channel = channelList[panelname];
                         FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, channel, 0, output, currentPanel);
-                }
-                else if ( cmd == "RTB" )
-                {
-                        // RTB {"type":"note","sender":"Viona","subject":"test"}
                 }
                 else if ( cmd == "SFC" )
                 {

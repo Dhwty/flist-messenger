@@ -29,7 +29,12 @@ int main(int argc, char** argv)
 {
 	bool d = (argc > 1 && strcmp(argv[1], "-d") == 0) ? true : false;
 	QApplication *app = new QApplication(argc, argv);
+#if QT_VERSION >= 0x050000
+	//QT5 only uses UTF-8 for implicit text conversion.
+#else
+	//QT4 needs to be told to use UTF-8 for implicit text conversion.
 	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+#endif
 	app->setOrganizationName("F-list.net");
 	app->setOrganizationDomain("www.f-list.net");
 	app->setApplicationName("F-list Messenger");

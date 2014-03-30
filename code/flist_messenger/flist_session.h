@@ -114,6 +114,8 @@ private:
 	COMMAND(CHA);
 	COMMAND(ORS);
 
+	COMMAND(RTB);
+
 	COMMAND(PIN);
 #undef COMMAND
 	
