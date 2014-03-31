@@ -18,6 +18,7 @@ enum MessageType {
 	MESSAGE_TYPE_BROADCAST,
 	MESSAGE_TYPE_RPAD,
 	MESSAGE_TYPE_CHAT,
+	MESSAGE_TYPE_ROLL,
 };
 
 class iUserInterface

@@ -3399,16 +3399,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 ci_teProfile->append ( out );
                         }
                 }
-                else if ( cmd == "RLL" )
-                {
-                        // RLL {"message": "[b]Chromatic[/b] rolls 1d6: [b]2[/b]", "character": "Chromatic", "channel": "ADH-8b02d6012cbad0e7e2c0"}
-                        QString output = nodes.at ( "message" ).as_string().c_str();
-                        QString channelname = nodes.at ( "channel" ).as_string().c_str();
-			QString panelname = PANELNAME(channelname, charName);
-
-			FChannelPanel* channel = channelList[panelname];
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, channel, 0, output, currentPanel);
-                }
                 else if ( cmd == "SFC" )
                 {
                         /* A staff report */
@@ -3491,21 +3481,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         }
 
                         refreshUserlist();
-                }
-                else if ( cmd == "RLL" )
-                {
-                        // Dice rolling or bottling.
-                        QString output;
-                        QString message = nodes.at("message").as_string().c_str();
-                        QString channelname = nodes.at("channel").as_string().c_str();
-			QString panelname = PANELNAME(channelname, charName);
-			FChannelPanel* channel;
-                        if (channelList.contains(panelname))
-                        {
-				channel = channelList[panelname];
-                                output = message;
-                                FMessage fmsg(FMessage::SYSTYPE_DICE, channel, 0, output, currentPanel);
-                        }
                 }
                 else if ( cmd == "TPN" )
                 {
@@ -3830,6 +3805,7 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 				continue;
 			}
 			break;
+		case MESSAGE_TYPE_ROLL:
 		case MESSAGE_TYPE_RPAD:
 		case MESSAGE_TYPE_CHAT:
 			//todo: trigger sounds

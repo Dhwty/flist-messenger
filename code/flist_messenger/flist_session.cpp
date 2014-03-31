@@ -345,6 +345,7 @@ void FSession::wsRecv(std::string packet)
 		CMD(LRP); //Looking for RP message.
 		CMD(MSG); //Channel message.
 		CMD(PRI); //Private message.
+		CMD(RLL); //Dice roll or bottle spin result.
 
 		CMD(CHA); //Channel list.
 		CMD(ORS); //Open room list.
@@ -926,6 +927,24 @@ COMMAND(PRI)
 	account->ui->addCharacterChat(this, charactername);
 	account->ui->messageCharacter(this, charactername, messagefinal, MESSAGE_TYPE_CHAT);
 }
+COMMAND(RLL)
+{
+	//Dice roll or bottle spin result.
+	//RLL {"message": "Message Text", "channel": "Channel Name", "character": "Character Name"}
+	//todo: Check if the "character" field is actually sent.
+	QString channelname = nodes.at("channel").as_string().c_str();
+	//QString charactername = nodes.at("character").as_string().c_str();
+	QString message = nodes.at("message").as_string().c_str();
+	FChannel *channel = getChannel(channelname);
+	//FCharacter *character = getCharacter(charactername);
+	if(!channel) {
+		debugMessage(QString("[SERVER BUG] Received a dice roll result from the channel '%1' but the channel '%1' is unknown. %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
+		//todo: Dump the message to console anyway?
+		return;
+	}
+	//todo: Maybe extract character name and make it a link and colored like normal.
+	account->ui->messageChannel(this, channelname, bbcodeparser->parse(message), MESSAGE_TYPE_ROLL, true);
+}
 
 COMMAND(CHA)
 {
@@ -968,8 +987,10 @@ COMMAND(RTB)
 {
 	(void)rawpacket; (void)nodes;
 	//Real time bridge.
-	//RTB {"type":typeenum, ???, "sender": "Character Name", "subject": "Subject Text"}
-	//todo:
+	//RTB {"type":typeenum, ???}
+	//RTB {"type":"note", "sender": "Character Name", "subject": "Subject Text"}
+	//RTB {"type":"trackadd","name":"Character Name"}
+	//todo: Determine all the RTB messages.
 	debugMessage(QString("Real time bridge: %1").arg(QString::fromStdString(rawpacket)));
 }
 
