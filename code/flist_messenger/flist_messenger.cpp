@@ -3312,7 +3312,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 {
         try
         {
-		FSession *session = account->getSession(charName);
                 if ( cmd == "CIU" )
                 {
                         //CIU {"sender": "EagerToPlease", "name": "ADH-085bcf60bef81b0790b7", "title": "Domination and Degradation"}
@@ -3437,50 +3436,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 output += "</b>\'s report.";
                                 FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
                         }
-                }
-                else if ( cmd == "STA" )
-                {
-                        QString stachar = nodes.at ( "character" ).as_string().c_str();
-
-			if(session->isCharacterOnline(stachar)) {
-                                FCharacter* character = session->characterlist[stachar];
-                                QString status(QString::fromUtf8(nodes.at ( "status" ).as_string().c_str()));
-                                character->setStatus ( status );
-                                QString statmsg;
-                                // Crown messages can cause there to be no statusmsg.
-                                try
-                                {
-                                        statmsg = nodes.at ( "statusmsg" ).as_string().c_str();
-                                        character->setStatusMsg ( statmsg );
-                                }
-                                catch ( std::out_of_range )
-                                {
-                                        statmsg = "";
-                                }
-
-                                if ( se_onlineOffline && session->friendslist.contains ( stachar ) )
-                                {
-                                        QString statusline = "<b>" + stachar + "</b> is now " + character->statusString();
-
-                                        if ( statmsg.length() != 0 )
-                                                statusline += " (" + statmsg + ")";
-
-                                        FMessage fmsg(FMessage::SYSTYPE_ONLINE, currentPanel, 0, statusline, currentPanel);
-                                }
-
-                                if ( channelList.count ( "PM|||"+ charName + "|||" + stachar ) )
-                                {
-					FChannelPanel* pmPanel = channelList["PM|||"+ charName + "|||" + stachar];
-                                        QString paneltitle = character->PMTitle();
-                                        pmPanel->setTitle ( paneltitle );
-                                }
-                        }
-                        else
-                        {
-                                printDebugInfo("[SERVER BUG]: Server told us status for a character we don't know about: " + input);
-                        }
-
-                        refreshUserlist();
                 }
                 else if ( cmd == "TPN" )
                 {
@@ -3759,6 +3714,27 @@ void flist_messenger::notifyCharacterOnline(FSession *session, QString character
 		messageMany(session, channels, characters, system, "<b>" + charactername +"</b> is now " + (online ? "online." : "offline."), online ? MESSAGE_TYPE_ONLINE : MESSAGE_TYPE_OFFLINE);
 	}
 }
+void flist_messenger::notifyCharacterStatusUpdate(FSession *session, QString charactername)
+{
+	QString panelname = "PM|||" + session->character + "|||" + charactername;
+	QList<QString> channels;
+	QList<QString> characters;
+	bool system = session->friendslist.contains(charactername);
+	if(channelList.contains(panelname)) {
+		characters.append(charactername);
+		system = true;
+		//todo: Update panel with changed status.
+	}
+	if(characters.count() > 0 || channels.count() > 0 || system) {
+		FCharacter *character = session->getCharacter(charactername);
+		QString statusmessage =  character->statusMsg();
+		if(!statusmessage.isEmpty()) {
+			statusmessage = QString(" (%1)").arg(statusmessage);
+		}
+		QString message = QString("<b>%1</b> is now %2%3").arg(charactername).arg(character->statusString()).arg(statusmessage);
+		messageMany(session, channels, characters, system, message, MESSAGE_TYPE_STATUS);
+	}
+}
 
 void flist_messenger::notifyIgnoreUpdate(FSession *session)
 {
@@ -3774,6 +3750,8 @@ void flist_messenger::setIgnoreCharacter(FSession *session, QString characternam
 		refreshFriendLists();
 	}
 }
+
+
 
 void flist_messenger::messageMany(QList<QString> &panelnames, QString message, MessageType messagetype)
 {
@@ -3793,6 +3771,11 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			break;
 		case MESSAGE_TYPE_ONLINE:
 		case MESSAGE_TYPE_OFFLINE:
+			if(!se_onlineOffline) {
+				continue;
+			}
+			break;
+		case MESSAGE_TYPE_STATUS:
 			if(!se_onlineOffline) {
 				continue;
 			}

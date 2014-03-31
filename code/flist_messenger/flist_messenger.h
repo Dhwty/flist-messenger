@@ -212,8 +212,10 @@ public:
 	virtual void leaveChannel(FSession *session, QString channelname);
 	virtual void setChannelDescription(FSession *session, QString channelname, QString description);
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
+	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
 	virtual void notifyIgnoreUpdate(FSession *session);
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore);
+
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype);
 	virtual void messageAll(FSession *session, QString message, MessageType messagetype);
 	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console = false, bool notify = false);

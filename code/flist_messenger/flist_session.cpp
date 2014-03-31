@@ -323,6 +323,7 @@ void FSession::wsRecv(std::string packet)
 		CMD(LIS); //List of online characters.
 		CMD(NLN); //Character is now online.
 		CMD(FLN); //Character is now offline.
+		CMD(STA); //Status change.
 
 		CMD(CBU); //kick and ban character from channel.
 		CMD(CKU); //Kick character from channel.
@@ -592,6 +593,28 @@ COMMAND(FLN)
 		}
 	}
 	account->ui->notifyCharacterOnline(this, charactername, false);
+}
+COMMAND(STA)
+{
+	//Status change.
+	//STA {"character": "Character Name", "status": statusenum, "statusmsg": "Status message"}
+	QString charactername = nodes.at("character").as_string().c_str();
+	QString status = nodes.at("status").as_string().c_str();
+	QString statusmessage;
+	FCharacter *character = getCharacter(charactername);
+	if(!character) {
+		debugMessage(QString("[SERVER BUG] Received a status update message from the character '%1', but the character '%1' is unknown. %2").arg(charactername).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	character->setStatus(status);
+	try {
+		statusmessage = nodes.at("statusmsg").as_string().c_str();
+		character->setStatusMsg(statusmessage);
+	} catch (std::out_of_range) {
+		// Crown messages can cause there to be no statusmsg.
+		/*do nothing*/
+	}
+	account->ui->notifyCharacterStatusUpdate(this, charactername);
 }
 
 COMMAND(CBUCKU)

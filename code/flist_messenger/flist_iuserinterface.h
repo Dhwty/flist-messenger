@@ -8,6 +8,7 @@ enum MessageType {
 	MESSAGE_TYPE_LOGIN,
 	MESSAGE_TYPE_ONLINE,
 	MESSAGE_TYPE_OFFLINE,
+	MESSAGE_TYPE_STATUS,
 	MESSAGE_TYPE_CHANNEL_DESCRIPTION,
 	MESSAGE_TYPE_JOIN,
 	MESSAGE_TYPE_LEAVE,
@@ -39,6 +40,7 @@ public:
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online) = 0;
 	virtual void notifyIgnoreUpdate(FSession *session) = 0;
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore) = 0;
+	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername) = 0;
 
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype) = 0;
 	virtual void messageAll(FSession *session, QString message, MessageType messagetype) = 0;
