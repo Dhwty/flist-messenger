@@ -213,6 +213,7 @@ public:
 	virtual void setChannelDescription(FSession *session, QString channelname, QString description);
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
+	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus);
 	virtual void notifyIgnoreUpdate(FSession *session);
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore);
 

@@ -348,10 +348,14 @@ void FSession::wsRecv(std::string packet)
 		CMD(PRI); //Private message.
 		CMD(RLL); //Dice roll or bottle spin result.
 
+		CMD(TPN); //Typing status.
+
 		CMD(CHA); //Channel list.
 		CMD(ORS); //Open room list.
 
 		CMD(RTB); //Real time bridge.
+
+		CMD(ERR); //Error message.
 
 		CMD(PIN); //Ping.
 		emit processCommand(packet, cmd, nodes);
@@ -969,6 +973,34 @@ COMMAND(RLL)
 	account->ui->messageChannel(this, channelname, bbcodeparser->parse(message), MESSAGE_TYPE_ROLL, true);
 }
 
+COMMAND(TPN)
+{
+	//Typing status.
+	//TPN {"status": typing_enum, "character": "Character Name"}
+	//Where 'typing_enum' is one of: "typing", "paused", "clear"
+	QString charactername = nodes.at("character").as_string().c_str();
+	QString typingstatus = nodes.at("status").as_string().c_str();
+	FCharacter *character = getCharacter(charactername);
+	if(!character) {
+		debugMessage(QString("[SERVER BUG] Received a typing status update for the character '%1' but the character '%1' is unknown. %2").arg(charactername).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	TypingStatus status;
+	if(typingstatus == "typing") {
+		status = TYPING_STATUS_TYPING;
+	} else if(typingstatus == "paused") {
+		status = TYPING_STATUS_PAUSED;
+	} else if(typingstatus == "clear") {
+		status = TYPING_STATUS_CLEAR;
+	} else {
+		debugMessage(QString("[SERVER BUG] Received a typing status update of '%2' for the character '%1' but the typing status '%2' is unknown. %3").arg(charactername).arg(typingstatus).arg(QString::fromStdString(rawpacket)));
+		status = TYPING_STATUS_CLEAR;
+	}
+	account->ui->setCharacterTypingStatus(this, charactername, status);
+
+	
+}
+
 COMMAND(CHA)
 {
 	(void)rawpacket;
@@ -1015,6 +1047,43 @@ COMMAND(RTB)
 	//RTB {"type":"trackadd","name":"Character Name"}
 	//todo: Determine all the RTB messages.
 	debugMessage(QString("Real time bridge: %1").arg(QString::fromStdString(rawpacket)));
+}
+
+COMMAND(ERR)
+{
+	//Error message.
+	//ERR {"number": error_number, "message": "Error Message"}
+	QString errornumberstring = nodes.at("number").as_string().c_str();
+	QString errormessage = nodes.at("message").as_string().c_str();
+	QString message = QString("<b>Error %1: </b> %2").arg(errornumberstring).arg(errormessage);
+	account->ui->messageSystem(this, message, MESSAGE_TYPE_ERROR);
+	bool ok;
+	int errornumber = errornumberstring.toInt(&ok);
+	if(!ok) {
+		debugMessage(QString("Received an error message but could not convert the error number to an integer. Error number '%1', error message '%2' : %3").arg(errornumberstring).arg(errormessage).arg(QString::fromStdString(rawpacket)));
+			     return;
+	}
+	//Handle special cases.
+	//todo: Parse the error and pass along to the UI for more informative feedback.
+	switch(errornumber) {
+	case 34: //Error 34 is not in the wiki, but the existing code sends out another identification if it is received.
+	{
+		JSONNode loginnode;
+		loginnode.push_back(JSONNode("method", "ticket"));
+		loginnode.push_back(JSONNode("ticket", account->ticket.toStdString()));
+		loginnode.push_back(JSONNode("account", account->getUserName().toStdString()));
+		loginnode.push_back(JSONNode("cname", FLIST_CLIENTID));
+		loginnode.push_back(JSONNode("cversion", FLIST_VERSIONNUM));
+		loginnode.push_back(JSONNode("character", character.toStdString()));
+		std::string idenStr = "IDN " + loginnode.write();
+		//debugMessage("Indentify...");
+		wsSend(idenStr);
+		break;
+	}
+	default:
+		break;
+	}
+		
 }
 
 COMMAND(PIN)

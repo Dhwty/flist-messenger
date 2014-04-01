@@ -946,7 +946,7 @@ void flist_messenger::tb_closeClicked()
         {
                 tb_recent->setActive(false);
                 tb_recent->pushButton->setVisible(false);
-		tb_recent->setTyping ( FChannelPanel::TYPINGSTATUS_CLEAR );
+		tb_recent->setTyping ( TYPING_STATUS_CLEAR );
         } else {
 		leaveChannel(tb_recent->getPanelName(), tb_recent->getChannelName(), true);
         }
@@ -1776,7 +1776,7 @@ void flist_messenger::receivePM ( QString& message, QString& character )
                 pmPanel->setActive(true);
                 pmPanel->pushButton->setVisible(true);
         }
-	pmPanel->setTyping ( FChannelPanel::TYPINGSTATUS_CLEAR );
+	pmPanel->setTyping ( TYPING_STATUS_CLEAR );
         pmPanel->updateButtonColor();
 
         FMessage msg(FMessage::MESSAGETYPE_PRIVMESSAGE, pmPanel, session->characterlist[character], message, currentPanel);
@@ -2061,14 +2061,14 @@ void flist_messenger::inputChanged()
                 if ( plainTextEdit->toPlainText().simplified() == "" )
                 {
                         typingCleared ( currentPanel );
-			currentPanel->setTypingSelf ( FChannelPanel::TYPINGSTATUS_CLEAR );
+			currentPanel->setTypingSelf ( TYPING_STATUS_CLEAR );
                 }
                 else
                 {
-			if ( currentPanel->getTypingSelf() != FChannelPanel::TYPINGSTATUS_TYPING )
+			if ( currentPanel->getTypingSelf() != TYPING_STATUS_TYPING )
                         {
                                 typingContinued ( currentPanel );
-				currentPanel->setTypingSelf ( FChannelPanel::TYPINGSTATUS_TYPING );
+				currentPanel->setTypingSelf ( TYPING_STATUS_TYPING );
                         }
                 }
         }
@@ -2331,7 +2331,7 @@ void flist_messenger::switchTab ( QString& tabname )
 
         QString input = plainTextEdit->toPlainText();
 
-	if ( currentPanel && currentPanel->type() == FChannelPanel::CHANTYPE_PM && currentPanel->getTypingSelf() == FChannelPanel::TYPINGSTATUS_TYPING )
+	if ( currentPanel && currentPanel->type() == FChannelPanel::CHANTYPE_PM && currentPanel->getTypingSelf() == TYPING_STATUS_TYPING )
         {
                 typingPaused ( currentPanel );
         }
@@ -3322,42 +3322,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                         output = "<b>" + sender + "</b> has invited you to join the room <a href=\"#AHI-" + name + "\">" + title + "</a>.";
                         FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
                 }
-                else if ( cmd == "ERR" )
-                {
-                        QString output;
-                        QString message = nodes.at ( "message" ).as_string().c_str();
-                        QString number = nodes.at ( "number" ).as_string().c_str();
-                        output = "<b>Error " + number + ": </b>" + message;
-
-                        if ( textEdit )
-                                FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
-                        else
-                                QMessageBox::critical ( this, "Error", message );
-
-                        if(number == "34")
-                        {
-                                JSONNode loginnode;
-                                JSONNode tempnode ( "method", "ticket" );
-                                loginnode.push_back ( tempnode );
-                                tempnode.set_name ( "ticket" );
-				tempnode = account->ticket.toStdString();
-                                loginnode.push_back ( tempnode );
-                                tempnode.set_name ( "account" );
-				tempnode = account->getUserName().toStdString();
-                                loginnode.push_back ( tempnode );
-                                tempnode.set_name ( "character" );
-                                tempnode = charName.toStdString();
-                                loginnode.push_back ( tempnode );
-                                tempnode.set_name ( "cname" );
-                                tempnode = FLIST_CLIENTID;
-                                loginnode.push_back ( tempnode );
-                                tempnode.set_name ( "cversion" );
-                                tempnode = FLIST_VERSIONNUM;
-                                loginnode.push_back ( tempnode );
-                                std::string idenStr = "IDN " + loginnode.write();
-                                sendWS ( idenStr );
-                        }
-                }
                 else if ( cmd == "KID" )
                 {
                         // [19:41 PM]>>KIN {"character":"Cinnamon Flufftail"}
@@ -3435,35 +3399,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 output += nodes.at ( "character" ).as_string().c_str();
                                 output += "</b>\'s report.";
                                 FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
-                        }
-                }
-                else if ( cmd == "TPN" )
-                {
-                        // Unparsed command: TPN {"status": "clear", "character": "Becca Greene"}
-                        // Unparsed command: TPN {"status": "typing", "character": "Becca Greene"}
-                        // Unparsed command: TPN {"status": "paused", "character": "Becca Greene"}
-                        QString status = nodes.at ( "status" ).as_string().c_str();
-                        QString character = nodes.at ( "character" ).as_string().c_str();
-                        QString panelName = "PM|||"+ charName + "|||" + character;
-
-                        if ( channelList.count ( panelName ) != 0 )
-                        {
-				FChannelPanel* panel = channelList[panelName];
-
-                                if ( status == "typing" )
-                                {
-					panel->setTyping ( FChannelPanel::TYPINGSTATUS_TYPING );
-                                }
-                                else if ( status == "paused" )
-                                {
-					panel->setTyping ( FChannelPanel::TYPINGSTATUS_PAUSED );
-                                }
-                                else // if (status == "clear")
-                                {
-					panel->setTyping ( FChannelPanel::TYPINGSTATUS_CLEAR );
-                                }
-
-                                panel->updateButtonColor();
                         }
                 }
                 else if ( cmd == "RMO" )
@@ -3573,7 +3508,7 @@ void flist_messenger::addCharacterChat(FSession *session, QString charactername)
 		channelpanel->setActive(true);
 		channelpanel->pushButton->setVisible(true);
 	}
-	channelpanel->setTyping(FChannelPanel::TYPINGSTATUS_CLEAR);
+	channelpanel->setTyping(TYPING_STATUS_CLEAR);
 	channelpanel->updateButtonColor();
 }
 
@@ -3735,6 +3670,17 @@ void flist_messenger::notifyCharacterStatusUpdate(FSession *session, QString cha
 		messageMany(session, channels, characters, system, message, MESSAGE_TYPE_STATUS);
 	}
 }
+void flist_messenger::setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus)
+{
+	QString panelname = "PM|||" + session->character + "|||" + charactername;
+	FChannelPanel *channelpanel;
+	channelpanel = channelList[panelname];
+	if(!channelpanel) {
+		return;
+	}
+	channelpanel->setTyping(typingstatus);
+	channelpanel->updateButtonColor();
+}
 
 void flist_messenger::notifyIgnoreUpdate(FSession *session)
 {
@@ -3798,6 +3744,7 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			}
 			channelpanel->updateButtonColor();
 			break;
+		case MESSAGE_TYPE_ERROR:
 		case MESSAGE_TYPE_SYSTEM:
 		case MESSAGE_TYPE_BROADCAST:
 			break;

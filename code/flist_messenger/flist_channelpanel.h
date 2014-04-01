@@ -31,6 +31,7 @@
 #include "flist_parser.h"
 #include "../libjson/libJSON.h"
 #include "../libjson/Source/NumberToString.h"
+#include "flist_enums.h"
 
 #include <iostream>
 #include <QDesktopWidget>
@@ -65,14 +66,6 @@ class FChannelPanel
 {
 
 public:
-	enum typingStatus
-	{
-		TYPINGSTATUS_CLEAR,
-		TYPINGSTATUS_TYPING,
-		TYPINGSTATUS_PAUSED,
-		TYPINGSTATUS_MAX
-	};
-
 	enum channelType
 	{
 		CHANTYPE_NORMAL,
@@ -111,10 +104,10 @@ public:
 	void addOp(QString &charactername);
 	void removeOp(QString &charactername);
 	QList<QString> opList(){return chanOps;}
-	void setTyping ( typingStatus status );
-	typingStatus getTyping(){return typing;}
-	void setTypingSelf ( typingStatus status ){typingSelf = status;}
-	typingStatus getTypingSelf(){return typingSelf;}
+	void setTyping ( TypingStatus status );
+	TypingStatus getTyping(){return typing;}
+	void setTypingSelf ( TypingStatus status ){typingSelf = status;}
+	TypingStatus getTypingSelf(){return typingSelf;}
 	void addChar ( FCharacter* character, bool sort_list = true );
 	void remChar ( FCharacter* character );
 	QList<FCharacter*> charList(){return chanChars;}
@@ -143,8 +136,8 @@ public:
 private:
 	bool					active;				// Will be no when the user leaves. This way, logs are kept.~
 	QString					recipientName;		// For PM tabs.
-	typingStatus			typing;				// For PM tabs: Whether the other is typing.
-	typingStatus			typingSelf;			// For PM tabs: Whether the user is typing
+	TypingStatus			typing;				// For PM tabs: Whether the other is typing.
+	TypingStatus			typingSelf;			// For PM tabs: Whether the user is typing
 	channelMode				mode;
 	QString					input;
 	bool					highlighted;

@@ -1,26 +1,9 @@
 #ifndef FLIST_IUSERINTERFACE_H
 #define FLIST_IUSERINTERFACE_H
 
-class FSession;
+#include "flist_enums.h"
 
-//todo: move this elsewhere
-enum MessageType {
-	MESSAGE_TYPE_LOGIN,
-	MESSAGE_TYPE_ONLINE,
-	MESSAGE_TYPE_OFFLINE,
-	MESSAGE_TYPE_STATUS,
-	MESSAGE_TYPE_CHANNEL_DESCRIPTION,
-	MESSAGE_TYPE_JOIN,
-	MESSAGE_TYPE_LEAVE,
-	MESSAGE_TYPE_KICK,
-	MESSAGE_TYPE_KICKBAN,
-	MESSAGE_TYPE_IGNORE_UPDATE,
-	MESSAGE_TYPE_SYSTEM,
-	MESSAGE_TYPE_BROADCAST,
-	MESSAGE_TYPE_RPAD,
-	MESSAGE_TYPE_CHAT,
-	MESSAGE_TYPE_ROLL,
-};
+class FSession;
 
 class iUserInterface
 {
@@ -41,6 +24,7 @@ public:
 	virtual void notifyIgnoreUpdate(FSession *session) = 0;
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore) = 0;
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername) = 0;
+	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus) = 0;
 
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype) = 0;
 	virtual void messageAll(FSession *session, QString message, MessageType messagetype) = 0;

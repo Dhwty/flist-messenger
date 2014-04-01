@@ -81,8 +81,8 @@ FChannelPanel::FChannelPanel (QString panelname, QString channelname, channelTyp
         chanType = type;
         chanTitle = channelname;
         active = true;
-        typing = TYPINGSTATUS_CLEAR;
-        typingSelf = TYPINGSTATUS_CLEAR;
+        typing = TYPING_STATUS_CLEAR;
+        typingSelf = TYPING_STATUS_CLEAR;
         input = "";
         if (type == CHANTYPE_NORMAL || type == CHANTYPE_ADHOC)
         {
@@ -110,7 +110,7 @@ void FChannelPanel::setTitle ( QString& title )
         chanTitle = title;
 }
 
-void FChannelPanel::setTyping ( typingStatus status )
+void FChannelPanel::setTyping ( TypingStatus status )
 {
         typing = status;
 }
@@ -340,10 +340,10 @@ void FChannelPanel::updateButtonColor()
         {
                 switch ( typing )
                 {
-                case TYPINGSTATUS_TYPING:
+                case TYPING_STATUS_TYPING:
                         rv = rv + colorTyping.name() + ";";
                         break;
-                case TYPINGSTATUS_PAUSED:
+                case TYPING_STATUS_PAUSED:
                         rv = rv + colorPaused.name() + ";";
                         break;
                 default:
