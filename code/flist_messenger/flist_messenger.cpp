@@ -3316,53 +3316,8 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 {
         try
         {
-                if ( cmd == "SFC" )
-                {
-                        /* A staff report */
-                        QString output;
-                        QString action = nodes.at ( "action" ).as_string().c_str();
-
-                        if ( action == "report" )
-                        {
-                                bool logged;
-                                QString callid = nodes.at ( "callid" ).as_string().c_str();
-                                QString character = nodes.at ( "character" ).as_string().c_str();
-                                QString logid;
-                                try
-                                {
-                                        logid = nodes.at ( "logid" ).as_string().c_str();
-                                        logged = true;
-                                }
-                                catch ( std::out_of_range )
-                                {
-                                        logged = false;
-                                }
-                                QString report = nodes.at ( "report" ).as_string().c_str();
-                                output        = "<b>STAFF ALERT!</b> From " + character + "<br />";
-                                output += report + "<br />";
-                                if (logged)
-                                        output += "<a href=\"#LNK-https://www.f-list.net/fchat/getLog.php?log=" + logid + "\" ><b>Log~</b></a> | ";
-                                output += "<a href=\"#CSA-" + callid + "\"><b>Confirm Alert</b></a>";
-                                FMessage fmsg(FMessage::MESSAGETYPE_REPORT, currentPanel, 0, output, currentPanel, channelList);
-                        }
-                        else if ( action == "confirm" )
-                        {
-                                output = "<b>";
-                                output += nodes.at ( "moderator" ).as_string().c_str();
-                                output += "</b> is handling <b>";
-                                output += nodes.at ( "character" ).as_string().c_str();
-                                output += "</b>\'s report.";
-                                FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
-                        }
-                }
-                else if ( cmd == "ZZZ" )
-                {
-                        QString output;
-                        QString message = nodes.at ( "message" ).as_string().c_str();
-                        output = "<b>Debug Reply:</b> " + message;
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
-                }
-                else
+		//todo: flist_messenger::processCommand() is almost completely obsolete!
+		(void) cmd; (void) nodes;
                 {
                         printDebugInfo("Unparsed command: " + input);
                         QString qinput = "Unparsed command: ";
@@ -3727,6 +3682,7 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			}
 			channelpanel->updateButtonColor();
 			break;
+		case MESSAGE_TYPE_REPORT:
 		case MESSAGE_TYPE_ERROR:
 		case MESSAGE_TYPE_SYSTEM:
 		case MESSAGE_TYPE_BROADCAST:

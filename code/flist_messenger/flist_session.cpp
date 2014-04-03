@@ -315,6 +315,8 @@ void FSession::wsRecv(std::string packet)
 		CMD(AOP); //Add a chat operator.
 		CMD(DOP); //Remove a chat operator.
 
+		CMD(SFC); //Staff report.
+
 		CMD(CDS); //Channel description.
 		CMD(CIU); //Channel invite.
 		CMD(ICH); //Initial channel data.
@@ -359,6 +361,8 @@ void FSession::wsRecv(std::string packet)
 		CMD(ORS); //Open room list.
 
 		CMD(RTB); //Real time bridge.
+
+		CMD(ZZZ); //Debug test command.
 
 		CMD(ERR); //Error message.
 
@@ -426,6 +430,41 @@ COMMAND(DOP)
 		character->setIsChatOp(false);
 	}
 	account->ui->setChatOperator(this, op, false);
+}
+
+COMMAND(SFC)
+{
+	//Staff report.
+	//SFC {"action": actionenum, ???}
+	//SFC {"action": "report", "callid": "ID?", "character": "Character Name", "logid": "LogID", "report": "Report Text"}
+	//SFC {"action": "confirm", "moderator": "Character Name", "character": "Character Name"}
+	//The wiki has no documentation on this command.
+	QString action = nodes.at("action").as_string().c_str();
+	if(action == "report") {
+		QString callid = nodes.at("callid").as_string().c_str();
+		QString character = nodes.at("character").as_string().c_str();
+		QString report = nodes.at("report").as_string().c_str();
+		QString logid;
+		QString logstring;
+		try {
+			logid = nodes.at("logid").as_string().c_str();
+			logstring = QString("<a href=\"#LNK-https://www.f-list.net/fchat/getLog.php?log=%1\" ><b>Log~</b></a> | ").arg(logid);
+		} catch(std::out_of_range) {
+			logstring.clear();
+		}
+		QString message = QString("<b>STAFF ALERT!</b> From %1<br />"
+					  "%2<br />"
+					  "%3" 
+					  "<a href=\"#CSA-%4\"><b>Confirm Alert</b></a>").arg(character).arg(report).arg(logstring).arg(callid);
+		account->ui->messageSystem(this, message, MESSAGE_TYPE_REPORT);
+	} else if(action == "confirm") {
+		QString moderator = nodes.at("moderator").as_string().c_str();
+		QString character = nodes.at("character").as_string().c_str();
+		QString message = QString("<b>%1</b> is handling <b>%2</b>'s report.").arg(moderator).arg(character);
+		account->ui->messageSystem(this, message, MESSAGE_TYPE_REPORT);
+	} else {
+		debugMessage(QString("Received a staff report with an action of '%1' but we don't know how to handle it. %2").arg(action).arg(QString::fromStdString(rawpacket)));
+	}
 }
 
 COMMAND(CDS)
@@ -1161,6 +1200,16 @@ COMMAND(RTB)
 	//RTB {"type":"trackadd","name":"Character Name"}
 	//todo: Determine all the RTB messages.
 	debugMessage(QString("Real time bridge: %1").arg(QString::fromStdString(rawpacket)));
+}
+
+COMMAND(ZZZ)
+{
+	(void)rawpacket;
+	//Debug test command.
+	//ZZZ {"message": "???"}
+	//This command is not documented.
+	QString message = nodes.at("message").as_string().c_str();
+	account->ui->messageSystem(this, QString("<b>Debug Reply:</b> %1").arg(message), MESSAGE_TYPE_SYSTEM);
 }
 
 COMMAND(ERR)

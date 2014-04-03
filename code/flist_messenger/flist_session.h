@@ -78,6 +78,8 @@ private:
 	COMMAND(AOP);
 	COMMAND(DOP);
 
+	COMMAND(SFC);
+
 	COMMAND(CDS);
 	COMMAND(CIU);
 	COMMAND(ICH);
@@ -124,6 +126,8 @@ private:
 	COMMAND(ORS);
 
 	COMMAND(RTB);
+
+	COMMAND(ZZZ);
 
 	COMMAND(ERR);
 
