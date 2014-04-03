@@ -117,6 +117,9 @@ private:
 
 	COMMAND(TPN);
 
+	COMMAND(KID);
+	COMMAND(PRD);
+
 	COMMAND(CHA);
 	COMMAND(ORS);
 

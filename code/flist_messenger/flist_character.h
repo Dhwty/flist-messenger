@@ -23,6 +23,7 @@
 #define flist_character_H
 
 #include <QString>
+#include <QHash>
 #include <QIcon>
 #include <time.h>
 
@@ -111,6 +112,17 @@ public:
 
 	QString getUrl() {return "https://www.f-list.net/c/" + charName + "/";} //todo: HTTP request character encoding. //todo: Get server address from FServer?
 
+	void clearCustomKinkData() {customkinkdatakeys.clear(); customkinkdata.clear();}
+	void addCustomKinkData(QString key, QString value) {customkinkdatakeys.removeAll(key); customkinkdatakeys.append(key); customkinkdata[key] = value;}
+	QStringList &getCustomKinkDataKeys() {return customkinkdatakeys;}
+	QHash<QString, QString> &getCustomKinkData() {return customkinkdata;}
+
+	void clearProfileData() {profiledatakeys.clear(); profiledata.clear();}
+	void addProfileData(QString key, QString value) {profiledatakeys.removeAll(key); profiledatakeys.append(key); profiledata[key] = value;}
+	QStringList &getProfileDataKeys() {return profiledatakeys;}
+	QHash<QString, QString> &getProfileData() {return profiledata;}
+	
+
 	static void initClass();
 
 private:
@@ -121,6 +133,12 @@ private:
 	quint32				lastActivity;
 	bool				chatOp;
 	bool				isFriend;
+
+	//todo: The following data should really go in 'FCharacterProfile', but placed here to expediate the transfer of flist_messenger::processCommand()'s functionality into 'FSession'. 'FCharacterProfile' is expected to use the JSON HTTP API to retrieve data and will be less session dependant.
+	QStringList customkinkdatakeys; //<Custom kink keys in the order they were reported by the server
+	QHash<QString, QString> customkinkdata; //Custom kink data.
+	QStringList profiledatakeys; //<Profile keys in the order they were reported by the server
+	QHash<QString, QString> profiledata; //Profile data.
 };
 
 #endif //flist_character_H

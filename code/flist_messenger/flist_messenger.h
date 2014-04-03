@@ -215,6 +215,8 @@ public:
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
 	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus);
+	virtual void notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername);
+	virtual void notifyCharacterProfileDataUpdated(FSession *session, QString charactername);
 	virtual void notifyIgnoreUpdate(FSession *session);
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore);
 

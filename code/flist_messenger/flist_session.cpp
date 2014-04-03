@@ -352,6 +352,9 @@ void FSession::wsRecv(std::string packet)
 
 		CMD(TPN); //Typing status.
 
+		CMD(KID); //Custom kink data.
+		CMD(PRD); //Profile data.
+
 		CMD(CHA); //Channel list.
 		CMD(ORS); //Open room list.
 
@@ -1049,6 +1052,66 @@ COMMAND(TPN)
 	}
 	account->ui->setCharacterTypingStatus(this, charactername, status);
 
+	
+}
+
+COMMAND(KID)
+{
+	//Custom kink data.
+	//KID {"type": kinkdataenum, "character": "Character Name", ???}
+	//KID {"type": "start", "character": "Character Name", "message": "Custom kinks of Character Name"}
+	//KID {"type": "end", "character": "Character Name", "message": "End of custom kinks."}
+	//KID {"type": "custom", "character": "Character Name", "key": "Key Text", "value": "Value Text"}
+	//Where "kinkdataenum" is one of: "start", "end", "custom"
+	QString type = nodes.at("type").as_string().c_str();
+	QString charactername = nodes.at("character").as_string().c_str();
+	FCharacter *character = getCharacter(charactername);
+	if(!character) {
+		debugMessage(QString("[SERVER BUG] Received custom kink data for the character '%1' but the character '%1' is unknown. %2").arg(charactername).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	if(type == "start") {
+		character->clearCustomKinkData();
+		//account->ui->notifyCharacterCustomKinkDataReset(this, charactername);
+	} else if(type == "end") {
+		account->ui->notifyCharacterCustomKinkDataUpdated(this, charactername);
+	} else if(type == "custom") {
+		QString key = nodes.at("key").as_string().c_str();
+		QString value = nodes.at("value").as_string().c_str();
+		character->addCustomKinkData(key, value);
+	} else {
+		debugMessage(QString("[BUG] Received custom kink data for the character '%1' with a type of '%2' but we don't know how to handle '%2'. %3").arg(charactername).arg(QString::fromStdString(rawpacket)));
+	}
+}
+COMMAND(PRD)
+{
+	//Profile data.
+	//PRD {"type": profiledataenum, "character": "Character Name", ???}
+	//PRD {"type": "start", "character": "Character Name", "message": "Profile of Character Name"}
+	//PRD {"type": "end", "character": "Character Name", "message": "End of Profile"}
+	//PRD {"type": "info", "character": "Character Name", "key": "Key Text", "value": "Value Text"}
+	//PRD {"type": "select", "character": "Character Name", ???}
+	//Where "profiledataenum" is one of: "start", "end", "info", "select"
+	QString type = nodes.at("type").as_string().c_str();
+	QString charactername = nodes.at("character").as_string().c_str();
+	FCharacter *character = getCharacter(charactername);
+	if(!character) {
+		debugMessage(QString("[SERVER BUG] Received profile data for the character '%1' but the character '%1' is unknown. %2").arg(charactername).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	if(type == "start") {
+		character->clearProfileData();
+		//account->ui->notifyCharacterProfileDataReset(this, charactername);
+	} else if(type == "end") {
+		account->ui->notifyCharacterProfileDataUpdated(this, charactername);
+	} else if(type == "info") {
+		QString key = nodes.at("key").as_string().c_str();
+		QString value = nodes.at("value").as_string().c_str();
+		character->addProfileData(key, value);
+	} else {
+		//todo: "select" is referred to in the wiki but no additional detail is given.
+		debugMessage(QString("[BUG] Received profile data for the character '%1' with a type of '%2' but we don't know how to handle '%2'. %3").arg(charactername).arg(QString::fromStdString(rawpacket)));
+	}
 	
 }
 

@@ -112,6 +112,7 @@ QString BBCodeParser::BBCodeTagChannel::parse(QString& param, QString& content)
         return content;
 }
 
+//todo: Check that this is a real F-List BBCode tag (it's not documented on the wiki), and that 'content' and 'param' are around the right way (currently they look swapped).
 // [session=Ponyville]ADH-27f9aeaebbf401b7178c[/session]
 QString BBCodeParser::BBCodeTagSession::parse(QString& param, QString& content)
 {

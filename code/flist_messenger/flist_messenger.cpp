@@ -3316,47 +3316,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 {
         try
         {
-                if ( cmd == "KID" )
-                {
-                        // [19:41 PM]>>KIN {"character":"Cinnamon Flufftail"}
-                        // [19:41 PM]<<KID {"message": "(custom) kinks of Cinnamon Flufftail.", "type": "start"}
-                        // [19:41 PM](custom) kinks of Cinnamon Flufftail.
-                        // [19:41 PM]<<KID {"type": "custom", "value": "<3", "key": "*Viona"}
-                        // [19:41 PM]*Viona: <3
-                        // [19:41 PM]<<KID {"message": "End of (custom) kinks.", "type": "end"}
-                        QString type = nodes.at ( "type" ).as_string().c_str();
-
-                        if ( type == "start" )
-                        {
-                                ci_teKinks->clear();
-                        }
-                        else if ( type == "custom" )
-                        {
-                                QString out;
-                                QString value = nodes.at ( "value" ).as_string().c_str();
-                                QString key = nodes.at ( "key" ).as_string().c_str();
-                                out = QString ( "<b>" ) + key + QString ( ":</b> " ) + value;
-                                ci_teKinks->append ( out );
-                        }
-                }
-                else if ( cmd == "PRD" )
-                {
-                        QString type = nodes.at ( "type" ).as_string().c_str();
-
-                        if ( type == "start" )
-                        {
-                                ci_teProfile->clear();
-                        }
-                        else if ( type == "info" )
-                        {
-                                QString out;
-                                QString value = nodes.at ( "value" ).as_string().c_str();
-                                QString key = nodes.at ( "key" ).as_string().c_str();
-                                out = QString ( "<b>" ) + key + QString ( ":</b> " ) + value;
-                                ci_teProfile->append ( out );
-                        }
-                }
-                else if ( cmd == "SFC" )
+                if ( cmd == "SFC" )
                 {
                         /* A staff report */
                         QString output;
@@ -3664,6 +3624,42 @@ void flist_messenger::setCharacterTypingStatus(FSession *session, QString charac
 	}
 	channelpanel->setTyping(typingstatus);
 	channelpanel->updateButtonColor();
+}
+void flist_messenger::notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername)
+{
+	if(!ci_teKinks) {
+		debugMessage(QString("Received custom kink data for the character '%1' but the profile window has not been created.").arg(charactername));
+		return;
+	}
+	FCharacter *character = session->getCharacter(charactername);
+	if(!character) {
+		debugMessage(QString("Received custom kink data for the character '%1' but the character is not known.").arg(charactername));
+		return;
+	}
+	QStringList &keys = character->getCustomKinkDataKeys();
+	QHash<QString, QString> &kinkdata = character->getCustomKinkData();
+	ci_teKinks->clear();
+	foreach(QString key, keys) {
+		ci_teKinks->append(QString("<b>%1:</b> %2").arg(key).arg(kinkdata[key]));
+	}
+}
+void flist_messenger::notifyCharacterProfileDataUpdated(FSession *session, QString charactername)
+{
+	if(!ci_teProfile) {
+		debugMessage(QString("Received profile data for the character '%1' but the profile window has not been created.").arg(charactername));
+		return;
+	}
+	FCharacter *character = session->getCharacter(charactername);
+	if(!character) {
+		debugMessage(QString("Received profile data for the character '%1' but the character is not known.").arg(charactername));
+		return;
+	}
+	QStringList &keys = character->getProfileDataKeys();
+	QHash<QString, QString> &profiledata = character->getProfileData();
+	ci_teProfile->clear();
+	foreach(QString key, keys) {
+		ci_teProfile->append(QString("<b>%1:</b> %2").arg(key).arg(profiledata[key]));
+	}
 }
 
 void flist_messenger::notifyIgnoreUpdate(FSession *session)

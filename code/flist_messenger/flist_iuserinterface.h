@@ -26,6 +26,8 @@ public:
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore) = 0;
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername) = 0;
 	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus) = 0;
+	virtual void notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername) = 0;
+	virtual void notifyCharacterProfileDataUpdated(FSession *session, QString charactername) = 0;
 
 
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype) = 0;
