@@ -316,9 +316,11 @@ void FSession::wsRecv(std::string packet)
 		CMD(DOP); //Remove a chat operator.
 
 		CMD(CDS); //Channel description.
+		CMD(CIU); //Channel invite.
 		CMD(ICH); //Initial channel data.
 		CMD(JCH); //Join channel.
 		CMD(LCH); //Leave channel.
+		CMD(RMO); //Room mode.
 
 		CMD(LIS); //List of online characters.
 		CMD(NLN); //Character is now online.
@@ -437,6 +439,23 @@ COMMAND(CDS)
 	channel->setDescription(description);
 	account->ui->setChannelDescription(this, channelname, description);
 }
+COMMAND(CIU)
+{
+	//Channel invite.
+	//CIU {"sender": "Character Name", "name": "Channel Name", "title": "Channel Title"}
+	QString charactername = nodes.at("sender").as_string().c_str();
+	QString channelname = nodes.at("name").as_string().c_str();
+	QString channeltitle = nodes.at("title").as_string().c_str();
+	FCharacter *character = getCharacter(charactername);
+	if(!character) {
+		debugMessage(QString("Received invite to the channel '%1' (title '%2') by '%3' but the character '%3' does not exist. %4")
+			     .arg(channelname).arg(channeltitle).arg(charactername).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	//todo: Filter the title for problem BBCode characters.
+	QString message = makeMessage(QString("/me has invited you to [session=%1]%2[/session].*").arg(channeltitle).arg(channelname), charactername, character, 0, "<font color=\"yellow\"><b>Channel invite:</b></font> ", "");
+	account->ui->messageSystem(this, message, MESSAGE_TYPE_CHANNEL_INVITE);
+}
 COMMAND(ICH)
 {
 	(void)rawpacket;
@@ -466,14 +485,15 @@ COMMAND(ICH)
 	channel = addChannel(channelname, channeltitle);
 	account->ui->addChannel(this, channelname, channeltitle);
 	if(channelmode == "both") {
-		channel->mode = FChannel::CHANMODE_BOTH;
+		channel->mode = CHANNEL_MODE_BOTH;
 	} else if(channelmode == "ads") {
-		channel->mode = FChannel::CHANMODE_ADS;
+		channel->mode = CHANNEL_MODE_ADS;
 	} else if(channelmode == "chat") {
-		channel->mode = FChannel::CHANMODE_CHAT;
+		channel->mode = CHANNEL_MODE_CHAT;
 	} else {
 		debugMessage("[SERVER BUG]: Received unknown channel mode '" + channelmode + "' for channel '" + channelname + "'. <<" + QString::fromStdString(rawpacket));
 	}
+	account->ui->setChannelMode(this, channelname, channel->mode);
 
 	int size = childnode.size();
 	debugMessage("Initial channel data for '" + channelname + "', charcter count: " + QString::number(size));
@@ -510,7 +530,6 @@ COMMAND(JCH)
 }
 COMMAND(LCH)
 {
-	(void)rawpacket;
 	//Leave a channel. Sent when a character leaves a channel.
 	//LCH {"channel": "Channel Name", "character", "Character Name"}
 	FChannel *channel;
@@ -527,6 +546,38 @@ COMMAND(LCH)
 		//todo: ui->removeChannel() ?
 	}
 	
+}
+COMMAND(RMO)
+{
+	(void)rawpacket;
+	//Room mode.
+	//RMO {"mode": mode_enum, "channel": "Channel Name"}
+	//Where mode_enum
+	QString channelname = nodes.at("channel").as_string().c_str();
+	QString channelmode = nodes.at("mode").as_string().c_str();
+	FChannel *channel = channellist[channelname];
+	if(!channel) {
+		//todo: Determine if RMO can be sent even if we're not in the channel in question.
+		return;
+	}
+	QString modedescription;
+	if(channelmode == "both") {
+		channel->mode = CHANNEL_MODE_BOTH;
+		modedescription = "chat and ads";
+	} else if(channelmode == "ads") {
+		channel->mode = CHANNEL_MODE_ADS;
+		modedescription = "ads only";
+	} else if(channelmode == "chat") {
+		channel->mode = CHANNEL_MODE_CHAT;
+		modedescription = "chat only";
+	} else {
+		debugMessage(QString("[SERVER BUG]: Received channel mode update '%1' for channel '%2'. %3").arg(channelmode).arg(channelname).arg(QString::fromStdString(rawpacket)));
+		return;
+	}
+	QString message = "[session=%1]%2[/session]'s mode has been changed to: %3";
+	message = bbcodeparser->parse(message).arg(channel->getTitle()).arg(channelname).arg(modedescription);
+	account->ui->setChannelMode(this, channelname, channel->mode);
+	account->ui->messageChannel(this, channelname, message, MESSAGE_TYPE_CHANNEL_MODE, true);
 }
 
 COMMAND(NLN)

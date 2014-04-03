@@ -211,6 +211,7 @@ public:
 	virtual void joinChannel(FSession *session, QString channelname);
 	virtual void leaveChannel(FSession *session, QString channelname);
 	virtual void setChannelDescription(FSession *session, QString channelname, QString description);
+	virtual void setChannelMode(FSession *session, QString channelname, ChannelMode mode);
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
 	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus);
@@ -226,6 +227,7 @@ public:
 	virtual void updateKnownChannelList(FSession *session);
 	virtual void updateKnownOpenRoomList(FSession *session);
 
+private:
 	void messageMany(QList<QString> &panelnames, QString message, MessageType messagetype);
 
 
@@ -329,6 +331,7 @@ private slots:
 	void aboutApp();
 	void channelButtonMenuRequested();
 	void channelButtonClicked();	// Called when channel button is clicked. This should switch panels, and do other necessary things.
+	void updateChannelMode();
 	void switchTab ( QString& tabname );
 	void inputChanged();
 	void userListContextMenuRequested ( const QPoint& point );

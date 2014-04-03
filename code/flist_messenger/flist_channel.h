@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QList>
+#include "flist_enums.h"
 
 class FSession;
 
@@ -11,13 +12,6 @@ class FChannel : public QObject
 {
 	Q_OBJECT
 public:
-	enum TypingStatus {
-		TYPINGSTATUS_CLEAR,
-		TYPINGSTATUS_TYPING,
-		TYPINGSTATUS_PAUSED,
-		TYPINGSTATUS_MAX
-	};
-
 	enum ChannelType {
 		CHANTYPE_NORMAL,
 		CHANTYPE_ADHOC,
@@ -26,13 +20,6 @@ public:
 		CHANTYPE_MAX
 	};
 
-	enum ChannelMode {// ads, etc
-		//todo: add an unknown
-		CHANMODE_CHAT,
-		CHANMODE_ADS,
-		CHANMODE_BOTH,
-		CHANMODE_MAX
-	};
 public:
 	explicit FChannel(QObject *parent, FSession *session, QString name, QString title);
 

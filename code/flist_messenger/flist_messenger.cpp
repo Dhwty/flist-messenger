@@ -196,7 +196,7 @@ void flist_messenger::enterPressed()
     if (currentPanel == 0) return;
 
     QString input = plainTextEdit->toPlainText();
-    if (currentPanel->getMode() == FChannelPanel::CHANMODE_ADS && !input.startsWith("/")) {
+    if (currentPanel->getMode() == CHANNEL_MODE_ADS && !input.startsWith("/")) {
         btnSendAdvClicked();
     } else {
         parseInput();
@@ -1491,6 +1491,7 @@ void flist_messenger::refreshUserlist()
         if ( currentPanel == 0 )
                 return;
 
+	//todo: Remember currently selected characters and then restore them once the list is refreshed.
         listWidget = this->findChild<QListWidget *> ( QString ( "userlist" ) );
         listWidget->clear();
         QList<FCharacter*> charList = currentPanel->charList();
@@ -2321,6 +2322,28 @@ void flist_messenger::to_btnCancelClicked()
 {
         timeoutDialog->hide();
 }
+
+/**
+Update the user interface based upon the mode of the current panel.
+ */
+void flist_messenger::updateChannelMode()
+{
+	if (currentPanel->getMode() == CHANNEL_MODE_CHAT ||
+	    currentPanel->type() == FChannelPanel::CHANTYPE_PM || 
+	    currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE) {
+		//Chat only, so disable ability to send ads.
+		btnSendAdv->setDisabled(true);
+		btnSendChat->setDisabled(false);
+	} else if (currentPanel->getMode() == CHANNEL_MODE_ADS) {
+		//Ads only, disable the ability to send regular chat messages.
+		btnSendAdv->setDisabled(false);
+		btnSendChat->setDisabled(true);
+	} else {
+		//Regular channel, allow both ads and chat messages.
+		btnSendAdv->setDisabled(false);
+		btnSendChat->setDisabled(false);
+	}
+}
 void flist_messenger::switchTab ( QString& tabname )
 {
         if ( channelList.count ( tabname ) == 0 && tabname != "CONSOLE" )
@@ -2358,26 +2381,7 @@ void flist_messenger::switchTab ( QString& tabname )
         refreshUserlist();
         refreshChatLines();
         textEdit->verticalScrollBar()->setSliderPosition(textEdit->verticalScrollBar()->maximum());
-	if (currentPanel->getMode() == FChannelPanel::CHANMODE_CHAT) // disable ads
-    {
-                btnSendAdv->setDisabled(true);
-        btnSendChat->setDisabled(false);
-    }
-    else if (currentPanel->getMode() == FChannelPanel::CHANMODE_ADS)
-    {
-        btnSendAdv->setDisabled(false);
-        btnSendChat->setDisabled(true);
-    }
-    else if (currentPanel->type() == FChannelPanel::CHANTYPE_PM || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE ) // Disable ads
-    {
-                btnSendAdv->setDisabled(true);
-        btnSendChat->setDisabled(false);
-    }
-    else
-    {
-        btnSendAdv->setDisabled(false);
-        btnSendChat->setDisabled(false);
-    }
+	updateChannelMode();
 }
 void flist_messenger::openPMTab()
 {
@@ -2449,7 +2453,7 @@ void flist_messenger::btnSendAdvClicked()
                 printDebugInfo("[CLIENT ERROR] currentPanel == 0");
                 return;
         }
-	if ( currentPanel == console || currentPanel->getMode() == FChannelPanel::CHANMODE_CHAT || currentPanel->type() == FChannelPanel::CHANTYPE_PM )
+	if ( currentPanel == console || currentPanel->getMode() == CHANNEL_MODE_CHAT || currentPanel->type() == FChannelPanel::CHANTYPE_PM )
         {
                 msg = "<b>Error:</b> Can't advertise here.";
                 FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, msg, currentPanel);                return;
@@ -3312,17 +3316,7 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
 {
         try
         {
-                if ( cmd == "CIU" )
-                {
-                        //CIU {"sender": "EagerToPlease", "name": "ADH-085bcf60bef81b0790b7", "title": "Domination and Degradation"}
-                        QString output;
-                        QString sender = nodes.at ( "sender" ).as_string().c_str();
-                        QString name = nodes.at ( "name" ).as_string().c_str();
-                        QString title = nodes.at ( "title" ).as_string().c_str();
-                        output = "<b>" + sender + "</b> has invited you to join the room <a href=\"#AHI-" + name + "\">" + title + "</a>.";
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
-                }
-                else if ( cmd == "KID" )
+                if ( cmd == "KID" )
                 {
                         // [19:41 PM]>>KIN {"character":"Cinnamon Flufftail"}
                         // [19:41 PM]<<KID {"message": "(custom) kinks of Cinnamon Flufftail.", "type": "start"}
@@ -3400,35 +3394,6 @@ void flist_messenger::processCommand(std::string input, std::string cmd, JSONNod
                                 output += "</b>\'s report.";
                                 FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, output, currentPanel);
                         }
-                }
-                else if ( cmd == "RMO" )
-                {
-                        //                        [12:15 AM] Unparsed command: RMO {"mode":"chat","channel":"ADH-af9c1cd5e1bf31220ab2"}
-                        //                        [12:15 AM] Unparsed command: RMO {"mode":"both","channel":"ADH-af9c1cd5e1bf31220ab2"}
-                        //                        [12:15 AM] Unparsed command: RMO {"mode":"ads","channel":"ADH-af9c1cd5e1bf31220ab2"}
-                        QString output;
-			QString mode = nodes.at("mode").as_string().c_str();
-                        QString channelname = nodes.at("channel").as_string().c_str();
-			QString panelname = PANELNAME(channelname, charName);
-			FChannelPanel* chan = channelList[panelname];
-                        if (chan==0) return;
-                        QString name = channelList[panelname]->title();
-                        if (mode == "ads")
-                        {
-				chan->setMode(FChannelPanel::CHANMODE_ADS);
-                                output = name + "'s mode was changed to: Ads only.";
-                        }
-                        else if (mode == "chat")
-                        {
-				chan->setMode(FChannelPanel::CHANMODE_CHAT);
-                                output = name + "'s mode was changed to: Chat only.";
-                        }
-                        else
-                        {
-				chan->setMode(FChannelPanel::CHANMODE_BOTH);
-                                output = name + "'s mode was changed to: Chat and ads.";
-			}
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, chan, 0, output, currentPanel);
                 }
                 else if ( cmd == "ZZZ" )
                 {
@@ -3633,6 +3598,21 @@ void flist_messenger::setChannelDescription(FSession *session, QString channelna
 	QString message = QString("You have joined <b>%1</b>: %2").arg(channelpanel->title()).arg(bbparser.parse(description));
 	messageChannel(session, channelname, message, MESSAGE_TYPE_CHANNEL_DESCRIPTION, true, false);
 }
+void flist_messenger::setChannelMode(FSession *session, QString channelname, ChannelMode mode)
+{
+	QString panelname = PANELNAME(channelname, session->character);
+	FChannelPanel *channelpanel = channelList.value(panelname);
+	if(!channelpanel) {
+		printDebugInfo(QString("[BUG]: Was told the mode of the channel '%1', but the panel for the channel doesn't exist.").arg(channelname).toStdString());
+		return;
+	}
+	channelpanel->setMode(mode);
+	if(channelpanel == currentPanel) {
+		//update UI with mode state
+		updateChannelMode();
+	}
+}
+
 
 void flist_messenger::notifyCharacterOnline(FSession *session, QString charactername, bool online)
 {
@@ -3668,6 +3648,10 @@ void flist_messenger::notifyCharacterStatusUpdate(FSession *session, QString cha
 		}
 		QString message = QString("<b>%1</b> is now %2%3").arg(charactername).arg(character->statusString()).arg(statusmessage);
 		messageMany(session, channels, characters, system, message, MESSAGE_TYPE_STATUS);
+	}
+	//Refresh character list if they are present in the current panel.
+	if(currentPanel->hasCharacter(session->getCharacter(charactername))) {
+		refreshUserlist();
 	}
 }
 void flist_messenger::setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus)
@@ -3727,6 +3711,9 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			}
 			break;
 		case MESSAGE_TYPE_CHANNEL_DESCRIPTION:
+		case MESSAGE_TYPE_CHANNEL_MODE:
+			break;
+		case MESSAGE_TYPE_CHANNEL_INVITE:
 			break;
 		case MESSAGE_TYPE_JOIN:
 		case MESSAGE_TYPE_LEAVE:

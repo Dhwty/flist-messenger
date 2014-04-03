@@ -74,7 +74,7 @@ void FChannelPanel::initClass()
 
 FChannelPanel::FChannelPanel (QString panelname, QString channelname, channelType type)
 {
-	mode = CHANMODE_BOTH;
+	mode = CHANNEL_MODE_BOTH;
 	this->panelname = panelname;
         chanName = channelname;
         creationTime = time ( 0 );
@@ -423,9 +423,9 @@ QString* FChannelPanel::toString()
         *rv += "\nActive: ";
         *rv += active ? "Yes" : "No";
         *rv += "\nMode: ";
-        if (mode == CHANMODE_CHAT) *rv += "Chat";
-        else if (mode == CHANMODE_ADS) *rv += "Ads";
-        else if (mode == CHANMODE_BOTH) *rv += "Both";
+        if (mode == CHANNEL_MODE_CHAT) *rv += "Chat";
+        else if (mode == CHANNEL_MODE_ADS) *rv += "Ads";
+        else if (mode == CHANNEL_MODE_BOTH) *rv += "Both";
         else *rv += "INVALID MODE";
         return rv;
 }

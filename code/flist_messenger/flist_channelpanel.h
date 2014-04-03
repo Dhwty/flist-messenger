@@ -75,14 +75,6 @@ public:
 		CHANTYPE_MAX
 	};
 
-	enum channelMode // ads, etc
-	{
-		CHANMODE_CHAT,
-		CHANMODE_ADS,
-		CHANMODE_BOTH,
-		CHANMODE_MAX
-	};
-
 	FChannelPanel(QString panelname, QString channelname, channelType type);
 	~FChannelPanel() {}
 	static void initClass();
@@ -110,6 +102,7 @@ public:
 	TypingStatus getTypingSelf(){return typingSelf;}
 	void addChar ( FCharacter* character, bool sort_list = true );
 	void remChar ( FCharacter* character );
+	bool hasCharacter(FCharacter* character) {return chanChars.contains(character);}
 	QList<FCharacter*> charList(){return chanChars;}
 	void sortChars();
 	bool isOp ( FCharacter* character );
@@ -120,8 +113,8 @@ public:
 	bool getHighlighted(){return highlighted;}
 	void setHasNewMessages ( bool o ){hasNewMessages = o;}
 	bool getHasNewMessages(){return hasNewMessages;}
-	void setMode ( channelMode o ){mode = o;}
-	channelMode getMode(){return mode;}
+	void setMode ( ChannelMode o ){mode = o;}
+	ChannelMode getMode(){return mode;}
 	void setAlwaysPing ( bool b ) {alwaysPing = b;}
 	bool getAlwaysPing(){return alwaysPing;}
 	JSONNode* toJSON();
@@ -138,7 +131,7 @@ private:
 	QString					recipientName;		// For PM tabs.
 	TypingStatus			typing;				// For PM tabs: Whether the other is typing.
 	TypingStatus			typingSelf;			// For PM tabs: Whether the user is typing
-	channelMode				mode;
+	ChannelMode				mode;
 	QString					input;
 	bool					highlighted;
 	bool					hasNewMessages;
