@@ -288,9 +288,6 @@ public slots:
 	void enterPressed();
 
 private slots:
-	//void parseCommand ( std::string input );			// Parses messages received from the server.
-	void processCommand(std::string input, std::string cmd, JSONNode &nodes);
-	void recvMessage(QString type, QString session, QString chan, QString sender, QString message);
 	void prepareLogin ( QString username, QString password );
 	void handleLogin();
 	void loginError(FAccount *account, QString errortitle, QString errorstring);

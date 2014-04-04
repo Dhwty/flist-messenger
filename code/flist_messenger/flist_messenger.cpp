@@ -1137,9 +1137,6 @@ void flist_messenger::loginClicked()
         setupRealUI();
 
         connect ( session, SIGNAL ( socketErrorSignal ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
-	//connect ( session, SIGNAL ( wsRecv(std::string) ), this, SLOT ( parseCommand(std::string) ) );
-	connect ( session, SIGNAL ( processCommand(std::string, std::string, JSONNode &) ), this, SLOT ( processCommand(std::string, std::string, JSONNode &) ) );
-	connect ( session, SIGNAL ( recvMessage(QString, QString, QString, QString, QString) ), this, SLOT ( recvMessage(QString, QString, QString, QString, QString) ));
 
 	session->connectSession();
 		
@@ -3311,43 +3308,11 @@ void flist_messenger::loadDefaultSettings()
 }
 
 #define PANELNAME(channelname,charname)  (((channelname).startsWith("ADH-") ? "ADH|||" : "CHAN|||") + (charname) + "|||" + (channelname))
-//void flist_messenger::parseCommand ( std::string input )
-void flist_messenger::processCommand(std::string input, std::string cmd, JSONNode &nodes)
-{
-        try
-        {
-		//todo: flist_messenger::processCommand() is almost completely obsolete!
-		(void) cmd; (void) nodes;
-                {
-                        printDebugInfo("Unparsed command: " + input);
-                        QString qinput = "Unparsed command: ";
-                        qinput += input.c_str();
-                        FMessage fmsg(FMessage::SYSTYPE_FEEDBACK, currentPanel, 0, qinput, currentPanel);
-                }
-        }
-        catch ( std::invalid_argument )
-        {
-                printDebugInfo("Server returned invalid json in its response: " + input);
-        }
-        catch ( std::out_of_range )
-        {
-                printDebugInfo("Server produced unexpected json without a field we expected: " + input);
-        }
-}
 
 void flist_messenger::flashApp(QString& reason)
 {
         printDebugInfo(reason.toStdString());
         QApplication::alert(this, 10000);
-}
-
-void flist_messenger::recvMessage(QString type, QString session, QString chan, QString sender, QString message)
-{
-	(void) type;
-	(void) session;
-	(void) chan;
-	(void) sender;
-	(void) message;
 }
 
 void flist_messenger::setChatOperator(FSession *session, QString characteroperator, bool opstatus)

@@ -39,8 +39,6 @@ public:
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);
-	//void wsRecv(std::string data);
-	void processCommand(std::string rawinput, std::string cmd, JSONNode &nodes);
 	void recvMessage(QString type, QString session, QString chan, QString sender, QString message);
 
 public slots:

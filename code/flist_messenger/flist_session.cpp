@@ -367,7 +367,8 @@ void FSession::wsRecv(std::string packet)
 		CMD(ERR); //Error message.
 
 		CMD(PIN); //Ping.
-		emit processCommand(packet, cmd, nodes);
+
+		debugMessage(QString("The command '%1' was received, but is unknown and could not be processed. %2").arg(QString::fromStdString(cmd)).arg(QString::fromStdString(packet)));
 	} catch(std::invalid_argument) {
                 debugMessage("Server returned invalid json in its response: " + packet);
         } catch(std::out_of_range) {
