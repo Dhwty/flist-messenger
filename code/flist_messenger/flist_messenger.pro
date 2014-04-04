@@ -31,7 +31,6 @@ HEADERS += \
            flist_global.h \
            flist_loginselectwindow.h \
            flist_loginwindow.h \
-           flist_message.h \
            flist_messenger.h \
            flist_parser.h \
            flist_session.h \
@@ -62,7 +61,6 @@ SOURCES += \
            flist_global.cpp \
            flist_loginselectwindow.cpp \
            flist_loginwindow.cpp \
-           flist_message.cpp \
            flist_messenger.cpp \
            flist_parser.cpp \
            flist_session.cpp \

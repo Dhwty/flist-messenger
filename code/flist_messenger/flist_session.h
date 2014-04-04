@@ -37,6 +37,10 @@ public:
 	FChannel *addChannel(QString name, QString title);
 	FChannel *getChannel(QString name);
 
+	void sendChannelMessage(QString channelname, QString message);
+	void sendChannelAdvertisement(QString channelname, QString message);
+	void sendCharacterMessage(QString charactername, QString message);
+
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);
 	void recvMessage(QString type, QString session, QString chan, QString sender, QString message);

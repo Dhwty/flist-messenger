@@ -1257,3 +1257,80 @@ COMMAND(PIN)
 	std::string cmd = "PIN";
 	wsSend(cmd);
 }
+
+//todo: Lots of duplicated between sendChannelMessage() and sendChannelAdvertisement() that can be refactored into a common function. 
+void FSession::sendChannelMessage(QString channelname, QString message)
+{
+	//Confirm channel is known, joined and has the right permissions.
+	FChannel *channel = getChannel(channelname);
+	if(!channel) {
+		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but the channel is unknown or has never been joined. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	if(!channel->isJoined()) {
+		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but you are not currently in the channel. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	if(channel->mode == CHANNEL_MODE_ADS) {
+		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but the channel only allows advertisements. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	JSONNode nodes;
+	nodes.push_back(JSONNode("channel", channelname.toStdString()));
+	nodes.push_back(JSONNode("message", message.toStdString()));
+	wsSend("MSG", nodes);
+	//Escape HTML characters.
+        message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+	//Send the message to the UI now.
+	QString messagefinal = makeMessage(message, character, getCharacter(character), channel);
+	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_CHAT);
+}
+void FSession::sendChannelAdvertisement(QString channelname, QString message)
+{
+	//Confirm channel is known, joined and has the right permissions.
+	FChannel *channel = getChannel(channelname);
+	if(!channel) {
+		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but the channel is unknown or has never been joined. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	if(!channel->isJoined()) {
+		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but you are not currently in the channel. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	if(channel->mode == CHANNEL_MODE_CHAT) {
+		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but the channel does not allow advertisements. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	JSONNode nodes;
+	nodes.push_back(JSONNode("channel", channelname.toStdString()));
+	nodes.push_back(JSONNode("message", message.toStdString()));
+	wsSend("LRP", nodes);
+	//Escape HTML characters.
+        message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+	//Send the message to the UI now.
+	QString messagefinal = makeMessage(message, character, getCharacter(character), channel, "<font color=\"green\"><b>Roleplay ad by</font> ", "");
+	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_RPAD);
+}
+void FSession::sendCharacterMessage(QString charactername, QString message)
+{
+	//Confirm character is known, online and we are not ignoring them.
+	if(!isCharacterOnline(charactername)) {
+		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but they are offline or unknown. Message: %2").arg(charactername).arg(message), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	if(isCharacterIgnored(charactername)) {
+		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but YOU are ignoring them. Message: %2").arg(charactername).arg(message), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	//Make packet and send it.
+	JSONNode nodes;
+	nodes.push_back(JSONNode("recipient", charactername.toStdString()));
+	nodes.push_back(JSONNode("message", message.toStdString()));
+	wsSend("PRI", nodes);
+	//Escape HTML characters.
+	//todo: use a proper function
+        message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+	//Send the message to the UI now.
+	QString messagefinal = makeMessage(message, this->character, getCharacter(this->character));
+	account->ui->messageCharacter(this, charactername, messagefinal, MESSAGE_TYPE_CHAT);
+}

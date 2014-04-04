@@ -81,8 +81,7 @@
 #include "flist_channelpanel.h"
 #include "flist_sound.h"
 #include "flist_avatar.h"
-#include "flist_message.h"
-//#include "flist_account.h"
+#include "flist_parser.h"
 #include "flist_channeltab.h"
 #include "flist_iuserinterface.h"
 
