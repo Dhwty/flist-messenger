@@ -415,11 +415,9 @@ private:
 	void refreshUserlist();								// Refreshes the GUI's userlist, based on what the current panel is
 	void refreshChatLines();							// Refreshes the GUI's chat lines, based on what the current panel is
 	void usersCommand();								// Does the /users thing.
-	void receivePM ( QString& message, QString& character );
 	void typingPaused ( FChannelPanel* channel );
 	void typingContinued ( FChannelPanel* channel );
 	void typingCleared ( FChannelPanel* channel );
-	QString* usernameToHtml ( QString& name );
 	void addToChannelsDialogList ( ChannelListItem* cli );
 	void addToProomsDialogList ( ChannelListItem* cli );
 	void addToFriendsList ( QListWidgetItem* lwi );

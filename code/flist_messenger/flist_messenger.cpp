@@ -1752,33 +1752,7 @@ FChannelTab* flist_messenger::addToActivePanels ( QString& panelname, QString &c
 
 	return channelTab;
 }
-void flist_messenger::receivePM ( QString& message, QString& character )
-{
-	FChannelPanel* pmPanel = 0;
-        QString panelname = "PM|||" + charName + "|||" + character;
 
-	FSession *session = account->getSession(charName);
-        if ( channelList.count ( panelname ) == 0 )
-        {
-		channelList[panelname] = new FChannelPanel ( panelname, character, FChannelPanel::CHANTYPE_PM );
-                FCharacter* charptr = session->characterlist[character];
-                QString paneltitle = charptr->PMTitle();
-                pmPanel = channelList[panelname];
-                pmPanel->setTitle ( paneltitle );
-                pmPanel->setRecipient ( character );
-                pmPanel->pushButton = addToActivePanels(panelname, character, paneltitle);
-        }
-        pmPanel = channelList[panelname];
-        if (pmPanel->getActive() == false)
-        {
-                pmPanel->setActive(true);
-                pmPanel->pushButton->setVisible(true);
-        }
-	pmPanel->setTyping ( TYPING_STATUS_CLEAR );
-        pmPanel->updateButtonColor();
-
-        FMessage msg(FMessage::MESSAGETYPE_PRIVMESSAGE, pmPanel, session->characterlist[character], message, currentPanel);
-}
 void flist_messenger::aboutApp()
 {
         QMessageBox::about ( this, "About F-List Messenger", "Created by:\n* Viona\n* Kira\n* Aniko\n* Hexxy\n* Eager\n\nCopyright(c) 2010-2011 F-list Team" );
