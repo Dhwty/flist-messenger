@@ -249,21 +249,16 @@ void FChannelPanel::removeOp(QString &charactername)
 	chanOps.removeAll(charactername);
 }
 
-void FChannelPanel::addLine(QString chanLine, bool log, bool parse)
+void FChannelPanel::addLine(QString chanLine, bool log)
 {
-        (void) parse; //todo: check what this was intended for
-        // if (parse) chanLine = bbparser->parse(chanLine);
-        char timebuf[64];
-        time_t now = time(0);
-        size_t len = strftime(&timebuf[0], 64, "[%T] ", localtime(&now));
-        timebuf[len] = 0;
-        chanLine = &timebuf[0] + chanLine;
-        chanLines << chanLine;
-
-        while ( chanLines.count() > 256 )
-                chanLines.pop_front();
-        if (log)
-                logLine        ( chanLine );
+	chanLines.append(chanLine);
+	//todo: make this configurable
+	while(chanLines.count() > 256) {
+		chanLines.pop_front();
+	}
+	if(log) {
+		logLine(chanLine);
+	}
 }
 
 void FChannelPanel::logLine ( QString &chanLine )

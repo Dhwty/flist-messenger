@@ -235,7 +235,7 @@ void flist_messenger::printDebugInfo(std::string s)
                         QString lt = "&lt;";
                         QString amp = "&amp;";
                         q.replace ( '&', amp ).replace ( '<', lt ).replace ( '>', gt );
-                        console->addLine(q, true, false);
+                        console->addLine(q, true);
                 }
         }
 }
@@ -3625,6 +3625,44 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			textEdit->append(messageout);
 		}
 	}
+	//todo: Sound support is still less than what it was originally.
+	if(/*se_ping &&*/ se_sounds) {
+		switch(messagetype) {
+		case MESSAGE_TYPE_LOGIN:
+		case MESSAGE_TYPE_ONLINE:
+		case MESSAGE_TYPE_OFFLINE:
+		case MESSAGE_TYPE_STATUS:
+		case MESSAGE_TYPE_CHANNEL_DESCRIPTION:
+		case MESSAGE_TYPE_CHANNEL_MODE:
+		case MESSAGE_TYPE_CHANNEL_INVITE:
+		case MESSAGE_TYPE_JOIN:
+		case MESSAGE_TYPE_LEAVE:
+			break;
+		case MESSAGE_TYPE_ROLL:
+		case MESSAGE_TYPE_RPAD:
+		case MESSAGE_TYPE_CHAT:
+			soundPlayer.play(FSound::SOUND_CHAT);
+			break;
+		case MESSAGE_TYPE_REPORT:
+			soundPlayer.play(FSound::SOUND_MODALERT);
+			break;
+		case MESSAGE_TYPE_ERROR:
+		case MESSAGE_TYPE_SYSTEM:
+		case MESSAGE_TYPE_BROADCAST:
+			soundPlayer.play(FSound::SOUND_ATTENTION);
+			break;
+		case MESSAGE_TYPE_FEEDBACK:
+			break;
+		case MESSAGE_TYPE_KICK:
+		case MESSAGE_TYPE_KICKBAN:
+			break;
+		case MESSAGE_TYPE_IGNORE_UPDATE:
+			break;
+		default:
+			debugMessage("Unhandled sound for message type " + QString::number(messagetype) + " for message '" + message + "'.");
+		}
+	}
+	//todo: flashing the window/panel tab
 }
 void flist_messenger::messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype)
 {

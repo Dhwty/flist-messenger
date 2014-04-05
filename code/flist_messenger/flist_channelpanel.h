@@ -120,7 +120,7 @@ public:
 	JSONNode* toJSON();
 	QString* toString();
 
-	void addLine ( QString chanLine, bool log, bool parse = true );
+	void addLine(QString chanLine, bool log);
 	void emptyCharList();
 	void logLine ( QString& chanLine );
 	void printChannel ( QTextBrowser* textEdit );
