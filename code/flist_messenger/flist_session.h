@@ -30,8 +30,13 @@ public:
 	bool isCharacterOnline(QString name) {return characterlist.contains(name);}
 	bool isCharacterOperator(QString name) {return operatorlist.contains(name);}
 	bool isCharacterIgnored(QString name) {return ignorelist.contains(name.toLower(), Qt::CaseInsensitive);}
+	bool isCharacterFriend(QString name) {return friendslist.contains(name);}
 	FCharacter *addCharacter(QString name);
 	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
+	int getCharacterCount() {return characterlist.count();}
+
+	QStringList &getFriendsList() {return friendslist;}
+	QStringList &getIgnoreList() {return ignorelist;}
 
 	void joinChannel(QString name);
 	FChannel *addChannel(QString name, QString title);
@@ -57,12 +62,14 @@ public:
 
 	QTcpSocket *tcpsocket;
 
+private:
 	QHash<QString, FCharacter *> characterlist; //< List of all known characters on the server/session.
-	QList<QString> friendslist; //<List of friends for this session's character.
-	QList<QString> bookmarklist; //<List of friends for this session's character.
-	QList<QString> operatorlist; //<List of all known characters that are chat operators (stored in lower case).
+	QStringList friendslist; //<List of friends for this session's character.
+	QStringList bookmarklist; //<List of friends for this session's character.
+	QStringList operatorlist; //<List of all known characters that are chat operators (stored in lower case).
 	QStringList ignorelist; //<List of all characters that are being ignored.
 	QHash<QString, FChannel *> channellist; //<List of channels that this session has joined (or was previously joined to).
+public:
 	QStringList autojoinchannels; //<List of channels the client should join upon connecting.
 	QHash<QString, QString> servervariables; //<List of variables as reported by the server.
 

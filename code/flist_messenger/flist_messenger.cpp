@@ -659,8 +659,9 @@ bool flist_messenger::setupChannelSettingsDialog()
                 cs_teDescription->setPlainText(cs_qsPlainDescription);
                 cs_teDescription->hide();
                 cs_chbEditDescription = new QCheckBox("Editable mode (OPs only)");
-                if ( ! ( ch->isOp(session->characterlist[charName]) || session->characterlist[charName]->isChatOp() ) )
-                        cs_chbEditDescription->setEnabled(false);
+		if(!(ch->isOp(session->getCharacter(charName)) || session->isCharacterOperator(charName))) {
+			cs_chbEditDescription->setEnabled(false);
+		}
                 cs_chbAlwaysPing = new QCheckBox("Always ping in this channel");
                 cs_chbAlwaysPing->setChecked(ch->getAlwaysPing());
                 cs_hblButtons = new QHBoxLayout;
@@ -1366,7 +1367,7 @@ void flist_messenger::userListContextMenuRequested ( const QPoint& point )
         if ( lwi )
         {
 		FSession *session = account->getSession(charName);
-                FCharacter* ch = session->characterlist[lwi->text() ];
+		FCharacter* ch = session->getCharacter(lwi->text());
                 ul_recent = ch;
                 displayCharacterContextMenu ( ch );
         }
@@ -1405,22 +1406,20 @@ void flist_messenger::displayCharacterContextMenu ( FCharacter* ch )
                         menu->addAction ( QIcon ( ":/images/heart.png" ), QString ( "Unignore" ), this, SLOT(ul_ignoreRemove()) );
                 else
                         menu->addAction ( QIcon ( ":/images/heart-break.png" ), QString ( "Ignore" ), this, SLOT(ul_ignoreAdd()) );
-                bool op = session->characterlist[charName]->isChatOp();
+		bool op = session->isCharacterOperator(charName);
                 if (op)
                 {
                         menu->addAction ( QIcon ( ":/images/fire.png" ), QString ( "Chat Kick" ), this, SLOT(ul_chatKick()) );
                         menu->addAction ( QIcon ( ":/images/auction-hammer--exclamation.png" ), QString ( "Chat Ban" ), this, SLOT(ul_chatBan()) );
                         menu->addAction ( QIcon ( ":/images/alarm-clock.png" ), QString ( "Timeout..." ), this, SLOT(timeoutDialogRequested()) );
                 }
-                if (op || currentPanel->isOwner(session->characterlist[charName]))
-                {
+		if(op || currentPanel->isOwner(session->getCharacter(charName))) {
                         if (currentPanel->isOp(ch))
                                 menu->addAction ( QIcon ( ":/images/auction-hammer--minus.png" ), QString ( "Remove Channel OP" ), this, SLOT(ul_channelOpRemove()) );
                         else
                                 menu->addAction ( QIcon ( ":/images/auction-hammer--plus.png" ), QString ( "Add Channel OP" ), this, SLOT(ul_channelOpAdd()) );
                 }
-                if ((op || currentPanel->isOp(session->characterlist[charName])) && !ch->isChatOp())
-                {
+		if((op || currentPanel->isOp(session->getCharacter(charName))) && !ch->isChatOp()) {
                         menu->addAction ( QIcon ( ":/images/lightning.png" ), QString ( "Channel Kick" ), this, SLOT(ul_channelKick()) );
                         menu->addAction ( QIcon ( ":/images/auction-hammer.png" ), QString ( "Channel Ban" ), this, SLOT(ul_channelBan()) );
                 }
@@ -1644,17 +1643,15 @@ void flist_messenger::friendsDialogRequested()
 }
 void flist_messenger::refreshFriendLists()
 {
-        QString s;
         FCharacter* f = 0;
         QListWidgetItem* lwi = 0;
         fr_lwFriends->clear();
 
 	FSession *session = account->getSession(charName);
 
-        foreach ( s, session->friendslist )
-        {
+	foreach(QString s, session->getFriendsList()) {
 		if(session->isCharacterOnline(s)) {
-                        f = session->characterlist[s];
+			f = session->getCharacter(s);
                         lwi = new QListWidgetItem ( * ( f->statusIcon() ), f->name() );
                         addToFriendsList ( lwi );
                 }
@@ -1662,8 +1659,7 @@ void flist_messenger::refreshFriendLists()
 
         fr_lwIgnore->clear();
 
-        foreach ( s, session->ignorelist )
-        {
+	foreach(QString s, session->getIgnoreList()) {
                 lwi = new QListWidgetItem ( s );
                 addToIgnoreList ( lwi );
         }
@@ -2023,7 +2019,7 @@ void flist_messenger::fr_friendsContextMenuRequested ( const QPoint& point )
 
 	FSession *session = account->getSession(charName);
 	if(lwi && session->isCharacterOnline(lwi->text())) {
-                FCharacter* ch = session->characterlist[lwi->text() ];
+		FCharacter* ch = session->getCharacter(lwi->text());
                 ul_recent = ch;
                 displayCharacterContextMenu ( ch );
         }
@@ -2058,7 +2054,7 @@ void flist_messenger::usersCommand()
 {
         QString msg;
 	FSession *session = account->getSession(charName);
-        msg.sprintf("<b>%d users online.</b>", session->characterlist.size());
+	msg.sprintf("<b>%d users online.</b>", session->getCharacterCount());
 	messageSystem(session, msg, MESSAGE_TYPE_FEEDBACK);
 }
 void flist_messenger::inputChanged()
@@ -2420,7 +2416,7 @@ void flist_messenger::openPMTab ( QString &character )
         else
         {
 		channelList[panelname] = new FChannelPanel(panelname, character, FChannelPanel::CHANTYPE_PM);
-                FCharacter* charptr = session->characterlist[character];
+		FCharacter* charptr = session->getCharacter(character);
                 QString paneltitle = charptr->PMTitle();
 		FChannelPanel* pmPanel = channelList.value(panelname);
                 pmPanel->setTitle ( paneltitle );
@@ -2479,7 +2475,7 @@ void flist_messenger::btnSendAdvClicked()
         bool isOp = false;
         QString genderColor;
 	if(session->isCharacterOnline(charName)) {
-                FCharacter* chanchar = session->characterlist[charName];
+		FCharacter* chanchar = session->getCharacter(charName);
                 genderColor = chanchar->genderColor().name();
                 isOp = ( chanchar->isChatOp() || currentPanel->isOp( chanchar ) || currentPanel->isOwner( chanchar ) );
         }
@@ -2936,8 +2932,7 @@ void flist_messenger::parseInput()
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
                         }
 
-                        if (currentPanel->isOp(session->characterlist[charName]) || session->characterlist[charName]->isChatOp())
-                        {
+			if (currentPanel->isOp(session->getCharacter(charName)) || session->isCharacterOperator(charName)) {
                                 QString mode = inputText.mid(9);
                                 JSONNode node;
                                 JSONNode channode("channel", currentPanel->getChannelName().toStdString());
@@ -3400,7 +3395,7 @@ void flist_messenger::addChannelCharacter(FSession *session, QString channelname
 		return;
 	}
 	channelpanel = channelList.value(panelname);
-	channelpanel->addChar(session->characterlist[charactername]);
+	channelpanel->addChar(session->getCharacter(charactername));
 	if(charactername == session->character) {
 		switchTab(panelname);
 	} else {
@@ -3426,7 +3421,7 @@ void flist_messenger::removeChannelCharacter(FSession *session, QString channeln
 		return;
 	}
 	channelpanel = channelList.value(panelname);
-	channelpanel->remChar(session->characterlist[charactername]);
+	channelpanel->remChar(session->getCharacter(charactername));
 	if(currentPanel->getChannelName() == channelname) {
 		refreshUserlist();
 	}
@@ -3498,7 +3493,7 @@ void flist_messenger::notifyCharacterOnline(FSession *session, QString character
 	QString panelname = "PM|||" + session->character + "|||" + charactername;
 	QList<QString> channels;
 	QList<QString> characters;
-	bool system = session->friendslist.contains(charactername);
+	bool system = session->isCharacterFriend(charactername);
 	if(channelList.contains(panelname)) {
 		characters.append(charactername);
 		system = true;
@@ -3513,7 +3508,7 @@ void flist_messenger::notifyCharacterStatusUpdate(FSession *session, QString cha
 	QString panelname = "PM|||" + session->character + "|||" + charactername;
 	QList<QString> channels;
 	QList<QString> characters;
-	bool system = session->friendslist.contains(charactername);
+	bool system = session->isCharacterFriend(charactername);
 	if(channelList.contains(panelname)) {
 		characters.append(charactername);
 		system = true;
