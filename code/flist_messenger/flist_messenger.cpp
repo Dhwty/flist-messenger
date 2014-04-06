@@ -1481,20 +1481,35 @@ void flist_messenger::insertLineBreak()
 }
 void flist_messenger::refreshUserlist()
 {
-        if ( currentPanel == 0 )
-                return;
-
-	//todo: Remember currently selected characters and then restore them once the list is refreshed.
+	if(currentPanel == 0) {
+		return;
+	}
+	//todo: Should 'listWidget' be renewed like this?
         listWidget = this->findChild<QListWidget *> ( QString ( "userlist" ) );
+
+	//Remember currently selected characters, so that we can restore them.
+	//Probably overkill, but this does support the selection of multiple rows.
+	QList<QListWidgetItem *> selecteditems = listWidget->selectedItems();
+	QStringList selectedcharacters;
+	foreach(QListWidgetItem *selecteditem, selecteditems) {
+		selectedcharacters.append(selecteditem->text());
+	}
+	int currentrow = -1;
+	int oldrow = listWidget->currentRow();
+	QString currentname; 
+	{
+		QListWidgetItem *currentitem = listWidget->currentItem();
+		if(currentitem) {
+			currentname = currentitem->text();
+		}
+	}
+	selecteditems.clear();
+
+	//Clear the existing list and reload it.
         listWidget->clear();
         QList<FCharacter*> charList = currentPanel->charList();
-        QListWidgetItem* charitem = 0;
-        FCharacter* character;
-        FCharacter::characterStatus status;
-        foreach ( character, charList )
-        {
-                status = character->status();
-                charitem = new QListWidgetItem ( character->name() );
+	foreach(FCharacter *character, charList) {
+		QListWidgetItem *charitem = new QListWidgetItem(character->name());
                 QIcon* i = character->statusIcon();
                 charitem->setIcon ( *i );
 
@@ -1512,8 +1527,33 @@ void flist_messenger::refreshUserlist()
                 charitem->setFont ( f );
                 charitem->setTextColor ( character->genderColor() );
                 listWidget->addItem ( charitem );
+		//Is this what the current row was previously?
+		if(character->name() == currentname) {
+			currentrow = listWidget->count() - 1;
+		}
+		//or a selected item?
+		if(selectedcharacters.contains(character->name())) {
+			if(currentrow < 0) {
+				currentrow = listWidget->count() - 1;
+			}
+			selecteditems.append(charitem);
+		}
         }
 
+	//Restore selection.
+	if(selecteditems.count() <= 0) {
+		//Could not find any previous matches, just set the current row to the same as the old row.
+		listWidget->setCurrentRow(oldrow);
+	} else {
+		//Set current row.
+		listWidget->setCurrentRow(currentrow, QItemSelectionModel::NoUpdate);
+		//Restore selected items.
+		foreach(QListWidgetItem *selecteditem, selecteditems) {
+			selecteditem->setSelected(true);
+		}
+	}
+
+	//Hide/show widget based upon panel type.
 	if ( currentPanel->type() == FChannelPanel::CHANTYPE_PM || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE )
         {
                 listWidget->hide();
