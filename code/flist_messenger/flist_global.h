@@ -17,7 +17,7 @@ void globalQuit();
 bool is_broken_escaped_apos(std::string const &data, std::string::size_type n);
 void fix_broken_escaped_apos (std::string &data);
 
-#define FLIST_VERSIONNUM "0.8.6"
+#define FLIST_VERSIONNUM "0.9.1.dev"
 #define FLIST_VERSION "F-List Messenger [Beta] " FLIST_VERSIONNUM
 #define FLIST_CLIENTID "F-List Desktop Client"
 
