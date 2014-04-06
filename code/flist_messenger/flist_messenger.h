@@ -443,10 +443,8 @@ private:
 	bool disconnected;
 	static QString settingsPath;
 	bool doingWS;
-	//QList<QString> opList;
-	//QHash<QString, FCharacter*> characterList;
 	QHash<QString, FChannelPanel*> channelList;
-	FCharacter* ul_recent;
+	QString ul_recent_name;
 	FChannelPanel* tb_recent;
 	QMenu* recentCharMenu;
 	QMenu* recentChannelMenu;

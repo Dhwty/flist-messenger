@@ -143,7 +143,6 @@ flist_messenger::flist_messenger(bool d)
         makeRoomDialog = 0;
         setStatusDialog = 0;
         characterInfoDialog = 0;
-        ul_recent = 0;
         tb_recent = 0;
         recentCharMenu = 0;
         recentChannelMenu = 0;
@@ -1367,8 +1366,8 @@ void flist_messenger::userListContextMenuRequested ( const QPoint& point )
         if ( lwi )
         {
 		FSession *session = account->getSession(charName);
-		FCharacter* ch = session->getCharacter(lwi->text());
-                ul_recent = ch;
+		ul_recent_name = lwi->text();
+		FCharacter* ch = session->getCharacter(ul_recent_name);
                 displayCharacterContextMenu ( ch );
         }
 }
@@ -1686,7 +1685,12 @@ void flist_messenger::characterInfoDialogRequested()
 {
         //[19:48 PM]>>PRO {"character":"Hexxy"}
         //[19:41 PM]>>KIN {"character":"Cinnamon Flufftail"}
-        FCharacter* ch = ul_recent;
+	FSession *session = account->getSession(charName);
+	FCharacter* ch = session->getCharacter(ul_recent_name);
+	if(!ch) {
+		debugMessage(QString("Tried to request character info on the character '%1' but they went offline already!").arg(ul_recent_name));
+		return;
+	}
         JSONNode outNode;
         JSONNode cn ( "character", ch->name().toStdString() );
         outNode.push_back ( cn );
@@ -2019,8 +2023,8 @@ void flist_messenger::fr_friendsContextMenuRequested ( const QPoint& point )
 
 	FSession *session = account->getSession(charName);
 	if(lwi && session->isCharacterOnline(lwi->text())) {
-		FCharacter* ch = session->getCharacter(lwi->text());
-                ul_recent = ch;
+		ul_recent_name = lwi->text();
+		FCharacter* ch = session->getCharacter(ul_recent_name);
                 displayCharacterContextMenu ( ch );
         }
 }
@@ -2128,34 +2132,26 @@ void flist_messenger::ul_infoRequested()
 }
 void flist_messenger::ul_ignoreAdd()
 {
-        FCharacter* c = ul_recent;
-        QString name = c->name();
 	FSession *session = account->getSession(charName);
-        if (session->isCharacterIgnored(name))
-        {
-                printDebugInfo("[CLIENT BUG] Tried to ignore somebody who is already on the ignorelist.");
-        } else {
-                sendIgnoreAdd(name);
-        }
+	if (session->isCharacterIgnored(ul_recent_name)) {
+		printDebugInfo("[CLIENT BUG] Tried to ignore somebody who is already on the ignorelist.");
+	} else {
+		sendIgnoreAdd(ul_recent_name);
+	}
 }
 void flist_messenger::ul_ignoreRemove()
 {
-        FCharacter* c = ul_recent;
-        QString name = c->name();
 	FSession *session = account->getSession(charName);
-        if (!session->isCharacterIgnored(name))
-        {
-                printDebugInfo("[CLIENT BUG] Tried to unignore somebody who is not on the ignorelist.");
-        } else {
-                sendIgnoreDelete(name);
-        }
+	if (!session->isCharacterIgnored(ul_recent_name)) {
+		printDebugInfo("[CLIENT BUG] Tried to unignore somebody who is not on the ignorelist.");
+	} else {
+		sendIgnoreDelete(ul_recent_name);
+	}
 }
 void flist_messenger::ul_channelBan()
 {
-        FCharacter* ch = ul_recent;
-
         JSONNode kicknode;
-        JSONNode charnode ( "character", ch->name().toStdString() );
+        JSONNode charnode ( "character", ul_recent_name.toStdString() );
         kicknode.push_back ( charnode );
         JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
         kicknode.push_back ( channode );
@@ -2164,9 +2160,8 @@ void flist_messenger::ul_channelBan()
 }
 void flist_messenger::ul_channelKick()
 {
-        FCharacter* ch = ul_recent;
         JSONNode kicknode;
-        JSONNode charnode ( "character", ch->name().toStdString() );
+        JSONNode charnode ( "character", ul_recent_name.toStdString() );
         kicknode.push_back ( charnode );
         JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
         kicknode.push_back ( channode );
@@ -2175,18 +2170,16 @@ void flist_messenger::ul_channelKick()
 }
 void flist_messenger::ul_chatBan()
 {
-        FCharacter* ch = ul_recent;
         JSONNode node;
-        JSONNode charnode ( "character", ch->name().toStdString() );
+        JSONNode charnode ( "character", ul_recent_name.toStdString() );
         node.push_back ( charnode );
         std::string out = "ACB " + node.write();
         sendWS ( out );
 }
 void flist_messenger::ul_chatKick()
 {
-        FCharacter* ch = ul_recent;
         JSONNode kicknode;
-        JSONNode charnode ( "character", ch->name().toStdString() );
+        JSONNode charnode ( "character", ul_recent_name.toStdString() );
         kicknode.push_back ( charnode );
         std::string out = "KIK " + kicknode.write();
         sendWS ( out );
@@ -2197,9 +2190,8 @@ void flist_messenger::ul_chatTimeout()
 }
 void flist_messenger::ul_channelOpAdd()
 {
-        FCharacter* ch = ul_recent;
         JSONNode opnode;
-        JSONNode charnode ( "character", ch->name().toStdString() );
+        JSONNode charnode ( "character", ul_recent_name.toStdString() );
         opnode.push_back ( charnode );
         JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
         opnode.push_back ( channode );
@@ -2208,9 +2200,8 @@ void flist_messenger::ul_channelOpAdd()
 }
 void flist_messenger::ul_channelOpRemove()
 {
-        FCharacter* ch = ul_recent;
         JSONNode opnode;
-        JSONNode charnode ( "character", ch->name().toStdString() );
+        JSONNode charnode ( "character", ul_recent_name.toStdString() );
         opnode.push_back ( charnode );
         JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
         opnode.push_back ( channode );
@@ -2219,8 +2210,7 @@ void flist_messenger::ul_channelOpRemove()
 }
 void flist_messenger::ul_chatOpAdd()
 {
-        FCharacter* ch = ul_recent;
-        std::string character = ch->name().toStdString();
+        std::string character = ul_recent_name.toStdString();
         JSONNode opnode;
         JSONNode charnode ( "character", character );
         opnode.push_back ( charnode );
@@ -2229,8 +2219,7 @@ void flist_messenger::ul_chatOpAdd()
 }
 void flist_messenger::ul_chatOpRemove()
 {
-        FCharacter* ch = ul_recent;
-        std::string character = ch->name().toStdString();
+        std::string character = ul_recent_name.toStdString();
         JSONNode opnode;
         JSONNode charnode ( "character", character );
         opnode.push_back ( charnode );
@@ -2239,10 +2228,7 @@ void flist_messenger::ul_chatOpRemove()
 }
 void flist_messenger::ul_profileRequested()
 {
-        FCharacter* ch = ul_recent;
-        QString l = "https://www.f-list.net/c/";
-        l += ch->name();
-        QUrl link(l);
+        QUrl link(QString("https://www.f-list.net/c/%1").arg(ul_recent_name));
         QDesktopServices::openUrl(link);
 }
 
@@ -2285,7 +2271,7 @@ void flist_messenger::timeoutDialogRequested()
 {
         if (timeoutDialog == 0 || timeoutDialog->parent() != this)
                 setupTimeoutDialog();
-        to_leWho->setText(ul_recent->name());
+	to_leWho->setText(ul_recent_name);
         timeoutDialog->show();
 }
 void flist_messenger::to_btnSubmitClicked()
@@ -2387,8 +2373,7 @@ void flist_messenger::switchTab ( QString& tabname )
 }
 void flist_messenger::openPMTab()
 {
-        QString ch = ul_recent->name();
-        openPMTab ( ch );
+	openPMTab(ul_recent_name);
 }
 void flist_messenger::openPMTab ( QString &character )
 {

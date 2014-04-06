@@ -33,6 +33,7 @@ public:
 	bool isCharacterFriend(QString name) {return friendslist.contains(name);}
 	FCharacter *addCharacter(QString name);
 	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
+	void removeCharacter(QString name);
 	int getCharacterCount() {return characterlist.count();}
 
 	QStringList &getFriendsList() {return friendslist;}

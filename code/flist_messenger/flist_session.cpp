@@ -52,6 +52,17 @@ FCharacter *FSession::addCharacter(QString name)
 	return character;
 }
 
+void FSession::removeCharacter(QString name)
+{
+	//Get and remove the character from the list.
+	FCharacter *character = characterlist.take(name);
+	//Delete if not null.
+	if(character) {
+		delete character;
+	}
+}
+
+
 /**
 Tell the server that we wish to join the given channel.
  */
@@ -691,6 +702,7 @@ COMMAND(FLN)
 		}
 	}
 	account->ui->notifyCharacterOnline(this, charactername, false);
+	removeCharacter(charactername);
 }
 COMMAND(STA)
 {
