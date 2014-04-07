@@ -121,6 +121,7 @@ public:
 	QString* toString();
 
 	void addLine(QString chanLine, bool log);
+	void clearLines();
 	void emptyCharList();
 	void logLine ( QString& chanLine );
 	void printChannel ( QTextBrowser* textEdit );

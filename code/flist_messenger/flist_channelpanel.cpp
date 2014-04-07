@@ -261,6 +261,11 @@ void FChannelPanel::addLine(QString chanLine, bool log)
 	}
 }
 
+void FChannelPanel::clearLines()
+{
+	chanLines.clear();
+}
+
 void FChannelPanel::logLine ( QString &chanLine )
 {
 

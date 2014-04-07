@@ -2530,6 +2530,9 @@ void flist_messenger::parseInput()
                 if ( parts[0].toLower() == "/clear" )
                 {
                         textEdit->clear();
+			if(currentPanel) {
+				currentPanel->clearLines();
+			}
                         success = true;
                 }
                 else if ( parts[0].toLower() == "/debug" )
