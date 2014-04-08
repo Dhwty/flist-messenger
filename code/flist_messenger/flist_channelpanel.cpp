@@ -72,10 +72,11 @@ void FChannelPanel::initClass()
         }
 }
 
-FChannelPanel::FChannelPanel (QString panelname, QString channelname, channelType type)
+FChannelPanel::FChannelPanel (QString sessionid, QString panelname, QString channelname, channelType type) :
+	sessionid(sessionid),
+	panelname(panelname)
 {
 	mode = CHANNEL_MODE_BOTH;
-	this->panelname = panelname;
         chanName = channelname;
         creationTime = time ( 0 );
         chanType = type;

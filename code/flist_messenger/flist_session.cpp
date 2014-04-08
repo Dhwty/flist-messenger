@@ -17,6 +17,7 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent) :
 	QObject(parent),
 	connected(false),
 	account(account),
+	sessionid(character),
 	character(character),
 	tcpsocket(0),
 	characterlist(),

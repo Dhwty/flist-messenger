@@ -20,6 +20,8 @@ public:
 	explicit FSession(FAccount *account, QString &character, QObject *parent = 0);
 	~FSession();
 
+	QString getSessionID() {return sessionid;}
+
 	void connectSession();
 	
 	void wsSend(const char *command);
@@ -59,6 +61,7 @@ public slots:
 public:
 	bool connected;
 	FAccount *account;
+	QString sessionid;
 	QString character;
 
 	QTcpSocket *tcpsocket;

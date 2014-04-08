@@ -75,13 +75,14 @@ public:
 		CHANTYPE_MAX
 	};
 
-	FChannelPanel(QString panelname, QString channelname, channelType type);
+	FChannelPanel(QString sessionid, QString panelname, QString channelname, channelType type);
 	~FChannelPanel() {}
 	static void initClass();
 	void setRecipient ( QString& name ){recipientName = name;}
 	QString& recipient(){return recipientName;}
 	void setName ( QString& name );
 	QString& getChannelName(){return chanName;}
+	QString &getSessionID() {return sessionid;}
 	QString& getPanelName(){return panelname;}
 	void setInput ( QString& input ){this->input = input;}
 	QString& getInput(){return input;}
@@ -137,6 +138,7 @@ private:
 	bool					highlighted;
 	bool					hasNewMessages;
 	bool					alwaysPing;			// This channel pings on every message.
+	QString sessionid;
 	QString					panelname;
 	QString					chanName;
 	QString					chanTitle;
