@@ -387,6 +387,7 @@ private slots:
 
 
 public:
+	void closeChannelPanel(QString panelname);
 	void parseInput();
 	void flashApp(QString& reason);
 	static const int BUFFERPUB  = 4096; // Buffer limit in public
@@ -445,7 +446,7 @@ private:
 	bool doingWS;
 	QHash<QString, FChannelPanel*> channelList;
 	QString ul_recent_name;
-	FChannelPanel* tb_recent;
+	QString tb_recent_name;
 	QMenu* recentCharMenu;
 	QMenu* recentChannelMenu;
 	//========================================

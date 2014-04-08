@@ -6,11 +6,13 @@ A multi-platform desktop client for the F-Chat protocol. If you have any questio
 **Changes between 0.8.5 and 0.9.1:**
 * Internally flist-messenger has under gone a very heavy overhaul to improve code quality. While a great deal of effort has been spent trying to keep behaviour bug free and working, it's possible that unintended bugs have crept in.
 * Project files have been switched from CMake to QMake. This provides better support from Qt Creator and removes the dependance on CMake.
+* '/close' has been added.
 * bugfix: Switching between tabs should no longer put double time stamps on every line.
 * bugfix: The current character selection in channels should no longer deselect when characters join or leave the channel.
 * bugfix: The character list in channels should refresh correctly with people joining, leaving and changing status.
 * bugfix: RP ads from ignored users are now hidden.
 * bugfix: Unignoring characters should now always work.
+* bugfix: '/setdescription' will no longer convert line breaks into spaces.
 
 **Known issues:**
 * Sound functionality is currently reduced when compared to version 0.8.5.

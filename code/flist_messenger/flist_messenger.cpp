@@ -143,7 +143,6 @@ flist_messenger::flist_messenger(bool d)
         makeRoomDialog = 0;
         setStatusDialog = 0;
         characterInfoDialog = 0;
-        tb_recent = 0;
         recentCharMenu = 0;
         recentChannelMenu = 0;
         reportDialog = 0;
@@ -608,18 +607,21 @@ void flist_messenger::channelSettingsDialogRequested()
 bool flist_messenger::setupChannelSettingsDialog()
 {
 	FSession *session = account->getSession(charName);
-
-	if (tb_recent->type() == FChannelPanel::CHANTYPE_PM)
-        {
+	FChannelPanel *channelpanel = channelList.value(tb_recent_name);
+	if(!channelpanel) {
+		debugMessage(QString("Tried to setup a channel settings dialog for the panel '%1', but the panel does not exist.").arg(tb_recent_name));
+		return false;
+	}
+	if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
                 // Setup for PM
-		if (!session->isCharacterOnline(tb_recent->recipient())) { // Recipient is offline
+		if (!session->isCharacterOnline(channelpanel->recipient())) { // Recipient is offline
 			return false;
 		}
                 channelSettingsDialog = new QDialog(this);
-                FCharacter* ch = session->getCharacter(tb_recent->recipient());
-                cs_chanCurrent = tb_recent;
+                FCharacter* ch = session->getCharacter(channelpanel->recipient());
+                cs_chanCurrent = channelpanel;
                 channelSettingsDialog->setWindowTitle(ch->name());
-                channelSettingsDialog->setWindowIcon(tb_recent->pushButton->icon());
+                channelSettingsDialog->setWindowIcon(channelpanel->pushButton->icon());
                 cs_qsPlainDescription = ch->statusMsg();
                 cs_vblOverview = new QVBoxLayout;
                 cs_gbDescription = new QGroupBox("Status");
@@ -644,7 +646,7 @@ bool flist_messenger::setupChannelSettingsDialog()
                 connect(cs_tbDescription, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
         } else {
                 channelSettingsDialog = new QDialog(this);
-		FChannelPanel* ch = tb_recent;
+		FChannelPanel* ch = channelpanel;
                 cs_chanCurrent = ch;
                 channelSettingsDialog->setWindowTitle(ch->title());
                 channelSettingsDialog->setWindowIcon(ch->pushButton->icon());
@@ -933,27 +935,29 @@ void flist_messenger::se_btnCancelClicked()
 {
         settingsDialog->hide();
 }
+
+void flist_messenger::closeChannelPanel(QString panelname)
+{
+	FChannelPanel *channelpanel = channelList.value(panelname);
+	if(!channelpanel) {
+		return;
+	}
+	bool current = channelpanel == currentPanel;
+	if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
+		channelpanel->setActive(false);
+		channelpanel->pushButton->setVisible(false);
+		channelpanel->setTyping(TYPING_STATUS_CLEAR);
+	} else {
+		leaveChannel(channelpanel->getPanelName(), channelpanel->getChannelName(), true);
+	}
+	if (current) {
+		QString c = "CONSOLE";
+		switchTab(c);
+	}
+}
 void flist_messenger::tb_closeClicked()
 {
-        if (tb_recent == 0) return;
-        bool current = false;
-        if (currentPanel && tb_recent == currentPanel)
-        {
-                current = true;
-        }
-	if (tb_recent->type() == FChannelPanel::CHANTYPE_PM)
-        {
-                tb_recent->setActive(false);
-                tb_recent->pushButton->setVisible(false);
-		tb_recent->setTyping ( TYPING_STATUS_CLEAR );
-        } else {
-		leaveChannel(tb_recent->getPanelName(), tb_recent->getChannelName(), true);
-        }
-        if (current)
-        {
-                QString c = "CONSOLE";
-                switchTab(c);
-        }
+	closeChannelPanel(tb_recent_name);
 }
 void flist_messenger::tb_settingsClicked()
 {
@@ -2034,14 +2038,13 @@ void flist_messenger::tb_channelRightClicked ( const QPoint & point )
         QObject* sender = this->sender();
         QPushButton* button = qobject_cast<QPushButton*> ( sender );
         if (button) {
-                tb_recent = channelList.value(button->objectName());
-                std::cout << tb_recent->title().toStdString() << std::endl;
+                tb_recent_name = button->objectName();
                 channelButtonMenuRequested();
         }
 }
 void flist_messenger::channelButtonMenuRequested()
 {
-        displayChannelContextMenu(tb_recent);
+        displayChannelContextMenu(channelList.value(tb_recent_name));
 }
 void flist_messenger::channelButtonClicked()
 {
@@ -2526,8 +2529,8 @@ void flist_messenger::parseInput()
         if ( isCommand )
         {
                 QStringList parts = inputText.split ( ' ' );
-
-                if ( parts[0].toLower() == "/clear" )
+		QString slashcommand = parts[0].toLower();
+                if ( slashcommand == "/clear" )
                 {
                         textEdit->clear();
 			if(currentPanel) {
@@ -2535,7 +2538,7 @@ void flist_messenger::parseInput()
 			}
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/debug" )
+                else if ( slashcommand == "/debug" )
                 {
                         JSONNode root;
                         JSONNode temp;
@@ -2546,40 +2549,37 @@ void flist_messenger::parseInput()
                         debug += root.write().c_str();
                         sendWS( debug );
                         success = true;
-                } else if(parts[0].toLower() == "/debugrecv") {
+                } else if(slashcommand == "/debugrecv") {
 			//Artificially receive a packet from the server. The packet is not validated.
 			session->wsRecv(ownText.mid(11).toStdString());
 			success = true;
 		}
-                else if ( parts[0].toLower() == "/me" )
+                else if ( slashcommand == "/me" )
                 {
                         msg = "<i>*<b>" + charName + "</b> " + ownText.mid ( 4 ).simplified() + "</i>";
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/me's" )
+                else if ( slashcommand == "/me's" )
                 {
                         msg = "<i>*<b>" + charName + "'s</b> " + ownText.mid( 4 ).simplified() + "</i>";
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/join" )
+                else if ( slashcommand == "/join" )
                 {
                         QString channel = inputText.mid ( 6, -1 ).simplified();
                         session->joinChannel(channel);
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/leave" )
+                else if ( slashcommand == "/leave" || slashcommand == "/close" )
                 {
-			if ( currentPanel == console || currentPanel->type() == FChannelPanel::CHANTYPE_PM )
-                        {
-                                success = false;
-                        }
-                        else
-                        {
-                                leaveChannel(currentPanel->getPanelName(), currentPanel->getChannelName(), true);
-                                success = true;
-                        }
+			if(currentPanel == console) {
+				success = false;
+			} else {
+				closeChannelPanel(currentPanel->getPanelName());
+				success = true;
+			}
                 }
-                else if ( parts[0].toLower() == "/status" )
+                else if ( slashcommand == "/status" )
                 {
                         QString status = parts[1];
                         QString statusMsg = inputText.mid ( 9 + status.length(), -1 ).simplified();
@@ -2588,18 +2588,18 @@ void flist_messenger::parseInput()
                         changeStatus ( stdstat, stdmsg );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/users" )
+                else if ( slashcommand == "/users" )
                 {
                         usersCommand();
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/priv" )
+                else if ( slashcommand == "/priv" )
                 {
                         QString character = inputText.mid ( 6 ).simplified();
                         openPMTab ( character );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/ignore" )
+                else if ( slashcommand == "/ignore" )
                 {
                         QString character = inputText.mid ( 8 ).simplified();
 
@@ -2609,7 +2609,7 @@ void flist_messenger::parseInput()
                                 success = true;
                         }
                 }
-                else if ( parts[0].toLower() == "/unignore" )
+                else if ( slashcommand == "/unignore" )
                 {
                         QString character = inputText.mid ( 10 ).simplified();
 
@@ -2627,12 +2627,12 @@ void flist_messenger::parseInput()
                                 }
                         }
                 }
-                else if ( parts[0].toLower() == "/channels" || parts[0].toLower() == "/prooms" )
+                else if ( slashcommand == "/channels" || slashcommand == "/prooms" )
                 {
                         channelsDialogRequested();
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/kick" )
+                else if ( slashcommand == "/kick" )
                 {
                         //[16:29 PM]>>CKU {"channel":"ADH-STAFFROOMFORSTAFFPPL","character":"Viona"}
                         JSONNode kicknode;
@@ -2644,7 +2644,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/gkick" )
+                else if ( slashcommand == "/gkick" )
                 {
                         // [16:22 PM]>>KIK {"character":"Tamu"}
                         JSONNode kicknode;
@@ -2654,7 +2654,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/ban" )
+                else if ( slashcommand == "/ban" )
                 {
                         //[17:23 PM]>>CBU {"channel":"ADH-89ff2273b20cfc422ca1","character":"Viona"}
                         JSONNode kicknode;
@@ -2666,7 +2666,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/accountban" )
+                else if ( slashcommand == "/accountban" )
                 {
                         //[22:42 PM]>>ACB {"character":"Mack"}
                         JSONNode node;
@@ -2676,7 +2676,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/makeroom" )
+                else if ( slashcommand == "/makeroom" )
                 {
                         // [17:24 PM]>>CCR {"channel":"abc"}
                         JSONNode makenode;
@@ -2686,7 +2686,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/closeroom")
+                else if ( slashcommand == "/closeroom")
                 {
                         // [13:12 PM]>>RST {"channel":"ADH-68c2 7 1 4e731ccfbe0","status":"public"}
                         JSONNode statusnode;
@@ -2698,7 +2698,7 @@ void flist_messenger::parseInput()
                         sendWS( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/openroom")
+                else if ( slashcommand == "/openroom")
                 {
                         // [13:12 PM]>>RST {"channel":"ADH-68c2 7 1 4e731ccfbe0","status":"private"}
                         JSONNode statusnode;
@@ -2710,7 +2710,7 @@ void flist_messenger::parseInput()
                         sendWS( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/invite" )
+                else if ( slashcommand == "/invite" )
                 {
                         //[16:37 PM]>>CIU {"channel":"ADH-STAFFROOMFORSTAFFPPL","character":"Viona"}
                         JSONNode invitenode;
@@ -2722,12 +2722,12 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/warn" )
+                else if ( slashcommand == "/warn" )
                 {
                         msg = "<b>" + charName + "</b>: <span id=\"warning\">" + ownText.mid ( 6 ) + "</span>";
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/cop" )
+                else if ( slashcommand == "/cop" )
                 {
                         //COA {"channel":"","character":""}
                         JSONNode opnode;
@@ -2739,7 +2739,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/cdeop" )
+                else if ( slashcommand == "/cdeop" )
                 {
                         //[16:27 PM]>>COR {"channel":"ADH-STAFFROOMFORSTAFFPPL","character":"Viona"}
                         JSONNode opnode;
@@ -2751,7 +2751,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/op" )
+                else if ( slashcommand == "/op" )
                 {
                         std::string character = inputText.mid ( 4 ).simplified().toStdString();
                         JSONNode opnode;
@@ -2761,7 +2761,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/reward" )
+                else if ( slashcommand == "/reward" )
                 {
                         // [17:19 PM]>>RWD {"character":"Arisato Hamuko"}
                         JSONNode node;
@@ -2771,7 +2771,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/deop" )
+                else if ( slashcommand == "/deop" )
                 {
                         // [17:27 PM]>>DOP {"character":"Viona"}
                         JSONNode node;
@@ -2781,7 +2781,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/code")
+                else if ( slashcommand == "/code")
                 {
                         QString out = "";
                         switch(currentPanel->type())
@@ -2799,7 +2799,7 @@ void flist_messenger::parseInput()
 			messageSystem(session, out, MESSAGE_TYPE_FEEDBACK);
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/unban" )
+                else if ( slashcommand == "/unban" )
                 {
                         // [17:30 PM]>>CUB {"channel":"ADH-cbae3bdf02cd39e8949e","character":"Viona"}
                         JSONNode node;
@@ -2811,7 +2811,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/banlist" )
+                else if ( slashcommand == "/banlist" )
                 {
                         // [17:30 PM]>>CBL {"channel":"ADH-cbae3bdf02cd39e8949e"}
                         JSONNode node;
@@ -2821,19 +2821,18 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/setdescription" )
+                else if ( slashcommand == "/setdescription" )
                 {
                         // [17:31 PM]>>CDS {"channel":"ADH-cbae3bdf02cd39e8949e","description":":3!"}
                         JSONNode node;
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        node.push_back ( channode );
-                        JSONNode descnode ( "description", inputText.mid ( 16 ).simplified().toStdString() );
-                        node.push_back ( descnode );
+			node.push_back(JSONNode("channel", currentPanel->getChannelName().toStdString()));
+			//todo: Does this require more intelligent filtering on excess whitespace?
+                        node.push_back(JSONNode("description", inputText.mid(16).trimmed().toStdString()));
                         std::string out = "CDS " + node.write();
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/coplist" )
+                else if ( slashcommand == "/coplist" )
                 {
                         // [17:31 PM]>>COL {"channel":"ADH-cbae3bdf02cd39e8949e"}
                         JSONNode node;
@@ -2843,7 +2842,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/timeout" )
+                else if ( slashcommand == "/timeout" )
                 {
                         // [17:16 PM]>>TMO {"time":1,"character":"Arisato Hamuko","reason":"Test."}
                         QStringList tparts = inputText.mid ( 9 ).split ( ',' );
@@ -2871,7 +2870,7 @@ void flist_messenger::parseInput()
                                 success = true;
                         }
                 }
-                else if ( parts[0].toLower() == "/gunban" )
+                else if ( slashcommand == "/gunban" )
                 {
                         // [22:43 PM]>>UNB {"character":"Mack"}
                         JSONNode node;
@@ -2881,7 +2880,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/createchannel" )
+                else if ( slashcommand == "/createchannel" )
                 {
                         // [0:59 AM]>>CRC {"channel":"test"}
                         JSONNode node;
@@ -2891,7 +2890,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/killchannel" )
+                else if ( slashcommand == "/killchannel" )
                 {
                         // [0:59 AM]>>KIC {"channel":"test"}
                         JSONNode node;
@@ -2901,7 +2900,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/broadcast" )
+                else if ( slashcommand == "/broadcast" )
                 {
                         //[1:14 AM]>>BRO {"message":"test"}
                         JSONNode node;
@@ -2911,7 +2910,7 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/setmode" )
+                else if ( slashcommand == "/setmode" )
                 {
                         //[23:59 PM]>>RMO {"channel":"ADH-9bbe33158b12f525f422","mode":"chat"}
                         if (inputText.length() < 10 || (parts[1].toLower() != "chat" && parts[1].toLower() != "ads" && parts[1].toLower() != "both") )
@@ -2937,7 +2936,7 @@ void flist_messenger::parseInput()
                         }
                         success = true;
                 }
-                else if ( parts[0].toLower() == "/bottle" )
+                else if ( slashcommand == "/bottle" )
                 {
 			if (currentPanel == 0 || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE || currentPanel->type() == FChannelPanel::CHANTYPE_PM)
                         {
@@ -2958,7 +2957,7 @@ void flist_messenger::parseInput()
                         success = true;
 
                 }
-                else if ( parts[0].toLower() == "/roll" )
+                else if ( slashcommand == "/roll" )
                 {
 			if (currentPanel == 0 || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE || currentPanel->type() == FChannelPanel::CHANTYPE_PM)
                         {
@@ -2985,7 +2984,7 @@ void flist_messenger::parseInput()
                         }
                         success = true;
                 }
-                else if (debugging && parts[0].toLower() == "/channeltojson")
+                else if (debugging && slashcommand == "/channeltojson")
                 {
                         QString output("[noparse]");
                         JSONNode* node = currentPanel->toJSON();
@@ -2995,7 +2994,7 @@ void flist_messenger::parseInput()
                         delete node;
                         success = true;
         }
-        else if (debugging && parts[0].toLower() == "/refreshqss")
+        else if (debugging && slashcommand == "/refreshqss")
         {
             QFile stylefile("default.qss");
             stylefile.open(QFile::ReadOnly);
@@ -3005,7 +3004,7 @@ void flist_messenger::parseInput()
 	    messageSystem(session, output, MESSAGE_TYPE_FEEDBACK);
             success = true;
         }
-                else if (parts[0].toLower() == "/channeltostring")
+                else if (slashcommand == "/channeltostring")
                 {
                         QString* output = currentPanel->toString();
 			messageSystem(session, *output, MESSAGE_TYPE_FEEDBACK);
