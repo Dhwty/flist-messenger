@@ -48,6 +48,7 @@ public:
 	void sendChannelMessage(QString channelname, QString message);
 	void sendChannelAdvertisement(QString channelname, QString message);
 	void sendCharacterMessage(QString charactername, QString message);
+	void sendChannelLeave(QString channelname);
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);

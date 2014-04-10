@@ -387,6 +387,7 @@ private slots:
 
 
 public:
+	void leaveChannelPanel(QString panelname);
 	void closeChannelPanel(QString panelname);
 	void parseInput();
 	void flashApp(QString& reason);
@@ -405,10 +406,6 @@ private:
 	void setupConsole();								// Makes the console channel.
 	void sendWS ( std::string& input );					// Sends messages to the server
 	FChannelTab* addToActivePanels ( QString& channel, QString &channelname, QString& tooltip );	// Adds the newly joined channel to the displayed list of channels
-	void leaveChannel(QString &panelname, QString &channelname, bool toServer = true);		// Leaves the channel
-	void messageChannel ( std::string& channel, std::string& message );	// Sends a message to the specified channel
-	void messagePrivate ( std::string& character, std::string& message );	// Sends a message to the specified character
-	void advertiseChannel(std::string& channel, std::string& message);
 	void sendIgnoreAdd ( QString& character );			// Sends an ignore request to the server
 	void sendIgnoreDelete ( QString& character );		// Sends an ignore request to the server
 	void changeStatus ( std::string& status, std::string& statusmsg );

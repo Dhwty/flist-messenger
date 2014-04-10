@@ -940,24 +940,57 @@ void flist_messenger::closeChannelPanel(QString panelname)
 {
 	FChannelPanel *channelpanel = channelList.value(panelname);
 	if(!channelpanel) {
+		debugMessage(QString("[BUG] Told to close channel panel '%1', but the panel does not exist.'").arg(panelname));
 		return;
 	}
-	bool current = channelpanel == currentPanel;
+	if(channelpanel == console) {
+		debugMessage(QString("[BUG] Was told to close the chanel panel for the console! Channel panel '%1'.").arg(panelname));
+		return;
+	}
 	if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
-		channelpanel->setActive(false);
-		channelpanel->pushButton->setVisible(false);
 		channelpanel->setTyping(TYPING_STATUS_CLEAR);
 	} else {
-		leaveChannel(channelpanel->getPanelName(), channelpanel->getChannelName(), true);
+		channelpanel->emptyCharList();
 	}
-	if (current) {
+	channelpanel->setActive(false);
+	channelpanel->pushButton->setVisible(false);
+	if(channelpanel == currentPanel) {
 		QString c = "CONSOLE";
 		switchTab(c);
 	}
 }
+
+/**
+Close a channel panel and if it has an associated channel, leave the channel too.
+ */
+void flist_messenger::leaveChannelPanel(QString panelname)
+{
+	FChannelPanel *channelpanel = channelList.value(panelname);
+	if(!channelpanel) {
+		debugMessage(QString("[BUG] Told to leave channel panel '%1', but the panel does not exist.'").arg(panelname));
+		return;
+	}
+	if(channelpanel == console) {
+		debugMessage(QString("[BUG] Was told to leave the chanel panel for the console! Channel panel '%1'.").arg(panelname));
+		return;
+	}
+	if(channelpanel->getSessionID().isEmpty()) {
+		debugMessage(QString("[BUG] Was told to leave the chanel panel '%1', but it has no session associated with it!.").arg(panelname));
+		return;
+	}
+	FSession *session = account->getSession(channelpanel->getSessionID());
+	QString channelname;
+	if(channelpanel->type() != FChannelPanel::CHANTYPE_PM) {
+		channelname = channelpanel->getChannelName();
+	}
+	closeChannelPanel(panelname);
+	if(!channelname.isEmpty()) {
+		session->sendChannelLeave(channelname);
+	}
+}
 void flist_messenger::tb_closeClicked()
 {
-	closeChannelPanel(tb_recent_name);
+	leaveChannelPanel(tb_recent_name);
 }
 void flist_messenger::tb_settingsClicked()
 {
@@ -1837,6 +1870,7 @@ void flist_messenger::socketSslError (QList<QSslError> sslerrors ) {
 	messageSystem(0, errorstring, MESSAGE_TYPE_ERROR);
 }
 
+//todo: Calls to sendWS() are to be replaced with appropriate calls to FSession methods.
 void flist_messenger::sendWS ( std::string& input )
 {
 	FSession *session = account->getSession(charName);
@@ -1898,52 +1932,7 @@ bool ReturnLogin::eventFilter(QObject *obj, QEvent *event)
                 return QObject::eventFilter(obj, event);
         }
 }
-void flist_messenger::leaveChannel(QString &panelname, QString &channelname, bool toServer)
-{
-        channelList[panelname]->emptyCharList();
-        channelList[panelname]->setActive ( false );
-        channelList[panelname]->pushButton->setVisible ( false );
-        currentPanel = console;
 
-        if ( toServer )
-        {
-                JSONNode leavenode;
-                JSONNode channode ( "channel", channelname.toStdString() );
-                leavenode.push_back ( channode );
-                std::string msg = "LCH " + leavenode.write();
-                sendWS ( msg );
-        }
-}
-void flist_messenger::advertiseChannel(std::string &channel, std::string &message)
-{
-        JSONNode msgnode;
-        JSONNode channode("channel", channel);
-        JSONNode textnode("message", message);
-        msgnode.push_back(channode);
-        msgnode.push_back(textnode);
-        std::string msg = "LRP " + msgnode.write();
-        sendWS(msg);
-}
-void flist_messenger::messageChannel ( std::string& channel, std::string& message )
-{
-        JSONNode msgnode;
-        JSONNode channode ( "channel", channel );
-        JSONNode textnode ( "message", message );
-        msgnode.push_back ( channode );
-        msgnode.push_back ( textnode );
-        std::string msg = "MSG " + msgnode.write();
-        sendWS ( msg );
-}
-void flist_messenger::messagePrivate ( std::string& character, std::string& message )
-{
-        JSONNode msgnode;
-        JSONNode targetnode ( "recipient", character );
-        JSONNode textnode ( "message", message );
-        msgnode.push_back ( targetnode );
-        msgnode.push_back ( textnode );
-        std::string msg = "PRI " + msgnode.write();
-        sendWS ( msg );
-}
 void flist_messenger::sendIgnoreAdd (QString& character )
 {
         character = character.toLower();
@@ -2423,61 +2412,31 @@ void flist_messenger::btnSendChatClicked()
 //todo: Move most of this functionality into FSession
 void flist_messenger::btnSendAdvClicked()
 {
-        if (se_sounds)
-                soundPlayer.play ( soundPlayer.SOUND_CHAT );
-
-	FSession *session = account->getSession(currentPanel->getSessionID());
+	if(se_sounds) {
+		soundPlayer.play ( soundPlayer.SOUND_CHAT );
+	}
         QPlainTextEdit *messagebox = this->findChild<QPlainTextEdit *> ( QString ( "chatinput" ) );
         QString inputText = QString ( messagebox->toPlainText() );
-        QString gt = "&gt;";
-        QString lt = "&lt;";
-        QString amp = "&amp;";
-        QString ownText = inputText;
-        ownText.replace ( '&', amp ).replace ( '<', lt ).replace ( '>', gt );
-        QString msg;
-        if ( inputText.length() == 0 )
-        {
-                msg = "<b>Error:</b> No message.";
-		messageSystem(session, msg, MESSAGE_TYPE_FEEDBACK);
-                return;
-        }
-        if ( currentPanel == 0 )
-	{
-                printDebugInfo("[CLIENT ERROR] currentPanel == 0");
-                return;
-        }
-	if ( currentPanel == console || currentPanel->getMode() == CHANNEL_MODE_CHAT || currentPanel->type() == FChannelPanel::CHANTYPE_PM )
-        {
-                msg = "<b>Error:</b> Can't advertise here.";
-		messageSystem(session, msg, MESSAGE_TYPE_FEEDBACK);
+	if(currentPanel == 0) {
+		printDebugInfo("[CLIENT ERROR] currentPanel == 0");
 		return;
         }
-        if ( inputText.length() > flist_messenger::BUFFERPUB )
-        {
-                msg = "<B>Error:</B> Message exceeds the maximum number of characters.";
-		messageSystem(session, msg, MESSAGE_TYPE_FEEDBACK);
-                return;
-        }
-
-        std::string chan = currentPanel->getChannelName().toStdString();
-        std::string message = inputText.toStdString();
-        bool isOp = false;
-        QString genderColor;
-	if(session->isCharacterOnline(session->character)) {
-		FCharacter* chanchar = session->getCharacter(session->character);
-                genderColor = chanchar->genderColor().name();
-                isOp = ( chanchar->isChatOp() || currentPanel->isOp( chanchar ) || currentPanel->isOwner( chanchar ) );
-        }
-        msg = "<font color=\"green\"><b>Roleplay ad by</font> <font color=\"";
-        msg+= genderColor;
-        msg+= "\">";
-        msg+= session->character;
-        msg+= "</b></font>: ";
-        msg+= ownText;
-	messageChannel(session, currentPanel->getChannelName(), msg, MESSAGE_TYPE_RPAD);
-
-        plainTextEdit->clear();
-        advertiseChannel ( chan, message );
+	FSession *session = account->getSession(currentPanel->getSessionID());
+	if(inputText.length() == 0) {
+		messageSystem(session, QString("<b>Error:</b> No message."), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	if ( currentPanel == console || currentPanel->getMode() == CHANNEL_MODE_CHAT || currentPanel->type() == FChannelPanel::CHANTYPE_PM ) {
+		messageSystem(session, QString("<b>Error:</b> Can't advertise here."), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	//todo: Use the configuration stored in the session.
+	if ( inputText.length() > flist_messenger::BUFFERPUB ) {
+		messageSystem(session, QString("<b>Error:</b> Message exceeds the maximum number of characters."), MESSAGE_TYPE_FEEDBACK);
+		return;
+	}
+	plainTextEdit->clear();
+	session->sendChannelAdvertisement(currentPanel->getChannelName(), inputText);
 }
 //todo: Move some of this functionality into the FSession class.
 void flist_messenger::parseInput()
@@ -2497,7 +2456,7 @@ void flist_messenger::parseInput()
 	FSession *session = account->getSession(currentPanel->getSessionID());
 
         bool success = false;
-        QString msg = 0;
+	bool plainmessage = false;
         QString gt = "&gt;";
         QString lt = "&lt;";
         QString amp = "&amp;";
@@ -2505,8 +2464,7 @@ void flist_messenger::parseInput()
         ownText.replace ( '&', amp ).replace ( '<', lt ).replace ( '>', gt );
         if ( inputText.length() == 0 )
         {
-                msg = "<b>Error:</b> No message.";
-		messageSystem(session, msg, MESSAGE_TYPE_FEEDBACK);
+		messageSystem(session, QString("<b>Error:</b> No message."), MESSAGE_TYPE_FEEDBACK);
                 return;
         }
         if ( currentPanel == 0 )
@@ -2514,16 +2472,18 @@ void flist_messenger::parseInput()
                 printDebugInfo("[CLIENT ERROR] currentPanel == 0");
                 return;
         }
-        int buffer;
-        if ( pm )
-                buffer = flist_messenger::BUFFERPRIV;
-        else
-                buffer = flist_messenger::BUFFERPUB;
 
-        if ( inputText.length() > buffer )
-        {
-                msg = "<B>Error:</B> Message exceeds the maximum number of characters.";
-		messageSystem(session, msg, MESSAGE_TYPE_FEEDBACK);
+	//todo: Make these read the configuration value from the session.
+	int buffermaxlength;
+	if(pm) {
+		buffermaxlength = flist_messenger::BUFFERPRIV;
+	} else {
+		buffermaxlength = flist_messenger::BUFFERPUB;
+	}
+
+	//todo: Should the maximum length only apply to stuff tagged 'plainmessage'?
+	if(inputText.length() > buffermaxlength) {
+		messageSystem(session, QString("<B>Error:</B> Message exceeds the maximum number of characters."), MESSAGE_TYPE_FEEDBACK);
                 return;
         }
 
@@ -2552,17 +2512,30 @@ void flist_messenger::parseInput()
                         success = true;
                 } else if(slashcommand == "/debugrecv") {
 			//Artificially receive a packet from the server. The packet is not validated.
-			session->wsRecv(ownText.mid(11).toStdString());
-			success = true;
+			if(session) {
+				session->wsRecv(ownText.mid(11).toStdString());
+				success = true;
+			} else {
+				messageSystem(session, QString("Can't do '/debugrecv', as there is no session associated with this console."), MESSAGE_TYPE_FEEDBACK);
+			}
+		} else if(slashcommand == "/debugsend") {
+			//Send a packet directly to the server. The packet is not validated.
+			if(session) {
+				std::string send = ownText.mid(11).toStdString();
+				session->wsSend(send);
+				success = true;
+			} else {
+				messageSystem(session, QString("Can't do '/debugsend', as there is no session associated with this console."), MESSAGE_TYPE_FEEDBACK);
+			}
 		}
                 else if ( slashcommand == "/me" )
                 {
-                        msg = "<i>*<b>" + session->character + "</b> " + ownText.mid ( 4 ).simplified() + "</i>";
+			plainmessage = true;
                         success = true;
                 }
                 else if ( slashcommand == "/me's" )
                 {
-                        msg = "<i>*<b>" + session->character + "'s</b> " + ownText.mid( 4 ).simplified() + "</i>";
+			plainmessage = true;
                         success = true;
                 }
                 else if ( slashcommand == "/join" )
@@ -2573,10 +2546,12 @@ void flist_messenger::parseInput()
                 }
                 else if ( slashcommand == "/leave" || slashcommand == "/close" )
                 {
-			if(currentPanel == console) {
+			//todo: Detect other console types.
+			if(currentPanel == console || !session) {
+				messageSystem(session, QString("Can't close and leave, as this is a console."), MESSAGE_TYPE_FEEDBACK);
 				success = false;
 			} else {
-				closeChannelPanel(currentPanel->getPanelName());
+				leaveChannelPanel(currentPanel->getPanelName());
 				success = true;
 			}
                 }
@@ -2725,7 +2700,7 @@ void flist_messenger::parseInput()
                 }
                 else if ( slashcommand == "/warn" )
                 {
-                        msg = "<b>" + session->character + "</b>: <span id=\"warning\">" + ownText.mid ( 6 ) + "</span>";
+			plainmessage = true;
                         success = true;
                 }
                 else if ( slashcommand == "/cop" )
@@ -3015,7 +2990,7 @@ void flist_messenger::parseInput()
         }
         else
         {
-                msg = "<b>" + session->character + "</b>: " + ownText;
+		plainmessage = true;
                 success = true;
         }
 
@@ -3024,8 +2999,7 @@ void flist_messenger::parseInput()
                 plainTextEdit->clear();
         }
 
-        if ( msg != 0 )
-        {
+	if(plainmessage) {
 		if(pm) {
 			session->sendCharacterMessage(currentPanel->recipient(), inputText);
 		} else {
@@ -3439,6 +3413,9 @@ void flist_messenger::joinChannel(FSession *session, QString channelname)
 	}
 	//todo: Refresh any elements in a half prepared state.
 }
+/**
+This notifies the UI that the given session has now left the given channel. The UI should close or disable the releavent widgets. It should not send any leave commands.
+ */
 void flist_messenger::leaveChannel(FSession *session, QString channelname)
 {
 	QString panelname = PANELNAME(channelname, session->getSessionID());
@@ -3446,7 +3423,7 @@ void flist_messenger::leaveChannel(FSession *session, QString channelname)
 		printDebugInfo("[BUG]: Told to leave a channel, but the panel for the channel doesn't exist. " + channelname.toStdString());
 		return;
 	}
-	leaveChannel(panelname, channelname, false);
+	closeChannelPanel(panelname);
 }
 void flist_messenger::setChannelDescription(FSession *session, QString channelname, QString description)
 {

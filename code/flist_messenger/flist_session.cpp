@@ -1347,3 +1347,10 @@ void FSession::sendCharacterMessage(QString charactername, QString message)
 	QString messagefinal = makeMessage(message, this->character, getCharacter(this->character));
 	account->ui->messageCharacter(this, charactername, messagefinal, MESSAGE_TYPE_CHAT);
 }
+
+void FSession::sendChannelLeave(QString channelname)
+{
+	JSONNode nodes;
+	nodes.push_back(JSONNode("channel", channelname.toStdString()));
+	wsSend("LCH", nodes);
+} 
