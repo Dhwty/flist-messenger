@@ -19,6 +19,18 @@ FAccount *FServer::addAccount()
 	return account;
 }
 
+FSession *FServer::getSession(QString sessionid)
+{
+	FSession *session;
+	foreach(FAccount *account, accounts) {
+		session = account->getSession(sessionid);
+		if(session) {
+			return session;
+		}
+	}
+	return 0;
+}
+
 FCharacter *characterAdd(QString &name)
 {
 	

@@ -7,6 +7,7 @@
 
 class FAccount;
 class FCharacter;
+class FSession;
 
 class FServer : public QObject
 {
@@ -14,6 +15,7 @@ Q_OBJECT
 public:
 	explicit FServer(QObject *parent = 0);
 	FAccount *addAccount();
+	FSession *getSession(QString sessionid);
 
 signals:
 

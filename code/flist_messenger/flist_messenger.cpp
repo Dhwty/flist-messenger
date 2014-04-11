@@ -773,7 +773,7 @@ void flist_messenger::ai_btnCancelClicked()
 }
 void flist_messenger::ai_btnSubmitClicked()
 {
-	FSession *session = account->getSession(charName);
+	FSession *session = account->getSession(charName); //todo: fix this
         QString character = ai_leName->text().simplified();
 
         if(character != "" && !session->isCharacterIgnored(character))
@@ -1163,7 +1163,7 @@ void flist_messenger::setupChannelsUI()
 void flist_messenger::loginClicked()
 {
         charName = comboBox->currentText();
-	FSession *session = account->getSession(charName);
+	FSession *session = account->addSession(charName);
 
 	session->autojoinchannels = defaultChannels;
 
@@ -1685,7 +1685,7 @@ void flist_messenger::refreshFriendLists()
         QListWidgetItem* lwi = 0;
         fr_lwFriends->clear();
 
-	FSession *session = account->getSession(charName);
+	FSession *session = account->getSession(charName); //todo: fix this
 
 	foreach(QString s, session->getFriendsList()) {
 		if(session->isCharacterOnline(s)) {
@@ -1840,7 +1840,7 @@ void flist_messenger::quitApp()
 void flist_messenger::socketError ( QAbstractSocket::SocketError socketError )
 {
         (void) socketError;
-        FSession *session = account->getSession(charName);
+        FSession *session = account->getSession(charName); //todo: fix this
         QString sockErrorStr = session->tcpsocket->errorString();
         if (btnConnect)
                 btnConnect->setEnabled(true);
@@ -2016,7 +2016,7 @@ void flist_messenger::fr_friendsContextMenuRequested ( const QPoint& point )
 {
         QListWidgetItem* lwi = fr_lwFriends->itemAt ( point );
 
-	FSession *session = account->getSession(charName);
+	FSession *session = account->getSession(charName); //todo: fix this
 	if(lwi && session->isCharacterOnline(lwi->text())) {
 		ul_recent_name = lwi->text();
 		FCharacter* ch = session->getCharacter(ul_recent_name);
@@ -2126,7 +2126,7 @@ void flist_messenger::ul_infoRequested()
 }
 void flist_messenger::ul_ignoreAdd()
 {
-	FSession *session = account->getSession(charName);
+	FSession *session = account->getSession(charName); //todo: fix this
 	if (session->isCharacterIgnored(ul_recent_name)) {
 		printDebugInfo("[CLIENT BUG] Tried to ignore somebody who is already on the ignorelist.");
 	} else {
@@ -2135,7 +2135,7 @@ void flist_messenger::ul_ignoreAdd()
 }
 void flist_messenger::ul_ignoreRemove()
 {
-	FSession *session = account->getSession(charName);
+	FSession *session = account->getSession(charName); //todo: fix this
 	if (!session->isCharacterIgnored(ul_recent_name)) {
 		printDebugInfo("[CLIENT BUG] Tried to unignore somebody who is not on the ignorelist.");
 	} else {
@@ -3134,7 +3134,7 @@ void flist_messenger::cd_btnJoinClicked()
 {
         QList<QListWidgetItem *> cliList = cd_channelsList->selectedItems();
         ChannelListItem* cli = 0;
-	FSession *session = account->getSession(charName);
+	FSession *session = account->getSession(charName); //todo: fix this
 
         for ( int i = 0;i < cliList.count();i++ )
         {
@@ -3149,7 +3149,7 @@ void flist_messenger::cd_btnProomsJoinClicked()
 {
         QList<QListWidgetItem *> cliList = cd_proomsList->selectedItems();
         ChannelListItem* cli = 0;
-	FSession *session = account->getSession(charName);
+	FSession *session = account->getSession(charName); //todo: fix this
 
         for ( int i = 0;i < cliList.count();i++ )
         {

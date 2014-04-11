@@ -71,6 +71,7 @@ void FAccount::loginHandle()
 
 	loginreply->deleteLater();
         std::string response ( respbytes.begin(), respbytes.end() );
+	//debugMessage(response);
         JSONNode respnode = libJSON::parse ( response );
         JSONNode childnode = respnode.at ( "error" );
 
@@ -128,7 +129,19 @@ void FAccount::loginUserPass(QString user, QString pass)
 	loginStart();
 }
 
-FSession *FAccount::getSession(QString character)
+FSession *FAccount::getSession(QString sessionid)
+{
+	//debugMessage("account->getSession()");
+	int i;
+	//Find existing session, if any.
+	for(i = 0; i < charactersessions.length(); i++) {
+		if(charactersessions[i]->sessionid == sessionid) {
+			return charactersessions[i];
+		}
+	}
+	return 0;
+}
+FSession *FAccount::getSessionByCharacter(QString character)
 {
 	//debugMessage("account->getSession()");
 	int i;
@@ -138,10 +151,19 @@ FSession *FAccount::getSession(QString character)
 			return charactersessions[i];
 		}
 	}
-	debugMessage("account->getSession() [new]");
-	//todo: Find character and create a session.
-	FSession *session = new FSession(this, character, this);
+	return 0;
+}
+
+FSession *FAccount::addSession(QString charactername)
+{
+	//Find existing session for this character, and return it if found.
+	FSession *session = getSessionByCharacter(charactername);
+	if(session) {
+		return session;
+	}
+	//No session found; create it.
+	debugMessage("account->addSession() [new]");
+	session = new FSession(this, charactername, this);
 	charactersessions.append(session);
 	return session;
-	//todo: return NULL if none found
 }

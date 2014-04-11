@@ -25,7 +25,9 @@ public:
 	void setUserName(QString name) {username = name;}
 	QString getPassword() {return password;}
 	void setPassword(QString pass) {password = pass;}
-	FSession *getSession(QString character);
+	FSession *getSession(QString sessionid);
+	FSession *getSessionByCharacter(QString character);
+	FSession *addSession(QString character);
 
 public slots:
 	void loginStart();
