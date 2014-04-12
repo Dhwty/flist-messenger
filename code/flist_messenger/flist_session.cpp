@@ -124,6 +124,9 @@ void FSession::connectSession()
 void FSession::socketConnected()
 {
 	debugMessage("Connected.");
+
+	tcpsocket->setSocketOption(QAbstractSocket::KeepAliveOption, true);
+
 	//todo: this should use a better random source
 	srand(QTime::currentTime().msecsTo(QTime()));
 	unsigned char nonce[16];
@@ -461,7 +464,7 @@ COMMAND(SFC)
 		QString logstring;
 		try {
 			logid = nodes.at("logid").as_string().c_str();
-			logstring = QString("<a href=\"#LNK-https://www.f-list.net/fchat/getLog.php?log=%1\" ><b>Log~</b></a> | ").arg(logid);
+			logstring = QString("<a href=\"https://www.f-list.net/fchat/getLog.php?log=%1\" ><b>Log~</b></a> | ").arg(logid);
 		} catch(std::out_of_range) {
 			logstring.clear();
 		}
@@ -1354,3 +1357,12 @@ void FSession::sendChannelLeave(QString channelname)
 	nodes.push_back(JSONNode("channel", channelname.toStdString()));
 	wsSend("LCH", nodes);
 } 
+
+void FSession::sendConfirmStaffReport(QString callid)
+{
+	JSONNode nodes;
+	nodes.push_back(JSONNode("action", "confirm"));
+	nodes.push_back(JSONNode("moderator", character.toStdString()));
+	nodes.push_back(JSONNode("callid", callid.toStdString()));
+	wsSend("SFC", nodes);
+}

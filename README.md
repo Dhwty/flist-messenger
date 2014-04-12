@@ -7,6 +7,8 @@ A multi-platform desktop client for the F-Chat protocol. If you have any questio
 * Internally flist-messenger has under gone a very heavy overhaul to improve code quality. While a great deal of effort has been spent trying to keep behaviour bug free and working, it's possible that unintended bugs have crept in.
 * Project files have been switched from CMake to QMake. This provides better support from Qt Creator and removes the dependance on CMake.
 * '/close' has been added.
+* Right clicking URLs in chat view will now bring up a smarter context menu based upon the URL.
+* bugfix: Regular URLs in the chat view and logs will no longer have wacky prefixes.
 * bugfix: Switching between tabs should no longer put double time stamps on every line.
 * bugfix: The current character selection in channels should no longer deselect when characters join or leave the channel.
 * bugfix: The character list in channels should refresh correctly with people joining, leaving and changing status.

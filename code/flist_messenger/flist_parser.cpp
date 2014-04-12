@@ -75,21 +75,20 @@ bool BBCodeParser::BBCodeTag::allows ( QString& tag )
 
 QString BBCodeParser::BBCodeTagURL::parse ( QString& param, QString& content )
 {
-        if ( param.length() == 0 )
-        {
-                param = content;
-        }
-        QUrl url(param);
-        if (url.isValid())
-        {
+	QString urlstring(param.isEmpty() ? content : param);
+	QUrl url(urlstring);
+	//Make sure the URL is valid, not a local file, and has a valid scheme.
+	//todo: There are more valid URLs that shouldn't be accepted within the context of a chat message. (Schemes should probably limited to 'http:' and 'https:'.)
+	if(url.isValid() && !url.isRelative() && !url.isLocalFile()) {
                 param = url.toString();
-        }
-        else
-        {
-                param = "";
-                content = "(BADURL) " + content;
-        }
-        return "<a href=\"#LNK-" + param + "\"><img height=\"16\" width=\"16\" src=\":/images/chain.png\" border=\"0\" />" + content + "</a>" + (!url.isValid() ? "" : "<span class=\"DOMAIN\">[" + url.host() + "]</span>");
+		return QString("<a href=\"%1\"><img height=\"16\" width=\"16\" src=\":/images/chain.png\" border=\"0\" />%2</a><span class=\"DOMAIN\">[%3]</span>").arg(param, content, url.host());
+	} else {
+		if(param.isEmpty()) {
+			return QString("(BADURL)[%1]").arg(content);
+		} else {
+			return QString("(BADURL)%1[%2]").arg(content, param);
+		}
+	}
 }
 
 
@@ -125,7 +124,7 @@ QString BBCodeParser::BBCodeTagIcon::parse(QString& param, QString& content)
 {
         (void) param;
         if( QRegExp("[A-Za-z0-9 \\-_]+").indexIn(content) >= 0 )
-                return "<a href=\"#LNK-https://www.f-list.net/c/" + content + "\"><img src=\"https://static.f-list.net/images/avatar/" + content.toLower() + ".png\" style=\"width:50px;height:50px;\" align=\"top\"/></a>";
+                return "<a href=\"https://www.f-list.net/c/" + content + "\"><img src=\"https://static.f-list.net/images/avatar/" + content.toLower() + ".png\" style=\"width:50px;height:50px;\" align=\"top\"/></a>";
         return content;
 }
 
@@ -133,7 +132,7 @@ QString BBCodeParser::BBCodeTagUser::parse(QString& param, QString& content)
 {
         (void) param;
         if( QRegExp("[A-Za-z0-9 \\-_]+").indexIn(content) >= 0 )
-                return "<a href=\"#LNK-https://www.f-list.net/c/" + content + "\"><img src=\":/images/user.png\" />" + content + "</a>";
+                return "<a href=\"https://www.f-list.net/c/" + content + "\"><img src=\":/images/user.png\" />" + content + "</a>";
         return content;
 }
 

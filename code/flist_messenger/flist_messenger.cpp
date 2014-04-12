@@ -133,7 +133,7 @@ flist_messenger::flist_messenger(bool d)
         doingWS = true;
         notificationsAreaMessageShown = false;
         console = 0;
-        textEdit = 0;
+        chatview = 0;
         //tcpSock = 0;
         debugging = d;
         disconnected = true;
@@ -1293,16 +1293,16 @@ void flist_messenger::setupRealUI()
         connect(btnChannels, SIGNAL ( clicked() ), this, SLOT ( channelsDialogRequested() ) );
         connect(btnMakeRoom, SIGNAL ( clicked() ), this, SLOT ( makeRoomDialogRequested() ) );
         connect(btnSetStatus, SIGNAL ( clicked() ), this, SLOT ( setStatusDialogRequested() ) );
-        textEdit = new QTextBrowser;
-        textEdit->setOpenLinks(false);
-        textEdit->setObjectName ( "chatoutput" );
-        textEdit->setContextMenuPolicy ( Qt::DefaultContextMenu );
-        textEdit->setDocumentTitle ( "" );
-        textEdit->setReadOnly ( true );
-        textEdit->setFrameShape ( QFrame::NoFrame );
-        connect ( textEdit, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
+        chatview = new FLogTextBrowser(this);
+        chatview->setOpenLinks(false);
+        chatview->setObjectName ( "chatoutput" );
+        chatview->setContextMenuPolicy ( Qt::DefaultContextMenu );
+	//chatview->setDocumentTitle ( "" );
+	//chatview->setReadOnly ( true );
+        chatview->setFrameShape ( QFrame::NoFrame );
+        connect ( chatview, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
         centralStuff->addWidget ( centralButtonsWidget );
-        centralStuff->addWidget ( textEdit );
+        centralStuff->addWidget ( chatview );
         horizontalLayout->addLayout ( centralStuff );
         listWidget = new QListWidget ( horizontalLayoutWidget );
         listWidget->setObjectName ( "userlist" );
@@ -1467,53 +1467,30 @@ void flist_messenger::displayCharacterContextMenu ( FCharacter* ch )
 }
 void flist_messenger::anchorClicked ( QUrl link )
 {
-        QString ls = link.toString();
-        /* Anchor commands:
-* AHI: Ad hoc invite. Join channel.
-* CSA: Confirm staff report.
-* LNK: Link. Should open the link in the system's browser.
-* USR: User. Open PM tab.
-*/
-        if ( ls.length() >= 5 )
-        {
-                QString cmd = ls.left(5);
-                if (cmd == "#AHI-")
-                {
-                        QString channel = ls.right ( ls.length() - 5 );
-			FSession *session = account->getSession(currentPanel->getSessionID());
-                        session->joinChannel(channel);
-                }
-                else if (cmd == "#CSA-")
-                {
-                        // Confirm staff alert
-                        JSONNode node;
-                        JSONNode actionnode("action", "confirm");
-                        JSONNode modnode("moderator", charName.toStdString());
-                        JSONNode idnode("callid", ls.right(ls.length()-5).toStdString());
-                        node.push_back(actionnode);
-                        node.push_back(modnode);
-                        node.push_back(idnode);
-                        std::string output = "SFC " + node.write();
-                        sendWS(output);
-                }
-                else if (cmd == "#LNK-")
-                {
-                        QUrl link(ls.right(ls.length()-5));
-                        QDesktopServices::openUrl(link);
-                }
-                else if (cmd == "#USR-")
-                {
-                        QString flist = "https://www.f-list.net/c/";
-                        flist += ls.right(ls.length()-5);
-                        QUrl link(flist);
-                        QDesktopServices::openUrl(link);
-                }
-        }
-        textEdit->verticalScrollBar()->setSliderPosition(textEdit->verticalScrollBar()->maximum());
+	QString linktext = link.toString();
+	/* Anchor commands:
+	 * AHI: Ad hoc invite. Join channel.
+	 * CSA: Confirm staff report.
+	 */
+	if(linktext.startsWith("#AHI-")) {
+		QString channel = linktext.mid(5);
+		FSession *session = account->getSession(currentPanel->getSessionID());
+		session->joinChannel(channel);
+	} else if(linktext.startsWith("#CSA-")) {
+		// Confirm staff alert
+		FSession *session = account->getSession(currentPanel->getSessionID());
+		session->sendConfirmStaffReport(linktext.mid(5));
+	} else if(linktext.startsWith("http://") || linktext.startsWith("https://")) {
+		//todo: Make this configurable between opening, copying, or doing nothing.
+		QDesktopServices::openUrl(link);
+	} else {
+		//todo: Show a debug or error message?
+	}
+	chatview->verticalScrollBar()->setSliderPosition(chatview->verticalScrollBar()->maximum());
 }
 void flist_messenger::insertLineBreak()
 {
-        if (textEdit)
+        if (chatview)
                 plainTextEdit->insertPlainText("\n");
 }
 void flist_messenger::refreshUserlist()
@@ -1777,8 +1754,8 @@ void flist_messenger::refreshChatLines()
         if ( currentPanel == 0 )
                 return;
 
-        textEdit->clear();
-        currentPanel->printChannel ( textEdit );
+        chatview->clear();
+        currentPanel->printChannel ( chatview );
 }
 FChannelTab* flist_messenger::addToActivePanels ( QString& panelname, QString &channelname, QString& tooltip )
 {
@@ -2362,8 +2339,9 @@ void flist_messenger::switchTab ( QString& tabname )
         currentPanel->pushButton->setChecked ( true );
         refreshUserlist();
         refreshChatLines();
-        textEdit->verticalScrollBar()->setSliderPosition(textEdit->verticalScrollBar()->maximum());
+        chatview->verticalScrollBar()->setSliderPosition(chatview->verticalScrollBar()->maximum());
 	updateChannelMode();
+	chatview->setSessionID(currentPanel->getSessionID());
 }
 void flist_messenger::openPMTab()
 {
@@ -2493,7 +2471,7 @@ void flist_messenger::parseInput()
 		QString slashcommand = parts[0].toLower();
                 if ( slashcommand == "/clear" )
                 {
-                        textEdit->clear();
+                        chatview->clear();
 			if(currentPanel) {
 				currentPanel->clearLines();
 			}
@@ -3271,6 +3249,11 @@ void flist_messenger::flashApp(QString& reason)
         QApplication::alert(this, 10000);
 }
 
+FSession *flist_messenger::getSession(QString sessionid)
+{
+	return server->getSession(sessionid);
+}
+
 void flist_messenger::setChatOperator(FSession *session, QString characteroperator, bool opstatus)
 {
 	debugMessage((opstatus ? "Added chat operator: " : "Removed chat operator: ") + characteroperator);
@@ -3290,6 +3273,12 @@ void flist_messenger::setChatOperator(FSession *session, QString characteroperat
 			}
 		}
 	}
+}
+void flist_messenger::openCharacterProfile(FSession *session, QString charactername)
+{
+	(void) session;
+	ul_recent_name = charactername;
+        characterInfoDialogRequested();
 }
 
 void flist_messenger::addCharacterChat(FSession *session, QString charactername)
@@ -3622,7 +3611,7 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 		}
 		channelpanel->addLine(messageout, true);
 		if(channelpanel == currentPanel) {
-			textEdit->append(messageout);
+			chatview->append(messageout);
 		}
 	}
 	//todo: Sound support is still less than what it was originally.

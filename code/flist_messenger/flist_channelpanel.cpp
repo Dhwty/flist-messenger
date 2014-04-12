@@ -317,9 +317,7 @@ void FChannelPanel::logLine ( QString &chanLine )
                 QMessageBox::critical(NULL, "Failed to open log file.", QString("Could not open a log file. This could be caused by bad file permissions, or windows zone protection preventing the write of files.\nLog File: ") + logName);
                 qApp->exit(1);
         }
-    chanLine.append("<br />\n");
-    chanLine.replace("#LNK-", "");
-    chanLine.replace("#USR-", "https://www.f-list.net/c/");
+	chanLine.append("<br />\n");
         logfile.write(chanLine.toUtf8());
         logfile.close();
 }

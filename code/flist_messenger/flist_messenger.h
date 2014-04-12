@@ -84,6 +84,7 @@
 #include "flist_parser.h"
 #include "flist_channeltab.h"
 #include "flist_iuserinterface.h"
+#include "flist_logtextbrowser.h"
 
 class FAccount;
 class FServer;
@@ -198,8 +199,11 @@ public:
 	flist_messenger(bool d);
 	~flist_messenger();
 public:
+	virtual FSession *getSession(QString sessionid);
+
 	virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus);
 
+	virtual void openCharacterProfile(FSession *session, QString charactername);
 	virtual void addCharacterChat(FSession *session, QString charactername);
 
 	virtual void addChannel(FSession *session, QString name, QString title);
@@ -268,7 +272,7 @@ public:
 	QPushButton *btnConnect;
 	QLabel *lblCheckingVersion;
 	QLabel *lblChannelName;
-	QTextBrowser *textEdit;
+	FLogTextBrowser *chatview;
 	QLineEdit *lineEdit;
 	QPlainTextEdit *plainTextEdit;
 	QListWidget *listWidget;

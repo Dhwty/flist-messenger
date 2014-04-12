@@ -8,8 +8,11 @@ class FSession;
 class iUserInterface
 {
 public:
+	virtual FSession *getSession(QString sessionid) = 0;
+
 	virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus) = 0;
 
+	virtual void openCharacterProfile(FSession *session, QString charactername) = 0;
 	virtual void addCharacterChat(FSession *session, QString charactername) = 0;
 
 	virtual void addChannel(FSession *session, QString name, QString title) = 0;

@@ -49,6 +49,7 @@ public:
 	void sendChannelAdvertisement(QString channelname, QString message);
 	void sendCharacterMessage(QString charactername, QString message);
 	void sendChannelLeave(QString channelname);
+	void sendConfirmStaffReport(QString callid);
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);
