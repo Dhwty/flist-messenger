@@ -86,6 +86,8 @@
 #include "flist_iuserinterface.h"
 #include "flist_logtextbrowser.h"
 
+class QSplitter;
+
 class FAccount;
 class FServer;
 
@@ -255,6 +257,8 @@ public:
 	QWidget *verticalLayoutWidget;
 	QHBoxLayout *horizontalLayout;
 	QVBoxLayout *verticalLayout;
+	QSplitter *horizontalsplitter;
+	QWidget *centralstuffwidget;
 	QGridLayout *gridLayout;
 	QScrollArea *activePanels;
 	QVBoxLayout *activePanelsContents;

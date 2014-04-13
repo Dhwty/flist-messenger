@@ -23,6 +23,7 @@
 #include "flist_global.h"
 
 #include <QString>
+#include <QSplitter>
 
 #include "flist_account.h"
 #include "flist_server.h"
@@ -1003,22 +1004,16 @@ void flist_messenger::setupCharacterInfoUI()
         QVBoxLayout* ci_vblContents;
         QGroupBox* ci_gbOverview;
         QTabWidget* ci_twKP;
-        QLabel* ci_lblStatus;
-        QLabel* ci_lblKinks;
-        QLabel* ci_lblProfile;
         QHBoxLayout* ci_hblButtons;
         QPushButton* ci_btnClose;
         ci_vblOverview = new QVBoxLayout;
         ci_vblContents = new QVBoxLayout;
         ci_gbOverview = new QGroupBox;
         ci_lblName = new QLabel;
-        ci_lblStatus = new QLabel;
         ci_lblStatusMessage = new QLabel;
         ci_lblStatusMessage->setWordWrap ( true );
         ci_hblButtons = new QHBoxLayout;
         ci_btnClose = new QPushButton;
-        ci_lblKinks = new QLabel ( QString ( "Kinks" ) );
-        ci_lblProfile = new QLabel ( QString ( "Profile" ) );
         ci_teKinks = new QTextEdit;
         ci_teProfile = new QTextEdit;
         ci_twKP = new QTabWidget;
@@ -1246,15 +1241,18 @@ void flist_messenger::setupRealUI()
         activePanels->setFixedWidth ( 45 );
         activePanels->setLayout ( activePanelsContents );
         horizontalLayout->addWidget ( activePanels );
-        centralStuff = new QVBoxLayout;
+	horizontalsplitter = new QSplitter(Qt::Horizontal);
+	centralstuffwidget = new QWidget(horizontalsplitter);
+	centralstuffwidget->setContentsMargins(0, 0, 0, 0);
+	centralStuff = new QVBoxLayout(centralstuffwidget);
         centralButtonsWidget = new QWidget;
         centralButtons = new QHBoxLayout ( centralButtonsWidget );
         centralButtonsWidget->setLayout ( centralButtons );
         lblChannelName = new QLabel ( QString ( "" ) );
         lblChannelName->setObjectName( "currentpanelname" );
         lblChannelName->setWordWrap( true );
-        lblChannelName->setFixedWidth( 350 );
-        lblChannelName->setFixedHeight( 35 );
+	QSizePolicy lblchannelnamesizepolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+	lblChannelName->setSizePolicy(lblchannelnamesizepolicy);
         btnSettings = new QPushButton;
         btnSettings->setIcon(QIcon(":/images/terminal.png"));
         btnSettings->setToolTip(QString("Settings"));
@@ -1280,7 +1278,6 @@ void flist_messenger::setupRealUI()
         btnReport->setToolTip(QString("Alert Staff!"));
         btnReport->setObjectName("alertstaffbutton");
         centralButtons->addWidget ( lblChannelName );
-        centralButtons->addStretch();
         centralButtons->addWidget(btnSettings);
         centralButtons->addWidget(btnReport);
         centralButtons->addWidget(btnFriends);
@@ -1303,21 +1300,28 @@ void flist_messenger::setupRealUI()
         connect ( chatview, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
         centralStuff->addWidget ( centralButtonsWidget );
         centralStuff->addWidget ( chatview );
-        horizontalLayout->addLayout ( centralStuff );
-        listWidget = new QListWidget ( horizontalLayoutWidget );
+	horizontalsplitter->addWidget (centralstuffwidget);
+	QSizePolicy centralstuffwidgetsizepolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	centralstuffwidgetsizepolicy.setHorizontalStretch(4);
+	centralstuffwidgetsizepolicy.setVerticalStretch(0);
+	centralstuffwidgetsizepolicy.setHeightForWidth(false);
+	centralstuffwidget->setSizePolicy(centralstuffwidgetsizepolicy);
+	
+	listWidget = new QListWidget(horizontalsplitter);
         listWidget->setObjectName ( "userlist" );
         QSizePolicy sizePolicy1 ( QSizePolicy::Preferred, QSizePolicy::Expanding );
-        sizePolicy1.setHorizontalStretch ( 0 );
+	sizePolicy1.setHorizontalStretch ( 1 );
         sizePolicy1.setVerticalStretch ( 0 );
         sizePolicy1.setHeightForWidth ( listWidget->sizePolicy().hasHeightForWidth() );
         listWidget->setSizePolicy ( sizePolicy1 );
         listWidget->setMinimumSize ( QSize ( 30, 0 ) );
-        listWidget->setMaximumSize ( QSize ( 150, 16777215 ) );
+	listWidget->setMaximumSize(QSize(16777215, 16777215));
         listWidget->setBaseSize ( QSize ( 100, 0 ) );
         listWidget->setContextMenuPolicy ( Qt::CustomContextMenu );
         listWidget->setIconSize ( QSize ( 16, 16 ) );
         connect ( listWidget, SIGNAL ( customContextMenuRequested ( const QPoint& ) ), this, SLOT ( userListContextMenuRequested ( const QPoint& ) ) );
-        horizontalLayout->addWidget ( listWidget );
+	horizontalsplitter->addWidget(listWidget);
+	horizontalLayout->addWidget(horizontalsplitter);
         verticalLayout->addWidget ( horizontalLayoutWidget );
         QWidget *textFieldWidget = new QWidget;
         textFieldWidget->setObjectName("inputarea");
