@@ -217,6 +217,8 @@ public:
 	virtual void leaveChannel(FSession *session, QString channelname);
 	virtual void setChannelDescription(FSession *session, QString channelname, QString description);
 	virtual void setChannelMode(FSession *session, QString channelname, ChannelMode mode);
+	virtual void notifyChannelReady(FSession *session, QString channelname);
+
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
 	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus);

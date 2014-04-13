@@ -1505,6 +1505,8 @@ void flist_messenger::refreshUserlist()
 	//todo: Should 'listWidget' be renewed like this?
         listWidget = this->findChild<QListWidget *> ( QString ( "userlist" ) );
 
+	//todo: Save current scroll position and restore that.
+
 	//Remember currently selected characters, so that we can restore them.
 	//Probably overkill, but this does support the selection of multiple rows.
 	QList<QListWidgetItem *> selecteditems = listWidget->selectedItems();
@@ -3350,7 +3352,7 @@ void flist_messenger::addChannelCharacter(FSession *session, QString channelname
 		return;
 	}
 	channelpanel = channelList.value(panelname);
-	channelpanel->addChar(session->getCharacter(charactername));
+	channelpanel->addChar(session->getCharacter(charactername), notify);
 	if(charactername == session->character) {
 		switchTab(panelname);
 	} else {
@@ -3445,6 +3447,22 @@ void flist_messenger::setChannelMode(FSession *session, QString channelname, Cha
 	}
 }
 
+/**
+The initial flood of channel data is complete and delayed tasks like sorting can now be performed.
+ */
+void flist_messenger::notifyChannelReady(FSession *session, QString channelname)
+{
+	QString panelname = PANELNAME(channelname, session->getSessionID());
+	FChannelPanel *channelpanel = channelList.value(panelname);
+	if(!channelpanel) {
+		printDebugInfo(QString("[BUG]: Was notified that the channel '%1' was ready, but the panel for the channel doesn't exist.").arg(channelname).toStdString());
+		return;
+	}
+	channelpanel->sortChars();
+	if(currentPanel == channelpanel) {
+		refreshUserlist();
+	}
+}
 
 void flist_messenger::notifyCharacterOnline(FSession *session, QString charactername, bool online)
 {

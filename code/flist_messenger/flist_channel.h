@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QList>
+#include <QMap>
 #include "flist_enums.h"
 
 class FSession;
@@ -23,8 +24,8 @@ public:
 public:
 	explicit FChannel(QObject *parent, FSession *session, QString name, QString title);
 
-	bool isCharacterPresent(QString charactername) {return characterlist.contains(charactername);}
-	bool isCharacterOperator(QString charactername) {return operatorlist.contains(charactername);}
+	bool isCharacterPresent(QString charactername) {return characterlist.contains(charactername.toLower());}
+	bool isCharacterOperator(QString charactername) {return operatorlist.contains(charactername.toLower());}
 	//todo: Figure out a better function name than 'isJoined'.
 	bool isJoined() {return joined;}
 
@@ -53,8 +54,10 @@ public:
 	QString name; //<Server name for this channel/room
 	QString title; //<Title for this room.
 	QString description; //<Long description for the channel/room.
-	QList<QString> characterlist; //<List of all characters within a channel.
-	QList<QString> operatorlist; //<List of all channel operators.
+private:
+	QMap<QString, QString> characterlist; //<List of all characters within a channel.
+	QMap<QString, QString> operatorlist; //<List of all channel operators.
+public:
 	bool joined; //<Indicates if this session is currently joined with this channel.
 	ChannelMode mode; //<The mode of the channel.
 	ChannelType type; 

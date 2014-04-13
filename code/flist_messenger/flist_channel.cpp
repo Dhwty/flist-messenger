@@ -21,25 +21,26 @@ FChannel::FChannel(QObject *parent, FSession *session, QString name, QString tit
 }
 
 void FChannel::addCharacter(QString charactername, bool notify) {
-	if(!characterlist.contains(charactername)) {
-		characterlist.append(charactername);
+	QString lowername = charactername.toLower();
+	if(!characterlist.contains(lowername) || characterlist.value(lowername).isEmpty()) {
+		characterlist[lowername] = charactername;
 	}
 	session->account->ui->addChannelCharacter(session, name, charactername, notify);
 }
 void FChannel::removeCharacter(QString charactername) {
-	characterlist.removeAll(charactername);
-	operatorlist.removeAll(charactername);
+	characterlist.remove(charactername.toLower());
 	session->account->ui->removeChannelCharacter(session, name, charactername);
 } 
 
 void FChannel::addOperator(QString charactername) {
-	if(!operatorlist.contains(charactername)) {
-		operatorlist.append(charactername);
+	QString lowername = charactername.toLower();
+	if(!operatorlist.contains(lowername) || operatorlist.value(lowername).isEmpty()) {
+		operatorlist[lowername] = charactername;
 	}
 	session->account->ui->setChannelOperator(session, name, charactername, true);	
 }
 void FChannel::removeOperator(QString charactername) {
-	operatorlist.removeAll(charactername);
+	operatorlist.remove(charactername.toLower());
 	session->account->ui->setChannelOperator(session, name, charactername, false);	
 }
 

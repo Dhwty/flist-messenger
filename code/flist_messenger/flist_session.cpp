@@ -564,6 +564,7 @@ COMMAND(ICH)
 		debugMessage("Add character '" + charactername + "' to channel '" + channelname + "'.");
 		channel->addCharacter(charactername, false);
 	}
+	account->ui->notifyChannelReady(this, channelname);
 }
 COMMAND(JCH)
 {

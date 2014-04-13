@@ -24,6 +24,8 @@ public:
 	virtual void leaveChannel(FSession *session, QString channelname) = 0;
 	virtual void setChannelDescription(FSession *session, QString channelname, QString description) = 0;
 	virtual void setChannelMode(FSession *session, QString channelname, ChannelMode mode) = 0;
+	virtual void notifyChannelReady(FSession *session, QString channelname) = 0;
+
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online) = 0;
 	virtual void notifyIgnoreUpdate(FSession *session) = 0;
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore) = 0;
