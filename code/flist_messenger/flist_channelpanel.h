@@ -60,6 +60,7 @@
 
 #include <time.h>
 
+class iUserInterface;
 class QStringList;
 
 class FChannelPanel
@@ -75,7 +76,7 @@ public:
 		CHANTYPE_MAX
 	};
 
-	FChannelPanel(QString sessionid, QString panelname, QString channelname, channelType type);
+	FChannelPanel(iUserInterface *ui, QString sessionid, QString panelname, QString channelname, channelType type);
 	~FChannelPanel() {}
 	static void initClass();
 	void setRecipient ( QString& name ){recipientName = name;}
@@ -138,6 +139,7 @@ private:
 	bool					highlighted;
 	bool					hasNewMessages;
 	bool					alwaysPing;			// This channel pings on every message.
+	iUserInterface *ui;
 	QString sessionid;
 	QString					panelname;
 	QString					chanName;

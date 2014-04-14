@@ -1185,7 +1185,7 @@ void flist_messenger::setupRealUI()
         // Setting up console first because it needs to receive server output.
 	//todo: Make account->getSession(currentPanel->getSessionID()) code robust to having a sessionless panel.
 	//todo: Remove 'charName' so that this panel can be sessionless
-	console = new FChannelPanel (charName, "FCHATSYSTEMCONSOLE", "FCHATSYSTEMCONSOLE", FChannelPanel::CHANTYPE_CONSOLE );
+	console = new FChannelPanel(this, charName, "FCHATSYSTEMCONSOLE", "FCHATSYSTEMCONSOLE", FChannelPanel::CHANTYPE_CONSOLE);
         QString name = "Console";
         console->setTitle ( name );
         channelList["FCHATSYSTEMCONSOLE"] = console;
@@ -2377,7 +2377,7 @@ void flist_messenger::openPMTab ( QString &character )
         }
         else
         {
-		channelList[panelname] = new FChannelPanel(session->getSessionID(), panelname, character, FChannelPanel::CHANTYPE_PM);
+		channelList[panelname] = new FChannelPanel(this, session->getSessionID(), panelname, character, FChannelPanel::CHANTYPE_PM);
 		FCharacter* charptr = session->getCharacter(character);
                 QString paneltitle = charptr->PMTitle();
 		FChannelPanel* pmPanel = channelList.value(panelname);
@@ -3292,7 +3292,7 @@ void flist_messenger::addCharacterChat(FSession *session, QString charactername)
 	QString panelname = "PM|||" + session->getSessionID() + "|||" + charactername;
 	FChannelPanel *channelpanel = channelList.value(panelname);
 	if(!channelpanel) {
-		channelpanel = new FChannelPanel(session->getSessionID(), panelname, charactername, FChannelPanel::CHANTYPE_PM);
+		channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, charactername, FChannelPanel::CHANTYPE_PM);
 		channelList[panelname] = channelpanel;
 		channelpanel->setTitle(charactername);
 		channelpanel->setRecipient(charactername);
@@ -3315,9 +3315,9 @@ void flist_messenger::addChannel(FSession *session, QString channelname, QString
 	QString panelname = PANELNAME(channelname, session->getSessionID());
 	if(!channelList.contains(panelname)) {
 		if(channelname.startsWith("ADH-")) {
-			channelpanel = new FChannelPanel(session->getSessionID(), panelname, channelname, FChannelPanel::CHANTYPE_ADHOC);
+			channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, channelname, FChannelPanel::CHANTYPE_ADHOC);
 		} else {
-			channelpanel = new FChannelPanel(session->getSessionID(), panelname, channelname, FChannelPanel::CHANTYPE_NORMAL);
+			channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, channelname, FChannelPanel::CHANTYPE_NORMAL);
 		}
 		channelList[panelname] = channelpanel;
 		channelpanel->setTitle(title);

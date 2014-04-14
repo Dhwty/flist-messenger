@@ -27,6 +27,10 @@
 #include <QtCore/QSettings>
 #include <QDateTime>
 
+#include "flist_global.h"
+#include "flist_session.h"
+#include "flist_iuserinterface.h"
+
 BBCodeParser* FChannelPanel::bbparser = 0;
 QColor FChannelPanel::colorInactive(255, 255, 255);
 QColor FChannelPanel::colorHighlighted(0, 255, 0);
@@ -72,7 +76,8 @@ void FChannelPanel::initClass()
         }
 }
 
-FChannelPanel::FChannelPanel (QString sessionid, QString panelname, QString channelname, channelType type) :
+FChannelPanel::FChannelPanel (iUserInterface *ui, QString sessionid, QString panelname, QString channelname, channelType type) :
+	ui(ui),
 	sessionid(sessionid),
 	panelname(panelname)
 {
@@ -269,36 +274,40 @@ void FChannelPanel::clearLines()
 
 void FChannelPanel::logLine ( QString &chanLine )
 {
+	QString logName, dirName;
 
-        QString logName, dirName;
-
-    logName = chanName + "-" + QDateTime::currentDateTime().toString("yyyy-MM-dd") + ".html";
-
-        // To ensure filename compatibility:
-        logName.remove ( QRegExp ( "[^\\d\\w\\.\\_\\-]" ) );
+	FSession *session = ui->getSession(sessionid);
+	if(session) {
+		logName = escapeFileName(session->character) + "~";
+	}
 
         switch ( chanType )
         {
 
         case CHANTYPE_NORMAL:
                 dirName += "public";
+		logName += escapeFileName(chanName);
                 break;
-
         case CHANTYPE_ADHOC:
                 dirName += "private";
+		logName += QString("%1~%2").arg(escapeFileName(chanName), escapeFileName(chanTitle));
                 break;
 
         case CHANTYPE_PM:
                 dirName += "pm";
+		logName += escapeFileName(chanName);
                 break;
 
         case CHANTYPE_CONSOLE:
-                dirName += "console";
-                break;
-
-        default:
-                break;
-        }
+		dirName += "console";
+		logName += escapeFileName(chanName);
+		break;
+	default:
+		logName += escapeFileName(chanName);
+		break;
+	}
+	logName += "~" + QDateTime::currentDateTime().toString("yyyy-MM-dd") + ".html";
+        // To ensure filename compatibility:
 
         dirName = "./logs/" + dirName + "/";
 
