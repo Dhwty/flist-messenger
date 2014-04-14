@@ -1016,7 +1016,7 @@ COMMAND(LRP)
 		//Ignore message
 		return;
 	}
-	QString messagefinal = makeMessage(message, charactername, character, channel, "<font color=\"green\"><b>Roleplay ad by</font> ", "");
+	QString messagefinal = makeMessage(message, charactername, character, channel, "<font color=\"green\"><b>Roleplay ad by</b></font> ", "");
 	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_RPAD);
 }
 COMMAND(MSG)
