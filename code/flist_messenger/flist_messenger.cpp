@@ -1505,7 +1505,8 @@ void flist_messenger::refreshUserlist()
 	//todo: Should 'listWidget' be renewed like this?
         listWidget = this->findChild<QListWidget *> ( QString ( "userlist" ) );
 
-	//todo: Save current scroll position and restore that.
+	//Save current scroll position.
+	int scrollpos = listWidget->verticalScrollBar()->value();
 
 	//Remember currently selected characters, so that we can restore them.
 	//Probably overkill, but this does support the selection of multiple rows.
@@ -1572,6 +1573,9 @@ void flist_messenger::refreshUserlist()
 			selecteditem->setSelected(true);
 		}
 	}
+
+	//Restore scroll position.
+	listWidget->verticalScrollBar()->setValue(scrollpos);
 
 	//Hide/show widget based upon panel type.
 	if ( currentPanel->type() == FChannelPanel::CHANTYPE_PM || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE )
