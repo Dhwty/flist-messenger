@@ -390,6 +390,7 @@ private slots:
 	void cs_chbEditDescriptionToggled(bool state);
 	void cs_btnCancelClicked();
 	void cs_btnSaveClicked();
+	void scrollChatViewEnd();
 	void openPMTab();
 	void openPMTab ( QString& character );
 	void displayCharacterContextMenu ( FCharacter* ch );

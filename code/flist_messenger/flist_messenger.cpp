@@ -1821,6 +1821,9 @@ void flist_messenger::aboutApp()
 }
 void flist_messenger::quitApp()
 {
+	if(trayIcon) {
+		trayIcon->hide();
+	}
         QApplication::quit();
 }
 
@@ -2350,8 +2353,18 @@ void flist_messenger::switchTab ( QString& tabname )
         refreshUserlist();
         refreshChatLines();
         chatview->verticalScrollBar()->setSliderPosition(chatview->verticalScrollBar()->maximum());
+	QTimer::singleShot(0, this, SLOT(scrollChatViewEnd()));
 	updateChannelMode();
 	chatview->setSessionID(currentPanel->getSessionID());
+}
+/**
+A slot used to scroll to the very end of the chat view. This is
+intended to be used from a 0 second one shot timer, to ensure that any
+widgets that have deferred their resizing have done their business.
+ */
+void flist_messenger::scrollChatViewEnd()
+{
+	chatview->verticalScrollBar()->setSliderPosition(chatview->verticalScrollBar()->maximum());
 }
 void flist_messenger::openPMTab()
 {
