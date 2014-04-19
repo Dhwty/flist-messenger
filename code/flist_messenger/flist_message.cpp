@@ -1,5 +1,6 @@
 #include "flist_message.h"
 #include <QSharedData>
+#include "flist_global.h"
 
 class FMessageData : public QSharedData {
 public:
@@ -20,6 +21,7 @@ public:
 	}
 	QDateTime timestamp;
 	QString formattedmessage;
+	QString plaintextmessage;
 	QString message;
 	MessageType messagetype;
 	QString sessionid;
@@ -103,10 +105,18 @@ FMessage &FMessage::fromCharacter(QString charactername)
 	return *this;
 }
 
+QString FMessage::getPlainTextMessage()
+{
+	if(data->stale) {
+		getFormattedMessage();
+	}
+	return data->plaintextmessage;
+}
 QString FMessage::getFormattedMessage()
 {
 	if(data->stale) {
 		data->formattedmessage = QString("<small>[%1]</small> %2").arg(data->timestamp.toString("hh:mm:ss AP"), data->message);
+		data->plaintextmessage = htmlToPlainText(data->formattedmessage);
 		data->stale = false;
 	}
 	return data->formattedmessage;

@@ -1,11 +1,16 @@
 #include "flist_global.h"
 #include <QApplication>
+#include <QSettings>
 #include <QByteArray>
 #include <iostream>
 #include "flist_parser.h"
+#include "flist_settings.h"
 
 QNetworkAccessManager *networkaccessmanager = 0;
 BBCodeParser *bbcodeparser = 0;
+QString settingsfile;
+QString logpath;
+FSettings *settings = 0;
 
 void debugMessage(QString str) {
 	std::cout << str.toUtf8().data() << std::endl;
@@ -21,8 +26,16 @@ void debugMessage(const char *str) {
 
 void globalInit()
 {
+	//todo: parse command line for options
+	//todo: make settingsfile configurable
+	settingsfile = qApp->applicationDirPath() + "/settings.ini";
+	//todo: make logpath configurable
+	logpath = qApp->applicationDirPath() + "/logs";
+
 	networkaccessmanager = new QNetworkAccessManager(qApp);
 	bbcodeparser = new BBCodeParser();
+	//settings = new QSettings(settingsfile, QSettings::IniFormat);
+	settings = new FSettings(settingsfile, qApp);
 }
 
 void globalQuit()
@@ -69,4 +82,9 @@ QString escapeFileName(QString infilename)
 		}
 	}
 	return QString::fromUtf8(outname);
+}
+
+QString htmlToPlainText(QString input) {
+	//todo:
+	return input;
 }

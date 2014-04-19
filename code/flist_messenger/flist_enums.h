@@ -1,6 +1,21 @@
 #ifndef FLIST_ENUMS_H
 #define FLIST_ENUMS_H
 
+#include <QString>
+#include <QHash>
+
+class EnumLookup {
+public:
+	EnumLookup(QString enumlist, QString dflt = QString());
+	int keyToValue(QString key) {return valuelookup.value(key, defaultvalue);}
+	int keyToValue(QString key, int defaultvalue) {return valuelookup.value(key, defaultvalue);}
+	QString valueToKey(int val) {return keylookup.value(val, QString());}
+private:
+	QString defaultkey;
+	int defaultvalue;
+	QHash<QString, int>valuelookup;
+	QHash<int, QString>keylookup;
+};
 
 enum MessageType {
 	MESSAGE_TYPE_LOGIN,
@@ -38,5 +53,23 @@ enum ChannelMode {
 	CHANNEL_MODE_BOTH,
 	CHANNEL_MODE_MAX
 };
+
+enum AttentionMode {
+	ATTENTION_DEFAULT,
+	ATTENTION_NEVER,
+	ATTENTION_IFNOTFOCUSED,
+	ATTENTION_ALWAYS
+};
+#define ATTENTION_MODE_ENUM "default, never, ifnotfocused, always"
+extern EnumLookup AttentionModeEnum;
+
+enum BoolTristate {
+	BOOL_FALSE,
+	BOOL_TRUE,
+	BOOL_DEFAULT
+};
+#define BOOL_TRISTATE_ENUM "false, true, default"
+#define BOOL_TRISTATE_DEFAULT
+extern EnumLookup BoolTristateEnum;
 
 #endif // FLIST_ENUMS_H

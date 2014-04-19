@@ -90,6 +90,7 @@ class QSplitter;
 
 class FAccount;
 class FServer;
+class FAttentionSettingsWidget;
 
 #ifndef USERETURN_CLASS
 #define USERETURN_CLASS
@@ -227,6 +228,7 @@ public:
 	virtual void notifyIgnoreUpdate(FSession *session);
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore);
 
+	virtual void messageMessage(FMessage message);
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype);
 	virtual void messageAll(FSession *session, QString message, MessageType messagetype);
 	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console = false, bool notify = false);
@@ -238,7 +240,7 @@ public:
 
 private:
 	void messageMany(QList<QString> &panelnames, QString message, MessageType messagetype);
-
+	bool needsAttention(QString key, FChannelPanel *channelpanel, AttentionMode dflt);
 
 public:
 	QPushButton* pushButton;
@@ -444,7 +446,7 @@ private:
 	FChannelPanel* currentPanel;
 	FSound soundPlayer;
 	BBCodeParser bbparser;
-	QStringList selfPingList;
+	QStringList keywordlist;
 	QStringList defaultChannels;
 	QString charName;
 	QString selfStatus;
@@ -500,17 +502,8 @@ private:
 	QCheckBox* se_chbOnlineOffline;
 	QCheckBox* se_chbEnableChatLogs;
 	QCheckBox* se_chbMute;
-	QCheckBox* se_chbAlwaysPing;
-	QCheckBox* se_chbEnablePing;
-	QLineEdit* se_lePingList;
 	QCheckBox* se_chbHelpdesk;
-	bool se_leaveJoin;
-	bool se_onlineOffline;
-	bool se_chatLogs;
-	bool se_sounds;
-	bool se_alwaysPing;
-	bool se_ping;
-	bool se_helpdesk;
+	FAttentionSettingsWidget *se_attentionsettings;
 
 	QDialog* characterInfoDialog; // ci stands for character info
 	QLabel* ci_lblName;

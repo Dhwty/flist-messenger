@@ -29,7 +29,9 @@ FSound::FSound()
 
 void FSound::play ( soundName sound )
 {
-
+	if(sound == SOUND_NONE) {
+		return;
+	}
 	QString soundFile = soundToString ( sound );
 
 	if ( !QFile::exists ( soundFile ) )
