@@ -3526,6 +3526,17 @@ void flist_messenger::setIgnoreCharacter(FSession *session, QString characternam
 	}
 }
 
+//todo: Making channelkey should be moved out to messageMessage().
+bool flist_messenger::getChannelBool(QString key, FChannelPanel *channelpanel, bool dflt)
+{
+	QString channelkey;
+	if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
+		channelkey = QString("Character/%1/%2").arg(channelpanel->recipient(), key);
+	} else {
+		channelkey = QString("Character/%1/%2").arg(channelpanel->getChannelName(), key);
+	}
+	return settings->getBool(channelkey, dflt);
+}
 bool flist_messenger::needsAttention(QString key, FChannelPanel *channelpanel, AttentionMode dflt)
 {
 	//todo: check settings from the channel itself
@@ -3582,6 +3593,23 @@ void flist_messenger::messageMessage(FMessage message)
 	bool message_keyword_flash = false;
 	QString panelname;
 	FChannelPanel *channelpanel;
+	bool globalkeywordmatched = false;
+	QString plaintext = message.getPlainTextMessage();
+	switch(message.getMessageType()) {
+	case MESSAGE_TYPE_ROLL:
+	case MESSAGE_TYPE_RPAD:
+	case MESSAGE_TYPE_CHAT:
+		foreach(QString keyword, keywordlist) {
+			if(plaintext.contains(keyword, Qt::CaseInsensitive)) {
+				globalkeywordmatched = true;
+				break;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+
 	if(!session) {
 		debugMessage("[CLIENT BUG] Sessionless messages are not handled yet.");
 		//todo: Sanity check that character and  channel lists are empty
@@ -3685,11 +3713,22 @@ void flist_messenger::messageMessage(FMessage message)
 			default:
 				break;
 			}
+			//todo: Per channel keyword matching.
+			//foreach(QString keyword, channelpanel->keywordlist) {
+			//	if(plaintext.contains(keyword, Qt::CaseInsensitive)) {
+			//		message_keyword_ding |= true;
+			//		message_keyword_flash |= true;
+			//		break;
+			//	}
+			//}
+			if(globalkeywordmatched && !getChannelBool("ignore_global_keywords", channelpanel, false)) {
+				message_keyword_ding |= true;
+				message_keyword_flash |= true;
+			}
 			channelpanel->setHasNewMessages(true);
 			if(panelname.startsWith("PM")) {
 				channelpanel->setHighlighted(true);
 			}
-			//todo: keyword detection
 			channelpanel->updateButtonColor();
 			break;
 		case MESSAGE_TYPE_REPORT:

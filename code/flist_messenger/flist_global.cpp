@@ -85,6 +85,15 @@ QString escapeFileName(QString infilename)
 }
 
 QString htmlToPlainText(QString input) {
-	//todo:
-	return input;
+	QString output = input;
+	//Strip tags
+	output.replace(QRegExp("<[^>]*>"), "");
+	//Convert escaped symbols. Only worries about those in the ASCII range.
+	output.replace("&quot;", "\"");
+	output.replace("&lt;", "<");
+	output.replace("&gt;", ">");
+	output.replace("&apos;", "'");
+	output.replace("&nbsp;", " ");
+	output.replace("&amp;", "&");
+	return output;
 }

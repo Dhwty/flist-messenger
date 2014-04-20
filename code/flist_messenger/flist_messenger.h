@@ -240,6 +240,7 @@ public:
 
 private:
 	void messageMany(QList<QString> &panelnames, QString message, MessageType messagetype);
+	bool getChannelBool(QString key, FChannelPanel *channelpanel, bool dflt);
 	bool needsAttention(QString key, FChannelPanel *channelpanel, AttentionMode dflt);
 
 public:
