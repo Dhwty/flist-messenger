@@ -834,7 +834,7 @@ COMMAND(BRO)
 	//Broadcast message.
 	//BRO {"message": "Message Text"}
 	QString message = nodes.at("message").as_string().c_str();
-	account->ui->messageAll(this, QString("<b>Broadcast message:</b> %1").arg(message), MESSAGE_TYPE_SYSTEM);
+	account->ui->messageAll(this, QString("<b>Broadcast message:</b> %1").arg(bbcodeparser->parse(message)), MESSAGE_TYPE_SYSTEM);
 }
 COMMAND(SYS)
 {
