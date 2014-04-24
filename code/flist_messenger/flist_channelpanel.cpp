@@ -379,11 +379,17 @@ void FChannelPanel::printChannel ( QTextBrowser* textEdit )
                 doScroll = true;
         }
         QString lines = "";
-        foreach ( chanLine, chanLines )
-        {
-                lines += "<br />" + chanLine;
-        }
-        html+=lines.mid(6);
+	int size = chanLines.size() * 6;
+        foreach(chanLine, chanLines) {
+		size += chanLine.length();
+	}
+	lines.reserve(size);
+
+	foreach ( chanLine, chanLines )  {
+		lines += chanLine;
+		lines += "<br />";
+	}
+	html += lines.left(lines.length() - 6);
 
         //html += "</font></qt>";
         textEdit->setHtml ( html );
