@@ -1,19 +1,21 @@
 #include "flist_channellistdialog.h"
 
-FChannelListModel::Item::Item(chType t, QString n, int m) : type(t), name(n), members(m) { }
-
 FChannelListModel::FChannelListModel()
 {
-  channels.push_back(new Item(chTypePublic, QString("Transformation"), 15));
-  channels.push_back(new Item(chTypePrivate, QString("Literate Ferals"), 4));
+	hash = QIcon ( ":/images/hash.png" );
+	key = QIcon (":/images/key.png");
+
+	QString a("Transformation");
+	QString b("ADH-whatevereverever");
+	QString c("Literate Ferals");
+	channels.push_back(new FChannelSummary(FChannelSummary::Public, a, 15));
+	channels.push_back(new FChannelSummary(FChannelSummary::Private, b, c, 4));
 }
 
 FChannelListModel::~FChannelListModel()
 {
-  hash = QIcon ( ":/images/hash.png" );
-  key = QIcon (":/images/key.png");
 
-  for(std::vector<Item*>::iterator i = channels.begin(); i != channels.end(); i++)
+	for(std::vector<FChannelSummary*>::iterator i = channels.begin(); i != channels.end(); i++)
   {
     delete *i;
   }
@@ -40,9 +42,9 @@ QVariant FChannelListModel::data(const QModelIndex &index, int role) const
       case colType:
           return "";
       case colMembers:
-        return channels[index.row()]->members;
-      case colName:
-        return channels[index.row()]->name;
+				return channels[index.row()]->count;
+			case colTitle:
+				return channels[index.row()]->title;
       default:
         return QString("?");
     }
@@ -51,10 +53,10 @@ QVariant FChannelListModel::data(const QModelIndex &index, int role) const
   {
     switch(channels[index.row()]->type)
     {
-    case chTypePublic:
-      return QIcon ( ":/images/hash.png" );
-    case chTypePrivate:
-      return QIcon ( ":/images/key.png" );
+		case FChannelSummary::Public:
+			return hash;
+		case FChannelSummary::Private:
+			return key;
     }
   }
   else if (role == Qt::SizeHintRole && index.column() == colType)
@@ -77,7 +79,7 @@ QVariant FChannelListModel::headerData(int section, Qt::Orientation orientation,
           return QString("Type");
         case colMembers:
           return QString("Characters");
-        case colName:
+				case colTitle:
           return QString("Name");
       }
     }

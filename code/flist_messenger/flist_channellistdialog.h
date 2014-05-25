@@ -3,27 +3,13 @@
 #include <QIcon>
 #include <vector>
 
+#include "flist_channelsummary.h"
 #include "ui_flist_channellistdialog.h"
 
 class FChannelListModel : public QAbstractTableModel
 {
   
 public:
-  enum chType
-  {
-    chTypePublic,
-    chTypePrivate
-  };
-  
-  
-  struct Item
-  {
-    chType type;
-    QString name;
-    int members;
-    
-    Item(chType t, QString n, int m);
-  };
   
   FChannelListModel();
   ~FChannelListModel();
@@ -34,15 +20,15 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
   
 private:
-  std::vector<Item*> channels;
-  QIcon hash;
-  QIcon key;
+	std::vector<FChannelSummary*> channels;
+	QIcon hash;
+	QIcon key;
   
   enum columns
   {
     colType = 0,
     colMembers = 1,
-    colName = 2,
+		colTitle = 2,
     colCount = 3
   };
 };
