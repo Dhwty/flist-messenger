@@ -579,7 +579,8 @@ private:
 	QCheckBox* cs_chbAlwaysPing;
 	FChannelPanel* cs_chanCurrent;
     
-    FChannelListDialog *fcld;
+	FChannelListDialog *cl_dialog;
+
 
 	/* The following GUIs still need to be made:
 	QDialog* kinkSearchDialog;

@@ -6,6 +6,7 @@ class FChannelSummary
 public:
 	enum Type
 	{
+		Unknown,
 		Public,
 		Private
 	};

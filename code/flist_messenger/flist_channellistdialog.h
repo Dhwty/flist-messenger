@@ -1,5 +1,6 @@
 #include <QDialog>
 #include <QAbstractTableModel>
+#include <QSortFilterProxyModel>
 #include <QIcon>
 #include <vector>
 
@@ -10,7 +11,16 @@ class FChannelListModel : public QAbstractTableModel
 {
   
 public:
-  
+	enum columns
+	{
+		colType = 0,
+		colMembers = 1,
+		colTitle = 2,
+		colCount = 3
+	};
+
+	static const int SortKeyRole = Qt::UserRole + 0;
+
   FChannelListModel();
   ~FChannelListModel();
   
@@ -21,16 +31,26 @@ public:
   
 private:
 	std::vector<FChannelSummary*> channels;
+	std::vector<FChannelSummary*> rooms;
 	QIcon hash;
 	QIcon key;
-  
-  enum columns
-  {
-    colType = 0,
-    colMembers = 1,
-		colTitle = 2,
-    colCount = 3
-  };
+
+	FChannelSummary *byIndex(uint index) const;
+};
+
+class FChannelListSortProxy : public QSortFilterProxyModel
+{
+public:
+
+	FChannelListSortProxy(QObject * parent = 0);
+	FChannelSummary::Type showType();
+	void setShowType(FChannelSummary::Type t);
+
+protected:
+	virtual bool filterAcceptsRow(int source_row, const QModelIndex & source_parent) const;
+
+private:
+	FChannelSummary::Type _showType;
 };
 
 class FChannelListDialog : public QDialog, private Ui::FChannelListDialogUi
@@ -43,7 +63,12 @@ public:
   
 private:
   FChannelListModel *data;
+	FChannelListSortProxy *datasort;
   
 private slots:
   void on_buttonBox_accepted();
+	void on_chFilterText_textChanged(const QString&);
+	void on_chTypeBoth_toggled(bool);
+	void on_chTypePublic_toggled(bool);
+	void on_chTypePrivate_toggled(bool);
 };

@@ -156,7 +156,7 @@ flist_messenger::flist_messenger(bool d)
         createTrayIcon();
         loadSettings();
         setupConnectBox();
-        fcld = 0;
+				cl_dialog = 0;
 
         FCharacter::initClass();
 	FChannelPanel::initClass();
@@ -1756,8 +1756,8 @@ void flist_messenger::channelsDialogRequested()
 
         channelsDialog->show();
         
-        if (fcld == 0) fcld = new FChannelListDialog(this);
-        fcld->show();
+				if (cl_dialog == 0) cl_dialog = new FChannelListDialog(this);
+				cl_dialog->show();
         
         // >>CHA
         std::string out = "CHA";
