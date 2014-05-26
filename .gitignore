@@ -213,3 +213,24 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+#############
+## Linux/Qt Creator
+#############
+
+# Generated files
+code/flist_messenger/Makefile
+code/flist_messenger/flist-messenger
+code/flist_messenger/qrc_resources.cpp
+code/flist_messenger/moc_*
+*.o
+
+# Files created by running in-place
+code/flist_messenger/logs
+code/flist_messenger/settings.ini
+
+# Qt Creator's default build directories
+/code/build-flist_messenger*
+
+# Autosaves
+*.autosave
