@@ -156,6 +156,8 @@ flist_messenger::flist_messenger(bool d)
         createTrayIcon();
         loadSettings();
         setupConnectBox();
+        fcld = 0;
+
         FCharacter::initClass();
 	FChannelPanel::initClass();
 }
@@ -1753,6 +1755,10 @@ void flist_messenger::channelsDialogRequested()
                 setupChannelsUI();
 
         channelsDialog->show();
+        
+        if (fcld == 0) fcld = new FChannelListDialog(this);
+        fcld->show();
+        
         // >>CHA
         std::string out = "CHA";
         sendWS ( out );
@@ -3583,8 +3589,6 @@ void flist_messenger::setIgnoreCharacter(FSession *session, QString characternam
 		refreshFriendLists();
 	}
 }
-
-
 
 void flist_messenger::messageMany(QList<QString> &panelnames, QString message, MessageType messagetype)
 {

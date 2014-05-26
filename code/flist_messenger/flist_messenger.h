@@ -86,6 +86,8 @@
 #include "flist_iuserinterface.h"
 #include "flist_logtextbrowser.h"
 
+#include "flist_channellistdialog.h"
+
 class QSplitter;
 
 class FAccount;
@@ -576,6 +578,8 @@ private:
 	QString cs_qsPlainDescription;
 	QCheckBox* cs_chbAlwaysPing;
 	FChannelPanel* cs_chanCurrent;
+    
+    FChannelListDialog *fcld;
 
 	/* The following GUIs still need to be made:
 	QDialog* kinkSearchDialog;
