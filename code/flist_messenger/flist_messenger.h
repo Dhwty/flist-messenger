@@ -122,73 +122,6 @@ protected:
 
 #endif
 
-#ifndef CHANNELLISTITEM_CLASS
-#define CHANNELLISTITEM_CLASS
-
-class ChannelListItem : public QListWidgetItem
-{
-
-public:
-	ChannelListItem ( QString& name, int chars );
-	ChannelListItem ( QString& name, QString& title, int chars );
-
-	void setName ( QString& n )
-	{
-		name = n;
-	}
-
-	const QString& getName()
-	{
-		return name;
-	}
-
-	void setTitle ( QString& t )
-	{
-		title = t;
-	}
-
-	const QString& getTitle()
-	{
-		return title;
-	}
-
-	void setChars ( int i )
-	{
-		chars = i;
-	}
-
-	int getChars()
-	{
-		return chars;
-	}
-
-	bool operator > ( ChannelListItem* cli );
-
-private:
-	QString name;
-	QString title;
-	int chars;
-};
-
-#endif
-
-#ifndef USERLISTROW_CLASS
-#define USERLISTROW_CLASS
-
-class UserListRow : public QObject
-{
-
-public:
-	UserListRow ( QString name, QWidget *parent = 0 );
-	~UserListRow() {}
-
-	QLabel* icon;
-	QLabel* userName;
-	QHBoxLayout* hbox;
-};
-
-#endif
-
 // This is a complete mess, login should be pulled out into another class somehow, and decoupled from the UI.
 
 class FChannelPanel;
@@ -313,7 +246,6 @@ private slots:
 	void setupSettingsDialog();
 	void setupTimeoutDialog();
 	void timeoutDialogRequested();
-	void setupChannelsUI();
 	void setupMakeRoomUI();
 	void setupSetStatusUI();
 	void setupCharacterInfoUI();
@@ -351,9 +283,6 @@ private slots:
 	void versionInfoReceived();
 	void btnSendAdvClicked();
 	void btnSendChatClicked();
-	void cd_btnJoinClicked();
-	void cd_btnProomsJoinClicked();
-	void cd_btnCancelClicked();
 	void mr_btnSubmitClicked();
 	void mr_btnCancelClicked();
 	void ss_btnSubmitClicked();
@@ -430,8 +359,6 @@ private:
 	void typingPaused ( FChannelPanel* channel );
 	void typingContinued ( FChannelPanel* channel );
 	void typingCleared ( FChannelPanel* channel );
-	void addToChannelsDialogList ( ChannelListItem* cli );
-	void addToProomsDialogList ( ChannelListItem* cli );
 	void addToFriendsList ( QListWidgetItem* lwi );
 	void addToIgnoreList ( QListWidgetItem* lwi );
 	void saveSettings();
@@ -464,24 +391,6 @@ private:
 	//========================================
 	QSystemTrayIcon* trayIcon;
 	QMenu* trayIconMenu;
-
-	QDialog* channelsDialog;
-	QTabWidget* cd_twOverview;
-	QVBoxLayout* cd_vblOverview;
-	QVBoxLayout* cd_vblChannels; // cd stands for channels dialog
-	QVBoxLayout* cd_vblProoms;
-	QGroupBox* cd_gbChannels;
-	QHBoxLayout* cd_hblChannelsSouthButtons;
-	QHBoxLayout* cd_hblChannelsCenter;
-	QPushButton* cd_btnChannelsCancel;
-	QPushButton* cd_btnChannelsJoin;
-	QListWidget* cd_channelsList;
-	QGroupBox* cd_gbProoms;
-	QHBoxLayout* cd_hblProomsSouthButtons;
-	QHBoxLayout* cd_hblProomsCenter;
-	QPushButton* cd_btnProomsCancel;
-	QPushButton* cd_btnProomsJoin;
-	QListWidget* cd_proomsList;
 
 	QDialog* makeRoomDialog; // mr stands for makeroom
 	QGroupBox* mr_gbOverview;

@@ -139,8 +139,7 @@ flist_messenger::flist_messenger(bool d)
         debugging = d;
         disconnected = true;
         friendsDialog = 0;
-        addIgnoreDialog = 0;
-        channelsDialog = 0;
+				addIgnoreDialog = 0;
         makeRoomDialog = 0;
         setStatusDialog = 0;
         characterInfoDialog = 0;
@@ -1079,87 +1078,7 @@ void flist_messenger::setupMakeRoomUI()
         connect ( mr_btnSubmit, SIGNAL ( clicked() ), this, SLOT ( mr_btnSubmitClicked() ) );
         connect ( mr_btnCancel, SIGNAL ( clicked() ), this, SLOT ( mr_btnCancelClicked() ) );
 }
-void flist_messenger::setupChannelsUI()
-{
-        if ( channelsDialog )
-        {
-                delete channelsDialog;
-                delete cd_vblOverview;
-                delete cd_vblChannels;
-                delete cd_vblProoms;
-                delete cd_twOverview;
-                delete cd_gbChannels;
-                delete cd_hblChannelsSouthButtons;
-                delete cd_hblChannelsCenter;
-                delete cd_hblProomsSouthButtons;
-                delete cd_hblProomsCenter;
-                delete cd_btnChannelsCancel;
-                delete cd_btnChannelsJoin;
-                delete cd_btnProomsCancel;
-                delete cd_btnProomsJoin;
-                delete cd_channelsList;
-                delete cd_proomsList;
-                delete cd_gbProoms;
-        }
 
-        channelsDialog = new QDialog ( this );
-
-        cd_vblOverview = new QVBoxLayout;
-        cd_vblChannels = new QVBoxLayout;
-        cd_vblProoms = new QVBoxLayout;
-        cd_twOverview = new QTabWidget;
-        cd_gbChannels = new QGroupBox;
-        cd_hblChannelsSouthButtons = new QHBoxLayout;
-        cd_hblChannelsCenter = new QHBoxLayout;
-        cd_hblProomsSouthButtons = new QHBoxLayout;
-        cd_hblProomsCenter = new QHBoxLayout;
-        cd_btnChannelsCancel = new QPushButton ( QString ( "Cancel" ) );
-        cd_btnChannelsJoin = new QPushButton ( QString ( "Join" ) );
-        cd_btnProomsCancel = new QPushButton ( QString ( "Cancel" ) );
-        cd_btnProomsJoin = new QPushButton ( QString ( "Join" ) );
-        cd_channelsList = new QListWidget;
-        cd_proomsList = new QListWidget;
-        cd_gbProoms = new QGroupBox;
-
-        channelsDialog->setObjectName ( QString ( "F-chat - Channels" ) );
-        channelsDialog->setWindowIcon ( QIcon ( ":/images/hash.png" ) );
-        channelsDialog->setWindowTitle ( QString ( "F-chat - Channels" ) );
-        channelsDialog->setLayout ( cd_vblOverview );
-        cd_vblOverview->addWidget ( cd_twOverview );
-
-        //Channels tab
-        cd_gbChannels->setTitle ( QString ( "Channels" ) );
-        cd_gbChannels->setLayout ( cd_vblChannels );
-        cd_vblChannels->addLayout ( cd_hblChannelsCenter );
-        cd_vblChannels->addLayout ( cd_hblChannelsSouthButtons );
-        cd_hblChannelsCenter->addWidget ( cd_channelsList );
-        cd_hblChannelsSouthButtons->addStretch();
-        cd_hblChannelsSouthButtons->addWidget ( cd_btnChannelsJoin );
-        cd_hblChannelsSouthButtons->addWidget ( cd_btnChannelsCancel );
-
-        //Prooms tab
-        cd_gbProoms->setTitle ( QString ( "Public rooms" ) );
-        cd_gbProoms->setLayout ( cd_vblProoms );
-        cd_vblProoms->addLayout ( cd_hblProomsCenter );
-        cd_vblProoms->addLayout ( cd_hblProomsSouthButtons );
-        cd_hblProomsCenter->addWidget ( cd_proomsList );
-        cd_hblProomsSouthButtons->addStretch();
-        cd_hblProomsSouthButtons->addWidget ( cd_btnProomsJoin );
-        cd_hblProomsSouthButtons->addWidget ( cd_btnProomsCancel );
-
-        cd_twOverview->addTab ( cd_gbChannels, QIcon ( ":/images/hash.png" ), QString ( "Channels" ) );
-        cd_twOverview->addTab ( cd_gbProoms, QIcon ( ":/images/key.png" ), QString ( "Public Rooms" ) );
-        cd_btnChannelsJoin->setIcon ( QIcon ( ":/images/hash.png" ) );
-        cd_btnProomsJoin->setIcon ( QIcon ( ":/images/key.png" ) );
-        cd_btnChannelsCancel->setIcon ( QIcon ( ":/images/cross.png" ) );
-        cd_btnProomsCancel->setIcon ( QIcon ( ":/images/cross.png" ) );
-
-        connect ( cd_btnChannelsJoin, SIGNAL ( clicked() ), this, SLOT ( cd_btnJoinClicked() ) );
-        connect ( cd_btnChannelsCancel, SIGNAL ( clicked() ), this, SLOT ( cd_btnCancelClicked() ) );
-        connect ( cd_btnProomsCancel, SIGNAL ( clicked() ), this, SLOT ( cd_btnCancelClicked() ) );
-        connect ( cd_btnProomsJoin, SIGNAL ( clicked() ), this, SLOT ( cd_btnProomsJoinClicked() ) );
-        channelsDialog->setGeometry ( this->geometry().left() + 15, this->geometry().top() + 15, 350, 250 );
-}
 void flist_messenger::loginClicked()
 {
         charName = comboBox->currentText();
@@ -1765,11 +1684,6 @@ void flist_messenger::reportDialogRequested()
 }
 void flist_messenger::channelsDialogRequested()
 {
-        if ( channelsDialog == 0 || channelsDialog->parent() != this )
-                setupChannelsUI();
-
-        channelsDialog->show();
-        
         // >>CHA
         std::string out = "CHA";
         sendWS ( out );
@@ -3035,74 +2949,6 @@ void flist_messenger::parseInput()
         }
 }
 
-ChannelListItem::ChannelListItem ( QString& name, int chars ) : QListWidgetItem ( name )
-{
-        this->name = name;
-        this->title = name;
-        this->chars = chars;
-}
-ChannelListItem::ChannelListItem ( QString& name, QString& title, int chars ) : QListWidgetItem ( name )
-{
-        this->name = name;
-        this->chars = chars;
-        this->title = title;
-}
-bool ChannelListItem::operator > ( ChannelListItem* cli )
-{
-        if ( cli->getChars() > this->chars )
-                return true;
-        else
-                return false;
-}
-
-void flist_messenger::addToChannelsDialogList ( ChannelListItem *cli )
-{
-        QString text = cli->getTitle();
-        text += " (";
-        QString it;
-        it.setNum ( cli->getChars() );
-        text += it;
-        text += ")";
-        cli->setText ( text );
-
-        bool c = true;
-
-        for ( int i = 0;i < cd_channelsList->count() && c;i++ )
-        {
-                if ( cli->getChars() > ( ( ChannelListItem* ) ( cd_channelsList->item ( i ) ) )->getChars() )
-                {
-                        cd_channelsList->insertItem ( i, cli );
-                        c = false;
-                }
-        }
-
-        if ( c )
-                cd_channelsList->addItem ( cli );
-}
-void flist_messenger::addToProomsDialogList ( ChannelListItem *cli )
-{
-        QString text = cli->getTitle();
-        text += " (";
-        QString it;
-        it.setNum ( cli->getChars() );
-        text += it;
-        text += ")";
-        cli->setText ( text );
-
-        bool c = true;
-
-        for ( int i = 0;i < cd_proomsList->count() && c;i++ )
-        {
-                if ( cli->getChars() > ( ( ChannelListItem* ) ( cd_proomsList->item ( i ) ) )->getChars() )
-                {
-                        cd_proomsList->insertItem ( i, cli );
-                        c = false;
-                }
-        }
-
-        if ( c )
-                cd_proomsList->addItem ( cli );
-}
 void flist_messenger::addToFriendsList ( QListWidgetItem *lwi )
 {
         QString name = lwi->text();
@@ -3141,10 +2987,7 @@ void flist_messenger::mr_btnCancelClicked()
 {
         makeRoomDialog->hide();
 }
-void flist_messenger::cd_btnCancelClicked()
-{
-        channelsDialog->hide();
-}
+
 void flist_messenger::mr_btnSubmitClicked()
 {
         QString title = mr_leName->text().simplified();
@@ -3157,36 +3000,7 @@ void flist_messenger::mr_btnSubmitClicked()
         std::string out = "CCR " + makenode.write();
         sendWS ( out );
 }
-void flist_messenger::cd_btnJoinClicked()
-{
-        QList<QListWidgetItem *> cliList = cd_channelsList->selectedItems();
-        ChannelListItem* cli = 0;
-	FSession *session = account->getSession(charName); //todo: fix this
 
-        for ( int i = 0;i < cliList.count();i++ )
-        {
-                cli = ( ChannelListItem* ) ( cliList.at ( i ) );
-                QString name = cli->getName();
-
-                if ( channelList.count ( name ) == 0 || !channelList[name]->getActive() )
-                        session->joinChannel(name);
-        }
-}
-void flist_messenger::cd_btnProomsJoinClicked()
-{
-        QList<QListWidgetItem *> cliList = cd_proomsList->selectedItems();
-        ChannelListItem* cli = 0;
-	FSession *session = account->getSession(charName); //todo: fix this
-
-        for ( int i = 0;i < cliList.count();i++ )
-        {
-                cli = ( ChannelListItem* ) ( cliList.at ( i ) );
-                QString name = cli->getName();
-
-                if ( channelList.count ( name ) == 0 || !channelList[name]->getActive() )
-                        session->joinChannel(name);
-        }
-}
 void flist_messenger::ss_btnCancelClicked()
 {
         setStatusDialog->hide();
@@ -3796,16 +3610,6 @@ void flist_messenger::updateKnownChannelList(FSession *session)
 	cl_data->updateChannels(
 				session->knownchannellist.begin(),
 				session->knownchannellist.end());
-
-	if(!cd_channelsList) {
-		return;
-	}
-	cd_channelsList->clear();
-	for(int i = 0; i < session->knownchannellist.size(); i++) {
-		FChannelSummary *channelsummary = &session->knownchannellist[i];
-		ChannelListItem *channellistitem = new ChannelListItem(channelsummary->name, channelsummary->count);
-		addToChannelsDialogList(channellistitem);
-	}
 }
 void flist_messenger::updateKnownOpenRoomList(FSession *session)
 {
@@ -3813,13 +3617,4 @@ void flist_messenger::updateKnownOpenRoomList(FSession *session)
 				session->knownopenroomlist.begin(),
 				session->knownopenroomlist.end()
 				);
-	if(!cd_proomsList) {
-		return;
-	}
-	cd_proomsList->clear();
-	for(int i = 0; i < session->knownopenroomlist.size(); i++) {
-		FChannelSummary *channelsummary = &session->knownopenroomlist[i];
-		ChannelListItem *channellistitem = new ChannelListItem(channelsummary->name, channelsummary->title, channelsummary->count);
-		addToProomsDialogList(channellistitem);
-	}
 }
