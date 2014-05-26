@@ -398,6 +398,8 @@ private slots:
 	void displayCharacterContextMenu ( FCharacter* ch );
 	void displayChannelContextMenu ( FChannelPanel* ch );
 
+	void cl_joinRequested(std::vector<QString> channels);
+
 
 public:
 	void leaveChannelPanel(QString panelname);
@@ -580,6 +582,7 @@ private:
 	FChannelPanel* cs_chanCurrent;
     
 	FChannelListDialog *cl_dialog;
+	FChannelListModel  *cl_data;
 
 
 	/* The following GUIs still need to be made:

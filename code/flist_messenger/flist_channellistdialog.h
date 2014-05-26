@@ -2,6 +2,7 @@
 #include <QAbstractTableModel>
 #include <QSortFilterProxyModel>
 #include <QIcon>
+#include <QPushButton>
 #include <vector>
 
 #include "flist_channelsummary.h"
@@ -28,14 +29,31 @@ public:
   int columnCount(const QModelIndex & parent = QModelIndex()) const;
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+	const FChannelSummary &byIndex(uint index) const;
   
+	template<class InputIterator>
+	void updateChannels(InputIterator first, InputIterator last)
+	{
+		beginResetModel();
+		channels.clear();
+		channels.assign(first, last);
+		endResetModel();
+	}
+
+	template<class InputIterator>
+	void updateRooms(InputIterator first, InputIterator last)
+	{
+		beginResetModel();
+		rooms.clear();
+		rooms.assign(first, last);
+		endResetModel();
+	}
+
 private:
-	std::vector<FChannelSummary*> channels;
-	std::vector<FChannelSummary*> rooms;
+	std::vector<FChannelSummary> channels;
+	std::vector<FChannelSummary> rooms;
 	QIcon hash;
 	QIcon key;
-
-	FChannelSummary *byIndex(uint index) const;
 };
 
 class FChannelListSortProxy : public QSortFilterProxyModel
@@ -58,12 +76,19 @@ class FChannelListDialog : public QDialog, private Ui::FChannelListDialogUi
   Q_OBJECT
   
 public:
-  FChannelListDialog(QWidget *parent/*, QAbstractTableModel *channels*/);
+	FChannelListDialog(FChannelListModel *m, QWidget *parent);
   ~FChannelListDialog();
+
+	FChannelListModel *model();
+	void setModel(FChannelListModel*);
+
+signals:
+	void joinRequested(std::vector<QString> channels);
   
 private:
   FChannelListModel *data;
 	FChannelListSortProxy *datasort;
+	QPushButton *joinButton;
   
 private slots:
   void on_buttonBox_accepted();

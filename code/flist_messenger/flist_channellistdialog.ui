@@ -41,7 +41,7 @@
         <string>&amp;Public</string>
        </property>
        <property name="checked">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -58,7 +58,7 @@
         <string>&amp;Both</string>
        </property>
        <property name="checked">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -80,7 +80,7 @@
    <item>
     <widget class="QLineEdit" name="chFilterText">
      <property name="placeholderText">
-      <string>Find</string>
+      <string>Filter</string>
      </property>
     </widget>
    </item>
@@ -139,7 +139,7 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Close|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Close</set>
      </property>
     </widget>
    </item>

@@ -156,6 +156,7 @@ flist_messenger::flist_messenger(bool d)
         createTrayIcon();
         loadSettings();
         setupConnectBox();
+				cl_data = new FChannelListModel();
 				cl_dialog = 0;
 
         FCharacter::initClass();
@@ -222,7 +223,9 @@ void flist_messenger::createTrayIcon()
 }
 flist_messenger::~flist_messenger()
 {
-        // TODO
+				// TODO: Delete everything
+	delete cl_dialog;
+	delete cl_data;
 }
 void flist_messenger::printDebugInfo(std::string s)
 {
@@ -1471,6 +1474,17 @@ void flist_messenger::displayCharacterContextMenu ( FCharacter* ch )
                 menu->exec ( QCursor::pos() );
         }
 }
+
+void flist_messenger::cl_joinRequested(std::vector<QString> channels)
+{
+	FSession *session = account->getSession(charName); //TODO: fix this
+	for(std::vector<QString>::const_iterator i = channels.begin(); i != channels.end(); i++)
+	{
+		if ( channelList.count ( *i ) == 0 || !channelList[*i]->getActive() )
+			session->joinChannel(*i);
+	}
+}
+
 void flist_messenger::anchorClicked ( QUrl link )
 {
 	QString linktext = link.toString();
@@ -1756,15 +1770,21 @@ void flist_messenger::channelsDialogRequested()
 
         channelsDialog->show();
         
-				if (cl_dialog == 0) cl_dialog = new FChannelListDialog(this);
-				cl_dialog->show();
-        
         // >>CHA
         std::string out = "CHA";
         sendWS ( out );
         out = "ORS";
         sendWS ( out );
+
+				if (cl_dialog == 0)
+				{
+					cl_dialog = new FChannelListDialog(cl_data, this);
+					QObject::connect(cl_dialog, &FChannelListDialog::joinRequested,
+													 this, &flist_messenger::cl_joinRequested);
+				}
+				cl_dialog->show();
 }
+
 void flist_messenger::refreshChatLines()
 {
         if ( currentPanel == 0 )
@@ -3773,6 +3793,10 @@ void flist_messenger::messageSystem(FSession *session, QString message, MessageT
 
 void flist_messenger::updateKnownChannelList(FSession *session)
 {
+	cl_data->updateChannels(
+				session->knownchannellist.begin(),
+				session->knownchannellist.end());
+
 	if(!cd_channelsList) {
 		return;
 	}
@@ -3785,6 +3809,10 @@ void flist_messenger::updateKnownChannelList(FSession *session)
 }
 void flist_messenger::updateKnownOpenRoomList(FSession *session)
 {
+	cl_data->updateRooms(
+				session->knownopenroomlist.begin(),
+				session->knownopenroomlist.end()
+				);
 	if(!cd_proomsList) {
 		return;
 	}
