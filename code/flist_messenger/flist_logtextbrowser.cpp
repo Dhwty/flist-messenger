@@ -5,6 +5,7 @@
 #include <QClipboard>
 #include <QApplication>
 #include <QDesktopServices>
+#include <QScrollBar>
 #include "flist_global.h"
 #include "flist_iuserinterface.h"
 #include "flist_session.h"
@@ -120,4 +121,21 @@ void FLogTextBrowser::confirmReport()
 		return;
 	}
 	session->sendConfirmStaffReport(flist_copyname);
+}
+
+void FLogTextBrowser::append(const QString & text)
+{
+	QTextCursor cur = textCursor();
+	if (cur.hasSelection())
+	{
+		int oldPosition = cur.position();
+		int oldAnchor = cur.anchor();
+
+		QTextBrowser::append(text);
+
+		cur.setPosition(oldAnchor, QTextCursor::MoveAnchor);
+		cur.setPosition(oldPosition, QTextCursor::KeepAnchor);
+		setTextCursor(cur);
+	}
+	else { QTextBrowser::append(text); }
 }
