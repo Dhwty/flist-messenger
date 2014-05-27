@@ -131,11 +131,20 @@ void FLogTextBrowser::append(const QString & text)
 		int oldPosition = cur.position();
 		int oldAnchor = cur.anchor();
 
+		int vpos = verticalScrollBar()->value();
+		int vmax = verticalScrollBar()->maximum();
+
 		QTextBrowser::append(text);
 
 		cur.setPosition(oldAnchor, QTextCursor::MoveAnchor);
 		cur.setPosition(oldPosition, QTextCursor::KeepAnchor);
 		setTextCursor(cur);
+		if (vpos != vmax) { verticalScrollBar()->setValue(vpos); }
+		else
+		{
+			vmax = verticalScrollBar()->maximum();
+			verticalScrollBar()->setValue(vmax);
+		}
 	}
 	else { QTextBrowser::append(text); }
 }
