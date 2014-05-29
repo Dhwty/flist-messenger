@@ -4,22 +4,33 @@
 class FChannelSummary
 {
 public:
+	enum Type
+	{
+		Unknown,
+		Public,
+		Private
+	};
+
 	FChannelSummary() : 
+		type(Public),
 		name(),
 		title(),
 		count(0)
 	{}
-	FChannelSummary(QString &name, int count) : 
+	FChannelSummary(Type type, QString &name, int count) :
+		type(type),
 		name(name),
 		title(name),
 		count(count)
 	{}
-	FChannelSummary(QString &name, QString &title, int count) : 
+	FChannelSummary(Type type, QString &name, QString &title, int count) :
+		type(type),
 		name(name),
 		title(title),
 		count(count)
 	{}
 
+	Type type;
 	QString name;
 	QString title;
 	int count;

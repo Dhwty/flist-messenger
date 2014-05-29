@@ -1186,7 +1186,7 @@ COMMAND(CHA)
 		QString channelcountstring = channelnode.at("characters").as_string().c_str();
 		//todo: Verify the count string can be converted properly.
 		int channelcount = channelcountstring.toInt();
-		knownchannellist.append(FChannelSummary(channelname, channelcount));
+		knownchannellist.append(FChannelSummary(FChannelSummary::Public, channelname, channelcount));
 	}
 	account->ui->updateKnownChannelList(this);
 }
@@ -1204,7 +1204,7 @@ COMMAND(ORS)
 		QString channeltitle = channelnode.at("title").as_string().c_str();
 		QString channelcountstring = channelnode.at("characters").as_string().c_str();
 		int channelcount = channelcountstring.toInt();
-		knownopenroomlist.append(FChannelSummary(channelname, channeltitle, channelcount));
+		knownopenroomlist.append(FChannelSummary(FChannelSummary::Private, channelname, channeltitle, channelcount));
 	}
 	account->ui->updateKnownOpenRoomList(this);
 }
