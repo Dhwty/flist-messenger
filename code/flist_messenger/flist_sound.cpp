@@ -80,7 +80,7 @@ QString FSound::soundToString ( soundName sound )
 		break;
 	}
 
-	soundFile = "./sounds/" + soundFile;
+	soundFile = ":/sounds/" + soundFile;
 
 	return soundFile;
 }
