@@ -315,7 +315,6 @@ private slots:
 	void setupChannelsUI();
 	void setupMakeRoomUI();
 	void setupSetStatusUI();
-	void setupCharacterInfoUI();
 	void setupFriendsDialog();
 	void setupAddIgnoreDialog();
 	void setupReportDialog();
@@ -373,7 +372,6 @@ private slots:
 	void ul_chatOpRemove();
 	void to_btnSubmitClicked();
 	void to_btnCancelClicked();
-	void ci_btnCloseClicked();
 	void fr_btnFriendsPMClicked();
 	void fr_btnIgnoreRemoveClicked();
 	void fr_btnCloseClicked();
@@ -513,12 +511,7 @@ private:
 	bool se_ping;
 	bool se_helpdesk;
 
-	FCharacterInfoDialog *ci_dialog;
-	QDialog* characterInfoDialog; // ci stands for character info
-	QLabel* ci_lblName;
-	QLabel* ci_lblStatusMessage;
-	QTextEdit* ci_teKinks;
-	QTextEdit* ci_teProfile;
+	FCharacterInfoDialog *ci_dialog; // ci stands for character info
 
 	QDialog* friendsDialog; // fr stands for friends
 	QVBoxLayout* fr_vblOverview;
