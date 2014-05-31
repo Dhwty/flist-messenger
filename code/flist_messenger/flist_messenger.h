@@ -85,6 +85,7 @@
 #include "flist_channeltab.h"
 #include "flist_iuserinterface.h"
 #include "flist_logtextbrowser.h"
+#include "flist_characterinfodialog.h"
 
 class QSplitter;
 
@@ -512,6 +513,7 @@ private:
 	bool se_ping;
 	bool se_helpdesk;
 
+	FCharacterInfoDialog *ci_dialog;
 	QDialog* characterInfoDialog; // ci stands for character info
 	QLabel* ci_lblName;
 	QLabel* ci_lblStatusMessage;

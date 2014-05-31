@@ -55,7 +55,8 @@ HEADERS += \
     flist_channelsummary.h \
     flist_enums.h \
     flist_message.h \
-    flist_logtextbrowser.h
+    flist_logtextbrowser.h \
+    flist_characterinfodialog.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -82,5 +83,6 @@ SOURCES += \
     flist_channelpanel.cpp \
     flist_channel.cpp \
     flist_message.cpp \
-    flist_logtextbrowser.cpp
+    flist_logtextbrowser.cpp \
+    flist_characterinfodialog.cpp
 RESOURCES += resources.qrc

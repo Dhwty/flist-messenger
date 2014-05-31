@@ -144,6 +144,7 @@ flist_messenger::flist_messenger(bool d)
         makeRoomDialog = 0;
         setStatusDialog = 0;
         characterInfoDialog = 0;
+				ci_dialog = 0;
         recentCharMenu = 0;
         recentChannelMenu = 0;
         reportDialog = 0;
@@ -1736,6 +1737,10 @@ void flist_messenger::characterInfoDialogRequested()
         ci_lblName->setText ( n );
         ci_lblStatusMessage->setText ( ch->statusMsg() );
         characterInfoDialog->show();
+
+				if (!ci_dialog) { ci_dialog = new FCharacterInfoDialog(this); }
+				ci_dialog->setDisplayedCharacter(ch);
+				ci_dialog->show();
 }
 void flist_messenger::reportDialogRequested()
 {
@@ -3549,6 +3554,8 @@ void flist_messenger::notifyCharacterCustomKinkDataUpdated(FSession *session, QS
 	foreach(QString key, keys) {
 		ci_teKinks->append(QString("<b>%1:</b> %2").arg(key).arg(kinkdata[key]));
 	}
+
+	ci_dialog->updateKinks(character);
 }
 void flist_messenger::notifyCharacterProfileDataUpdated(FSession *session, QString charactername)
 {
@@ -3567,6 +3574,8 @@ void flist_messenger::notifyCharacterProfileDataUpdated(FSession *session, QStri
 	foreach(QString key, keys) {
 		ci_teProfile->append(QString("<b>%1:</b> %2").arg(key).arg(profiledata[key]));
 	}
+
+	ci_dialog->updateProfile(character);
 }
 
 void flist_messenger::notifyIgnoreUpdate(FSession *session)
