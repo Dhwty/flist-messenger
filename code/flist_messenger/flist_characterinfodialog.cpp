@@ -79,6 +79,8 @@ void FCharacterInfoDialog::setDisplayedCharacter(FCharacter *c)
 	ui->name->setText(name);
 
 	ui->status->setText(c->statusMsg());
+	updateProfile(c);
+	updateKinks(c);
 }
 
 void FCharacterInfoDialog::updateProfile(FCharacter *c)
