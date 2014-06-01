@@ -86,9 +86,6 @@ SOURCES += \
     flist_channel.cpp \
     flist_message.cpp \
     flist_logtextbrowser.cpp \
-    flist_settings.cpp \
-    flist_enums.cpp \
-    flist_attentionsettingswidget.cpp \
     flist_channellistdialog.cpp
 RESOURCES += resources.qrc
 FORMS += flist_channellistdialog.ui

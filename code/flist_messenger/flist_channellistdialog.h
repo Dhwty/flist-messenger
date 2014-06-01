@@ -22,13 +22,13 @@ public:
 
 	static const int SortKeyRole = Qt::UserRole + 0;
 
-  FChannelListModel();
-  ~FChannelListModel();
+	FChannelListModel();
+	~FChannelListModel();
   
-  int rowCount(const QModelIndex & parent = QModelIndex()) const;
-  int columnCount(const QModelIndex & parent = QModelIndex()) const;
-  QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+	int rowCount(const QModelIndex & parent = QModelIndex()) const;
+	int columnCount(const QModelIndex & parent = QModelIndex()) const;
+	QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
 	const FChannelSummary &byIndex(uint index) const;
   
 	template<class InputIterator>
@@ -73,25 +73,25 @@ private:
 
 class FChannelListDialog : public QDialog, private Ui::FChannelListDialogUi
 {
-  Q_OBJECT
+	Q_OBJECT
   
 public:
 	FChannelListDialog(FChannelListModel *m, QWidget *parent);
-  ~FChannelListDialog();
+	~FChannelListDialog();
 
 	FChannelListModel *model();
 	void setModel(FChannelListModel*);
 
 signals:
-	void joinRequested(std::vector<QString> channels);
+	void joinRequested(QStringList channels);
   
 private:
-  FChannelListModel *data;
+	FChannelListModel *data;
 	FChannelListSortProxy *datasort;
 	QPushButton *joinButton;
   
 private slots:
-  void on_buttonBox_accepted();
+	void on_buttonBox_accepted();
 	void on_chFilterText_textChanged(const QString&);
 	void on_chTypeBoth_toggled(bool);
 	void on_chTypePublic_toggled(bool);

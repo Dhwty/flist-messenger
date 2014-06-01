@@ -327,7 +327,7 @@ private slots:
 	void displayCharacterContextMenu ( FCharacter* ch );
 	void displayChannelContextMenu ( FChannelPanel* ch );
 
-	void cl_joinRequested(std::vector<QString> channels);
+	void cl_joinRequested(QStringList channels);
 
 
 public:

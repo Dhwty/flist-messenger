@@ -1394,13 +1394,14 @@ void flist_messenger::displayCharacterContextMenu ( FCharacter* ch )
         }
 }
 
-void flist_messenger::cl_joinRequested(std::vector<QString> channels)
+void flist_messenger::cl_joinRequested(QStringList channels)
 {
 	FSession *session = account->getSession(charName); //TODO: fix this
-	for(std::vector<QString>::const_iterator i = channels.begin(); i != channels.end(); i++)
-	{
-		if ( channelList.count ( *i ) == 0 || !channelList[*i]->getActive() )
-			session->joinChannel(*i);
+	foreach(QString channel, channels) {
+		FChannelPanel *channelpanel = channelList.value(channel);
+		if(!channelpanel || !channelpanel->getActive() ) {
+			session->joinChannel(channel);
+		}
 	}
 }
 
@@ -1690,13 +1691,12 @@ void flist_messenger::channelsDialogRequested()
         out = "ORS";
         sendWS ( out );
 
-				if (cl_dialog == 0)
-				{
-					cl_dialog = new FChannelListDialog(cl_data, this);
-					QObject::connect(cl_dialog, &FChannelListDialog::joinRequested,
-													 this, &flist_messenger::cl_joinRequested);
-				}
-				cl_dialog->show();
+	if (cl_dialog == 0)
+	{
+		cl_dialog = new FChannelListDialog(cl_data, this);
+		connect(cl_dialog, SIGNAL(joinRequested(QStringList)), this, SLOT(cl_joinRequested(QStringList)));
+	}
+	cl_dialog->show();
 }
 
 void flist_messenger::refreshChatLines()

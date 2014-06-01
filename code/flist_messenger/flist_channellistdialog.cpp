@@ -12,43 +12,43 @@ FChannelListModel::~FChannelListModel()
 
 int FChannelListModel::rowCount(const QModelIndex & parent) const
 {
-  if (parent.isValid()) { return 0; }
+	if (parent.isValid()) { return 0; }
 	return channels.size() + rooms.size();
 }
 
 int FChannelListModel::columnCount(const QModelIndex & parent) const
 {
-  if (parent.isValid()) { return 0; }
-  return colCount; // Type, name, members
+	if (parent.isValid()) { return 0; }
+	return colCount; // Type, name, members
 }
 
 QVariant FChannelListModel::data(const QModelIndex &index, int role) const
 {
-  if(role == Qt::DisplayRole)
-  {
-    switch(index.column())
+	if(role == Qt::DisplayRole)
+	{
+		switch(index.column())
 		{
-			case colType:
-					return "";
-      case colMembers:
-				return byIndex(index.row()).count;
-			case colTitle:
-				return byIndex(index.row()).title;
-      default:
-        return QString("?");
-    }
-  }
+		case colType:
+			return "";
+		case colMembers:
+			return byIndex(index.row()).count;
+		case colTitle:
+			return byIndex(index.row()).title;
+		default:
+			return QString("?");
+		}
+	}
 	else if ((role == Qt::DecorationRole) && (index.column() == colType))
-  {
+	{
 		switch(byIndex(index.row()).type)
-    {
+		{
 		case FChannelSummary::Public:
 			return hash;
 		case FChannelSummary::Private:
 			return key;
 		case FChannelSummary::Unknown:
 			return QVariant();
-    }
+		}
 	}
 	else if (role == SortKeyRole)
 	{
@@ -63,32 +63,32 @@ QVariant FChannelListModel::data(const QModelIndex &index, int role) const
 		}
 	}
 
-  return QVariant();
+	return QVariant();
 }
 
 QVariant FChannelListModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-  if(orientation == Qt::Horizontal)
-  {
-    if(role == Qt::DisplayRole)
-    {
-      switch(section)
+	if(orientation == Qt::Horizontal)
+	{
+		if(role == Qt::DisplayRole)
+		{
+			switch(section)
 			{
-				case colType:
-					return QVariant();
-        case colMembers:
-					return QString("#");
-				case colTitle:
-          return QString("Name");
-      }
+			case colType:
+				return QVariant();
+			case colMembers:
+				return QString("#");
+			case colTitle:
+				return QString("Name");
+			}
 		}
 		else if (role==Qt::SizeHintRole && section == colType)
 		{
 			return QSize(16,16);
 		}
-  }
+	}
   
-  return QVariant();
+	return QVariant();
 }
 
 const FChannelSummary &FChannelListModel::byIndex(uint index) const
@@ -160,12 +160,16 @@ void FChannelListDialog::setModel(FChannelListModel *m)
 	data = m;
 	datasort->setSourceModel(data);
 	chTable->resizeColumnsToContents();
+#if QT_VERSION >= 0x050000
 	chTable->horizontalHeader()->setSectionResizeMode(FChannelListModel::colType,	QHeaderView::ResizeToContents);
+#else
+	chTable->horizontalHeader()->setResizeMode(FChannelListModel::colType,	QHeaderView::ResizeToContents);
+#endif
 }
 
 void FChannelListDialog::on_buttonBox_accepted()
 {
-	std::vector<QString> channels;
+	QStringList channels;
 	QModelIndexList selected = chTable->selectionModel()->selectedRows(FChannelListModel::colTitle);
 	for (QModelIndexList::ConstIterator i = selected.begin(); i != selected.end(); i++)
 	{
