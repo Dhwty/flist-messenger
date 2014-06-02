@@ -32,20 +32,13 @@ void FSound::play ( soundName sound )
 
 	QString soundFile = soundToString ( sound );
 
-	if ( !QFile::exists ( soundFile ) )
-	{
-		std::cout << "Error!  Soundfile not found: " + soundFile.toStdString() + "\n";
-	}
-	else
-	{
-		std::cout << "Playing sound " + soundFile.toStdString() + "\n";
-		QSound::play ( soundFile );
-	}
+	std::cout << "Playing sound " + soundFile.toStdString() + "\n";
+	QSound::play ( soundFile );
 }
 
 QString FSound::soundToString ( soundName sound )
 {
-	QString soundFile;
+	QString soundFile, soundPath;
 
 	switch ( sound )
 	{
@@ -80,7 +73,11 @@ QString FSound::soundToString ( soundName sound )
 		break;
 	}
 
-	soundFile = "./sounds/" + soundFile;
+	soundPath = "./sounds/" + soundFile;
+	if  (!QFile::exists ( soundPath ) )
+	{
+		soundPath = ":/sounds/" + soundFile;
+	}
 
-	return soundFile;
+	return soundPath;
 }
