@@ -28,6 +28,7 @@
 #include "flist_account.h"
 #include "flist_server.h"
 #include "flist_session.h"
+#include "flist_loginwindow.h"
 
 // Bool to string macro
 #define BOOLSTR(b) ( (b) ? "true" : "false" )
@@ -283,6 +284,9 @@ void flist_messenger::setupConnectBox()
 //        btnConnect->hide();
         gridLayout->addWidget ( btnConnect, 2, 1 );
         verticalLayout->addLayout ( gridLayout );
+				FLoginWindow *lw = new FLoginWindow(this);
+				verticalLayout->addWidget(lw);
+				verticalLayout->setAlignment(lw, Qt::AlignHCenter|Qt::AlignVCenter);
         this->setCentralWidget ( verticalLayoutWidget );
         connect ( btnConnect, SIGNAL ( clicked() ), this, SLOT ( connectClicked() ) );
 
@@ -341,12 +345,12 @@ void flist_messenger::setupLoginBox()
         label->setGeometry ( QRect ( 10, 13, 71, 21 ) );
         label->setText ( "Character:" );
         setCentralWidget ( groupBox );
-        connect ( pushButton, SIGNAL ( clicked() ), this, SLOT ( loginClicked() ) );
-        int wid = QApplication::desktop()->width();
-        int hig = QApplication::desktop()->height();
+				connect ( pushButton, SIGNAL ( clicked() ), this, SLOT ( loginClicked() ) );
+				int wid = QApplication::desktop()->width();
+				int hig = QApplication::desktop()->height();
         int mwid = 265;
         int mhig = height();
-        setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
+				setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
 }
 void flist_messenger::setupSetStatusUI()
 {

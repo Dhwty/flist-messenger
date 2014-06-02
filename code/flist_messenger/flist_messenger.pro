@@ -31,7 +31,6 @@ HEADERS += \
            flist_common.h \
            flist_global.h \
            flist_loginselectwindow.h \
-           flist_loginwindow.h \
            flist_messenger.h \
            flist_parser.h \
            flist_session.h \
@@ -59,6 +58,7 @@ HEADERS += \
     flist_settings.h \
     flist_attentionsettingswidget.h \
     flist_channellistdialog.h
+    flist_loginwindow.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -66,7 +66,6 @@ SOURCES += \
            flist_character.cpp \
            flist_global.cpp \
            flist_loginselectwindow.cpp \
-           flist_loginwindow.cpp \
            flist_messenger.cpp \
            flist_parser.cpp \
            flist_session.cpp \
@@ -86,6 +85,8 @@ SOURCES += \
     flist_channel.cpp \
     flist_message.cpp \
     flist_logtextbrowser.cpp \
-    flist_channellistdialog.cpp
+    flist_channellistdialog.cpp \
+	flist_loginwindow.cpp
 RESOURCES += resources.qrc
-FORMS += flist_channellistdialog.ui
+FORMS += flist_channellistdialog.ui \
+    flist_loginwindow.ui
