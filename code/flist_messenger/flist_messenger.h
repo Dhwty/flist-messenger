@@ -85,6 +85,7 @@
 #include "flist_channeltab.h"
 #include "flist_iuserinterface.h"
 #include "flist_logtextbrowser.h"
+#include "usereturn.h"
 
 #include "flist_channellistdialog.h"
 
@@ -92,35 +93,6 @@ class QSplitter;
 
 class FAccount;
 class FServer;
-
-#ifndef USERETURN_CLASS
-#define USERETURN_CLASS
-
-
-class UseReturn : public QObject
-{
-	Q_OBJECT
-
-public:
-	UseReturn ( QObject* parent )
-	{
-		setParent ( parent );
-	}
-
-protected:
-	bool eventFilter ( QObject *obj, QEvent *event );
-};
-
-class ReturnLogin : public QObject
-{
-	Q_OBJECT
-public:
-	ReturnLogin ( QObject* parent) {setParent(parent);}
-protected:
-	bool eventFilter(QObject *obj, QEvent *event);
-};
-
-#endif
 
 // This is a complete mess, login should be pulled out into another class somehow, and decoupled from the UI.
 
