@@ -59,24 +59,34 @@ FAttentionSettingsWidget::FAttentionSettingsWidget(QString channelname, QString 
 		pulldownlist = QString("Use Default,Never,If Not Current Tab,Always").split(",");
 	}
 
-	keyword_exclusive_checkbox = new QCheckBox("Ignore global keywords");
+	if(!isglobal) {
+		keyword_exclusive_checkbox = new QCheckBox("Ignore global keywords");
+	}
 	keyword_text = new QLineEdit("");
-	message_channel_ding_pulldown = buildPulldown(pulldownlist);
-	message_rpad_ding_pulldown = buildPulldown(pulldownlist);
-	message_character_ding_pulldown = buildPulldown(pulldownlist);
+	if(ischannel || isglobal) {
+		message_channel_ding_pulldown = buildPulldown(pulldownlist);
+		message_rpad_ding_pulldown = buildPulldown(pulldownlist);
+	}
+	if(!ischannel || isglobal) {
+		message_character_ding_pulldown = buildPulldown(pulldownlist);
+	}
 	message_keyword_ding_pulldown = buildPulldown(pulldownlist);
-	message_channel_flash_pulldown = buildPulldown(pulldownlist);
-	message_rpad_flash_pulldown = buildPulldown(pulldownlist);
-	message_character_flash_pulldown = buildPulldown(pulldownlist);
+	if(ischannel || isglobal) {
+		message_channel_flash_pulldown = buildPulldown(pulldownlist);
+		message_rpad_flash_pulldown = buildPulldown(pulldownlist);
+	}
+	if(!ischannel || isglobal) {
+		message_character_flash_pulldown = buildPulldown(pulldownlist);
+	}
 	message_keyword_flash_pulldown = buildPulldown(pulldownlist);
 	
 	QVBoxLayout *vbox = new QVBoxLayout;
 	vbox->setSpacing(0);
 
 	if(isglobal) {
-		vbox->addLayout(buildHBox("Highlight keyword:", 0));
+		vbox->addLayout(buildHBox("Highlight keywords:", 0));
 	} else {
-		vbox->addLayout(buildHBox("Highlight keyword:", keyword_exclusive_checkbox));
+		vbox->addLayout(buildHBox("Highlight keywords:", keyword_exclusive_checkbox));
 	}
 	vbox->addWidget(keyword_text);
 
@@ -155,7 +165,7 @@ void FAttentionSettingsWidget::saveSettings()
 	}
 
 	if(!isglobal) {
-		settings->qsettings->value(settingprefix + "ignore_global_keywords", keyword_exclusive_checkbox->isChecked());
+		settings->qsettings->setValue(settingprefix + "ignore_global_keywords", keyword_exclusive_checkbox->isChecked());
 	}
 	settings->qsettings->setValue(settingprefix + "keywords", keyword_text->text());
 

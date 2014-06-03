@@ -23,13 +23,14 @@
 #include <iostream>
 #include <fstream>
 #include <QDir>
-#include <QtCore/QStringList>
-#include <QtCore/QSettings>
+#include <QStringList>
+#include <QSettings>
 #include <QDateTime>
 
 #include "flist_global.h"
 #include "flist_session.h"
 #include "flist_iuserinterface.h"
+#include "flist_settings.h"
 
 BBCodeParser* FChannelPanel::bbparser = 0;
 QColor FChannelPanel::colorInactive(255, 255, 255);
@@ -76,7 +77,7 @@ void FChannelPanel::initClass()
         }
 }
 
-FChannelPanel::FChannelPanel (iUserInterface *ui, QString sessionid, QString panelname, QString channelname, channelType type) :
+FChannelPanel::FChannelPanel (iUserInterface *ui, QString sessionid, QString panelname, QString channelname, FChannel::ChannelType type) :
 	ui(ui),
 	sessionid(sessionid),
 	panelname(panelname)
@@ -90,15 +91,7 @@ FChannelPanel::FChannelPanel (iUserInterface *ui, QString sessionid, QString pan
         typing = TYPING_STATUS_CLEAR;
         typingSelf = TYPING_STATUS_CLEAR;
         input = "";
-        if (type == CHANTYPE_NORMAL || type == CHANTYPE_ADHOC)
-        {
-                QString setting = chanName;
-                setting += "/alwaysping";
-                QSettings settings(flist_messenger::getSettingsPath(), QSettings::IniFormat);
-                alwaysPing = settings.value(setting) == "true" ? true : false;
-        } else {
-                alwaysPing = false;
-        }
+	loadSettings();
 }
 
 void FChannelPanel::setDescription ( QString& desc )
@@ -161,8 +154,16 @@ void FChannelPanel::remChar ( FCharacter* character )
 void FChannelPanel::sortChars()
 {
         // Gnome Sort. :3
-        int i = 0;
+        int i;
 
+	QList<int> chancharlevels;
+
+	chancharlevels.reserve(chanChars.count());
+	for(i = 0; i < chanChars.count(); i++) {
+		FCharacter* ch = chanChars[i];
+		chancharlevels.append((ch->getFriend() ? 1 : 0) + (isOp(ch) ? 2 : 0) + (isOwner(ch) ? 4 : 0) + (ch->isChatOp() ? 8 : 0));
+	}
+	i = 0;
         while ( i < chanChars.count() )
         {
                 if ( i == 0 )
@@ -171,12 +172,13 @@ void FChannelPanel::sortChars()
                 {
                         FCharacter* a = chanChars[i - 1];
                         FCharacter* b = chanChars[i];
-                        int aLevel = ( a->getFriend() ? 1 : 0 ) + ( isOp ( a ) ? 2 : 0 ) + ( isOwner ( a ) ? 4 : 0 ) + ( a->isChatOp() ? 8 : 0 );
-                        int bLevel = ( b->getFriend() ? 1 : 0 ) + ( isOp ( b ) ? 2 : 0 ) + ( isOwner ( b ) ? 4 : 0 ) + ( b->isChatOp() ? 8 : 0 );
+			int aLevel = chancharlevels[i - 1];
+			int bLevel = chancharlevels[i];
 
                         if ( aLevel < bLevel || ( ( aLevel == bLevel ) && a->name().toLower() > b->name().toLower() ) )
                         {
                                 chanChars.swap ( i - 1, i );
+                                chancharlevels.swap ( i - 1, i );
                                 i--;
                         }
                         else
@@ -197,13 +199,7 @@ bool FChannelPanel::isOp ( FCharacter* character )
                 return false;
         }
 
-        for ( int i = 0; i < this->chanOps.count(); i++ )
-        {
-                if ( this->chanOps[i].toLower() == character->name().toLower() )
-                        return true;
-        }
-
-        return false;
+	return chanOps.contains(character->name().toLower());
 }
 
 bool FChannelPanel::isOwner ( FCharacter* character )
@@ -214,17 +210,12 @@ bool FChannelPanel::isOwner ( FCharacter* character )
                 return false;
         }
 
-        if ( this->chanOps.count() > 0 && this->chanOps[0].toLower() == character->name().toLower() )
-        {
-                return true;
-        }
-
-        return false;
+	return character->name().toLower() == chanowner.toLower();
 }
 
-void FChannelPanel::setType ( FChannelPanel::channelType type )
+void FChannelPanel::setType ( FChannel::ChannelType type )
 {
-        if ( type > 0 && type < CHANTYPE_MAX )
+        if ( type > 0 && type < FChannel::CHANTYPE_MAX )
         {
                 chanType = type;
         }
@@ -238,21 +229,20 @@ void FChannelPanel::setOps ( QStringList& oplist )
 {
         chanOps.clear();
 
+	chanowner = (oplist.length() > 0) ? oplist[0] : "";
+
         for ( int i = 0;i < oplist.length();++i )
         {
-                chanOps.append ( oplist[i] );
+		chanOps[oplist[i].toLower()] = oplist[i];
         }
 }
 void FChannelPanel::addOp(QString &charactername)
 {
-	if(chanOps.contains(charactername)) {
-		return;
-	}
-	chanOps.append(charactername);
+	chanOps[charactername.toLower()] = charactername;
 }
 void FChannelPanel::removeOp(QString &charactername)
 {
-	chanOps.removeAll(charactername);
+	chanOps.remove(charactername.toLower());
 }
 
 void FChannelPanel::addLine(QString chanLine, bool log)
@@ -284,21 +274,21 @@ void FChannelPanel::logLine ( QString &chanLine )
         switch ( chanType )
         {
 
-        case CHANTYPE_NORMAL:
+        case FChannel::CHANTYPE_NORMAL:
                 dirName += "public";
 		logName += escapeFileName(chanName);
                 break;
-        case CHANTYPE_ADHOC:
+        case FChannel::CHANTYPE_ADHOC:
                 dirName += "private";
 		logName += QString("%1~%2").arg(escapeFileName(chanName), escapeFileName(chanTitle));
                 break;
 
-        case CHANTYPE_PM:
+        case FChannel::CHANTYPE_PM:
                 dirName += "pm";
 		logName += escapeFileName(chanName);
                 break;
 
-        case CHANTYPE_CONSOLE:
+        case FChannel::CHANTYPE_CONSOLE:
 		dirName += "console";
 		logName += escapeFileName(chanName);
 		break;
@@ -427,10 +417,10 @@ QString* FChannelPanel::toString()
         *rv += "\nName: ";
         *rv += chanName;
         *rv += "\nType: ";
-        if (chanType == CHANTYPE_NORMAL) *rv += "Normal";
-        else if (chanType == CHANTYPE_PM) { *rv += "PM to: "; *rv += recipientName; }
-        else if (chanType == CHANTYPE_ADHOC) *rv += "Adhoc";
-        else if (chanType == CHANTYPE_CONSOLE) *rv += "CONSOLE";
+        if (chanType == FChannel::CHANTYPE_NORMAL) *rv += "Normal";
+        else if (chanType == FChannel::CHANTYPE_PM) { *rv += "PM to: "; *rv += recipientName; }
+        else if (chanType == FChannel::CHANTYPE_ADHOC) *rv += "Adhoc";
+        else if (chanType == FChannel::CHANTYPE_CONSOLE) *rv += "CONSOLE";
         else *rv += "INVALID TYPE";
         *rv += "\nLines: ";
         *rv += QString::number(chanLines.count());
@@ -442,4 +432,26 @@ QString* FChannelPanel::toString()
         else if (mode == CHANNEL_MODE_BOTH) *rv += "Both";
         else *rv += "INVALID MODE";
         return rv;
+}
+
+/**
+ */
+void FChannelPanel::loadSettings()
+{
+	QString keyprefix;
+	if(type() == FChannel::CHANTYPE_PM) {
+		keyprefix = QString("Character/%1/").arg(escapeFileName(recipient()));
+	} else {
+		keyprefix = QString("Channel/%1/").arg(escapeFileName(getChannelName()));
+	}
+	//load and parse keywords
+	keywordlist = settings->qsettings->value(keyprefix + "keywords").toString().split(",", QString::SkipEmptyParts);
+	for(int i = 0; i < keywordlist.size(); i++) {
+		keywordlist[i] = keywordlist[i].trimmed();
+		if(keywordlist[i].isEmpty()) {
+			keywordlist.removeAt(i);
+			i--;
+		}
+	}
+	
 }

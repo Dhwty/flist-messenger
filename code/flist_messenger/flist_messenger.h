@@ -371,6 +371,7 @@ private slots:
 	void ul_channelOpAdd();
 	void ul_channelOpRemove();
 	void ul_profileRequested();
+	void ul_copyLink();
 	void ul_chatOpAdd();
 	void ul_chatOpRemove();
 	void to_btnSubmitClicked();
@@ -558,6 +559,7 @@ private:
 	QLineEdit* to_leReason;
 
 	QDialog* channelSettingsDialog; // cs stands for channel settings
+
 	QTextEdit* cs_teDescription;
 	QTextBrowser* cs_tbDescription;
 	QCheckBox* cs_chbEditDescription;
@@ -568,8 +570,8 @@ private:
 	QPushButton* cs_btnCancel;
 	QPushButton* cs_btnSave;
 	QString cs_qsPlainDescription;
-	QCheckBox* cs_chbAlwaysPing;
 	FChannelPanel* cs_chanCurrent;
+	FAttentionSettingsWidget *cs_attentionsettings;
 
 	/* The following GUIs still need to be made:
 	QDialog* kinkSearchDialog;

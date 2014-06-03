@@ -24,6 +24,7 @@
 
 #include <QString>
 #include <QSplitter>
+#include <QClipboard>
 
 #include "flist_account.h"
 #include "flist_server.h"
@@ -616,80 +617,98 @@ bool flist_messenger::setupChannelSettingsDialog()
 		return false;
 	}
 	FSession *session = account->getSession(channelpanel->getSessionID());
-	if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
-                // Setup for PM
-		if (!session->isCharacterOnline(channelpanel->recipient())) { // Recipient is offline
-			return false;
+
+	bool is_pm = channelpanel->type() == FChannel::CHANTYPE_PM;
+	//todo: Allow to work with offline characters.
+	//if(is_pm && !session->isCharacterOnline(channelpanel->recipient())) { // Recipient is offline
+	//	return false;
+	//}
+
+	cs_chanCurrent = channelpanel;
+
+	channelSettingsDialog = new QDialog(this);
+	channelSettingsDialog->setWindowIcon(channelpanel->pushButton->icon());
+	FCharacter* character = 0;
+	if(is_pm) {
+                character = session->getCharacter(channelpanel->recipient());
+		if(character) {
+			channelSettingsDialog->setWindowTitle(character->name());
+			cs_qsPlainDescription = character->statusMsg();
+		} else {
+			channelSettingsDialog->setWindowTitle(channelpanel->recipient());
+			cs_qsPlainDescription = "";
 		}
-                channelSettingsDialog = new QDialog(this);
-                FCharacter* ch = session->getCharacter(channelpanel->recipient());
-                cs_chanCurrent = channelpanel;
-                channelSettingsDialog->setWindowTitle(ch->name());
-                channelSettingsDialog->setWindowIcon(channelpanel->pushButton->icon());
-                cs_qsPlainDescription = ch->statusMsg();
-                cs_vblOverview = new QVBoxLayout;
-                cs_gbDescription = new QGroupBox("Status");
-                cs_vblDescription = new QVBoxLayout;
-                QLabel* lblStatus = new QLabel(ch->statusString());
-                cs_tbDescription = new QTextBrowser;
-                cs_tbDescription->setHtml(bbparser.parse(cs_qsPlainDescription));
-                cs_tbDescription->setReadOnly(true);
-                cs_hblButtons = new QHBoxLayout;
-                cs_btnCancel = new QPushButton(QIcon ( QString ( ":/images/cross.png" ) ), "Cancel");
+	} else {
+                channelSettingsDialog->setWindowTitle(channelpanel->title());
+                cs_qsPlainDescription = channelpanel->description();
+	}
 
-                channelSettingsDialog->setLayout(cs_vblOverview);
-                cs_vblOverview->addWidget(cs_gbDescription);
-                cs_gbDescription->setLayout(cs_vblDescription);
-                cs_vblDescription->addWidget(lblStatus);
-                cs_vblDescription->addWidget(cs_tbDescription);
-                cs_vblOverview->addLayout(cs_hblButtons);
-                cs_hblButtons->addStretch();
-                cs_hblButtons->addWidget(cs_btnCancel);
 
-                connect(cs_btnCancel, SIGNAL(clicked()), this, SLOT(cs_btnCancelClicked()));
-                connect(cs_tbDescription, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
-        } else {
-                channelSettingsDialog = new QDialog(this);
-		FChannelPanel* ch = channelpanel;
-                cs_chanCurrent = ch;
-                channelSettingsDialog->setWindowTitle(ch->title());
-                channelSettingsDialog->setWindowIcon(ch->pushButton->icon());
-                cs_qsPlainDescription = ch->description();
-                cs_vblOverview = new QVBoxLayout;
-                cs_gbDescription = new QGroupBox("Description");
-                cs_vblDescription = new QVBoxLayout;
-                cs_tbDescription = new QTextBrowser;
-                cs_tbDescription->setHtml(bbparser.parse(cs_qsPlainDescription));
-                cs_teDescription = new QTextEdit;
-                cs_teDescription->setPlainText(cs_qsPlainDescription);
-                cs_teDescription->hide();
+        //QTabWidget* twOverview = new QTabWidget;
+
+	QTabWidget *twOverview = new QTabWidget;
+	QGroupBox* gbNotifications = new QGroupBox(QString("Notifications"));
+	QVBoxLayout* vblNotifications = new QVBoxLayout;
+
+	if(is_pm) {
+		cs_attentionsettings = new FAttentionSettingsWidget(channelpanel->recipient(), channelpanel->recipient(), channelpanel->type());
+	} else {
+		cs_attentionsettings = new FAttentionSettingsWidget(channelpanel->getChannelName(), channelpanel->title(), channelpanel->type());
+	}
+
+	cs_vblOverview = new QVBoxLayout;
+	cs_gbDescription = new QGroupBox(is_pm ? "Status" : "Description");
+	cs_vblDescription = new QVBoxLayout;
+	cs_tbDescription = new QTextBrowser;
+	cs_tbDescription->setHtml(bbparser.parse(cs_qsPlainDescription));
+	cs_tbDescription->setReadOnly(true);
+	cs_teDescription = new QTextEdit;
+	cs_teDescription->setPlainText(cs_qsPlainDescription);
+	cs_teDescription->hide();
+	if(!is_pm) {
                 cs_chbEditDescription = new QCheckBox("Editable mode (OPs only)");
-		if(!(ch->isOp(session->getCharacter(session->character)) || session->isCharacterOperator(session->character))) {
+		if(!(channelpanel->isOp(session->getCharacter(session->character)) || session->isCharacterOperator(session->character))) {
 			cs_chbEditDescription->setEnabled(false);
 		}
-                cs_chbAlwaysPing = new QCheckBox("Always ping in this channel");
-                cs_chbAlwaysPing->setChecked(ch->getAlwaysPing());
-                cs_hblButtons = new QHBoxLayout;
-                cs_btnCancel = new QPushButton(QIcon ( QString ( ":/images/cross.png" ) ), "Cancel");
-                cs_btnSave = new QPushButton(QIcon ( QString ( ":/images/tick.png" ) ), "Save");
+	}
+	cs_hblButtons = new QHBoxLayout;
+	cs_btnCancel = new QPushButton(QIcon ( QString ( ":/images/cross.png" ) ), "Cancel");
+	cs_btnSave = new QPushButton(QIcon ( QString ( ":/images/tick.png" ) ), "Save");
 
-                channelSettingsDialog->setLayout(cs_vblOverview);
-                cs_vblOverview->addWidget(cs_gbDescription);
-                cs_gbDescription->setLayout(cs_vblDescription);
-                cs_vblDescription->addWidget(cs_teDescription);
-                cs_vblDescription->addWidget(cs_tbDescription);
+	channelSettingsDialog->setLayout(cs_vblOverview);
+	cs_vblOverview->addWidget(twOverview);
+	twOverview->addTab(cs_gbDescription, "General");
+	cs_gbDescription->setLayout(cs_vblDescription);
+	if(is_pm) {
+                QLabel* lblStatus = new QLabel(character ? character->statusString() : "Offline");
+                cs_vblDescription->addWidget(lblStatus);
+	}
+	cs_vblDescription->addWidget(cs_teDescription);
+	cs_vblDescription->addWidget(cs_tbDescription);
+	if(!is_pm) {
                 cs_vblDescription->addWidget(cs_chbEditDescription);
-                cs_vblOverview->addWidget(cs_chbAlwaysPing);
-                cs_vblOverview->addLayout(cs_hblButtons);
-                cs_hblButtons->addStretch();
-                cs_hblButtons->addWidget(cs_btnSave);
-                cs_hblButtons->addWidget(cs_btnCancel);
+	}
 
+	twOverview->addTab(gbNotifications, QString("Notifications"));
+	gbNotifications->setLayout(vblNotifications);
+	vblNotifications->addWidget(cs_attentionsettings);
+	
+	
+	cs_vblOverview->addLayout(cs_hblButtons);
+	cs_hblButtons->addStretch();
+	cs_hblButtons->addWidget(cs_btnSave);
+	cs_hblButtons->addWidget(cs_btnCancel);
+
+	if(!is_pm) {
                 connect(cs_chbEditDescription, SIGNAL(toggled(bool)), this, SLOT(cs_chbEditDescriptionToggled(bool)));
-                connect(cs_btnCancel, SIGNAL(clicked()), this, SLOT(cs_btnCancelClicked()));
-                connect(cs_btnSave, SIGNAL(clicked()), this, SLOT(cs_btnSaveClicked()));
-                connect(cs_tbDescription, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
-        }
+	}
+
+	cs_attentionsettings->loadSettings();
+
+	connect(cs_btnCancel, SIGNAL(clicked()), this, SLOT(cs_btnCancelClicked()));
+	connect(cs_btnSave, SIGNAL(clicked()), this, SLOT(cs_btnSaveClicked()));
+	connect(cs_tbDescription, SIGNAL ( anchorClicked ( QUrl ) ), this, SLOT ( anchorClicked ( QUrl ) ) );
+
         return true;
 }
 void flist_messenger::cs_chbEditDescriptionToggled(bool state)
@@ -729,12 +748,10 @@ void flist_messenger::cs_btnSaveClicked()
                 std::string out = "CDS " + node.write();
                 sendWS ( out );
         }
-        cs_chanCurrent->setAlwaysPing(cs_chbAlwaysPing->isChecked());
-
-        QString setting = cs_chanCurrent->getChannelName();
-        setting += "/alwaysping";
-        QSettings settings(settingsPath, QSettings::IniFormat);
-        settings.setValue(setting, cs_chbAlwaysPing->isChecked());
+	//Save settings to the ini file.
+	cs_attentionsettings->saveSettings();
+	//And reload those settings into the channel panel.
+	cs_chanCurrent->loadSettings();
 
         cs_qsPlainDescription = "";
         cs_chanCurrent = 0;
@@ -942,7 +959,7 @@ void flist_messenger::closeChannelPanel(QString panelname)
 		debugMessage(QString("[BUG] Was told to close the chanel panel for the console! Channel panel '%1'.").arg(panelname));
 		return;
 	}
-	if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
+	if(channelpanel->type() == FChannel::CHANTYPE_PM) {
 		channelpanel->setTyping(TYPING_STATUS_CLEAR);
 	} else {
 		channelpanel->emptyCharList();
@@ -975,7 +992,7 @@ void flist_messenger::leaveChannelPanel(QString panelname)
 	}
 	FSession *session = account->getSession(channelpanel->getSessionID());
 	QString channelname;
-	if(channelpanel->type() != FChannelPanel::CHANTYPE_PM) {
+	if(channelpanel->type() != FChannel::CHANTYPE_PM) {
 		channelname = channelpanel->getChannelName();
 	}
 	closeChannelPanel(panelname);
@@ -1179,7 +1196,7 @@ void flist_messenger::setupRealUI()
         // Setting up console first because it needs to receive server output.
 	//todo: Make account->getSession(currentPanel->getSessionID()) code robust to having a sessionless panel.
 	//todo: Remove 'charName' so that this panel can be sessionless
-	console = new FChannelPanel(this, charName, "FCHATSYSTEMCONSOLE", "FCHATSYSTEMCONSOLE", FChannelPanel::CHANTYPE_CONSOLE);
+	console = new FChannelPanel(this, charName, "FCHATSYSTEMCONSOLE", "FCHATSYSTEMCONSOLE", FChannel::CHANTYPE_CONSOLE);
         QString name = "Console";
         console->setTitle ( name );
         channelList["FCHATSYSTEMCONSOLE"] = console;
@@ -1437,6 +1454,7 @@ void flist_messenger::displayCharacterContextMenu ( FCharacter* ch )
                 menu->addAction ( QIcon ( ":/images/users.png" ), QString ( "Private Message" ), this, SLOT ( ul_pmRequested() ) );
                 menu->addAction ( QIcon ( ":/images/book-open-list.png" ), QString ( "F-list Profile"), this, SLOT ( ul_profileRequested() ) );
                 menu->addAction ( QIcon ( ":/images/tag-label.png" ), QString ( "Quick Profile" ), this, SLOT ( ul_infoRequested() ) );
+                menu->addAction (QString ( "Copy Profile Link" ), this, SLOT ( ul_copyLink() ) );
 		FSession *session = account->getSession(currentPanel->getSessionID());
                 if (session->isCharacterIgnored(ch->name()))
                         menu->addAction ( QIcon ( ":/images/heart.png" ), QString ( "Unignore" ), this, SLOT(ul_ignoreRemove()) );
@@ -1572,7 +1590,7 @@ void flist_messenger::refreshUserlist()
 	listWidget->verticalScrollBar()->setValue(scrollpos);
 
 	//Hide/show widget based upon panel type.
-	if ( currentPanel->type() == FChannelPanel::CHANTYPE_PM || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE )
+	if ( currentPanel->type() == FChannel::CHANTYPE_PM || currentPanel->type() == FChannel::CHANTYPE_CONSOLE )
         {
                 listWidget->hide();
         }
@@ -2035,7 +2053,7 @@ void flist_messenger::usersCommand()
 }
 void flist_messenger::inputChanged()
 {
-	if ( currentPanel && currentPanel->type() == FChannelPanel::CHANTYPE_PM )
+	if ( currentPanel && currentPanel->type() == FChannel::CHANTYPE_PM )
         {
                 if ( plainTextEdit->toPlainText().simplified() == "" )
                 {
@@ -2200,8 +2218,16 @@ void flist_messenger::ul_chatOpRemove()
 }
 void flist_messenger::ul_profileRequested()
 {
-        QUrl link(QString("https://www.f-list.net/c/%1").arg(ul_recent_name));
+        QUrl link(QString("https://www.f-list.net/c/%1/").arg(ul_recent_name));
         QDesktopServices::openUrl(link);
+}
+void flist_messenger::ul_copyLink()
+{
+        QString link = QString("https://www.f-list.net/c/%1/").arg(ul_recent_name);
+	
+	QClipboard *clipboard = QApplication::clipboard();
+	clipboard->setText(link, QClipboard::Clipboard);
+	clipboard->setText(link, QClipboard::Selection);
 }
 
 void flist_messenger::setupTimeoutDialog()
@@ -2289,8 +2315,8 @@ Update the user interface based upon the mode of the current panel.
 void flist_messenger::updateChannelMode()
 {
 	if (currentPanel->getMode() == CHANNEL_MODE_CHAT ||
-	    currentPanel->type() == FChannelPanel::CHANTYPE_PM || 
-	    currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE) {
+	    currentPanel->type() == FChannel::CHANTYPE_PM || 
+	    currentPanel->type() == FChannel::CHANTYPE_CONSOLE) {
 		//Chat only, so disable ability to send ads.
 		btnSendAdv->setDisabled(true);
 		btnSendChat->setDisabled(false);
@@ -2314,7 +2340,7 @@ void flist_messenger::switchTab ( QString& tabname )
 
         QString input = plainTextEdit->toPlainText();
 
-	if ( currentPanel && currentPanel->type() == FChannelPanel::CHANTYPE_PM && currentPanel->getTypingSelf() == TYPING_STATUS_TYPING )
+	if ( currentPanel && currentPanel->type() == FChannel::CHANTYPE_PM && currentPanel->getTypingSelf() == TYPING_STATUS_TYPING )
         {
                 typingPaused ( currentPanel );
         }
@@ -2382,7 +2408,7 @@ void flist_messenger::openPMTab ( QString &character )
         }
         else
         {
-		channelList[panelname] = new FChannelPanel(this, session->getSessionID(), panelname, character, FChannelPanel::CHANTYPE_PM);
+		channelList[panelname] = new FChannelPanel(this, session->getSessionID(), panelname, character, FChannel::CHANTYPE_PM);
 		FCharacter* charptr = session->getCharacter(character);
                 QString paneltitle = charptr->PMTitle();
 		FChannelPanel* pmPanel = channelList.value(panelname);
@@ -2415,7 +2441,7 @@ void flist_messenger::btnSendAdvClicked()
 		messageSystem(session, QString("<b>Error:</b> No message."), MESSAGE_TYPE_FEEDBACK);
 		return;
 	}
-	if ( currentPanel == console || currentPanel->getMode() == CHANNEL_MODE_CHAT || currentPanel->type() == FChannelPanel::CHANTYPE_PM ) {
+	if ( currentPanel == console || currentPanel->getMode() == CHANNEL_MODE_CHAT || currentPanel->type() == FChannel::CHANTYPE_PM ) {
 		messageSystem(session, QString("<b>Error:</b> Can't advertise here."), MESSAGE_TYPE_FEEDBACK);
 		return;
 	}
@@ -2434,7 +2460,7 @@ void flist_messenger::parseInput()
                 soundPlayer.play ( soundPlayer.SOUND_CHAT );
 	}
 
-	bool pm = ( bool ) ( currentPanel->type() == FChannelPanel::CHANTYPE_PM );
+	bool pm = ( bool ) ( currentPanel->type() == FChannel::CHANTYPE_PM );
         QPlainTextEdit *messagebox = this->findChild<QPlainTextEdit *> ( QString ( "chatinput" ) );
         QString inputText = QString ( messagebox->toPlainText() );
 
@@ -2752,10 +2778,10 @@ void flist_messenger::parseInput()
                         QString out = "";
                         switch(currentPanel->type())
                         {
-			case FChannelPanel::CHANTYPE_NORMAL:
+			case FChannel::CHANTYPE_NORMAL:
                                 out = "Copy this code to your message: [b][noparse][channel]" + currentPanel->getChannelName() + "[/channel][/noparse][/b]";
                                 break;
-			case FChannelPanel::CHANTYPE_ADHOC:
+			case FChannel::CHANTYPE_ADHOC:
                                 out = "Copy this code to your message: [b][noparse][session=" + currentPanel->title() + "]" + currentPanel->getChannelName() + "[/session][/noparse][/b]";
                                 break;
                         default:
@@ -2904,7 +2930,7 @@ void flist_messenger::parseInput()
                 }
                 else if ( slashcommand == "/bottle" )
                 {
-			if (currentPanel == 0 || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE || currentPanel->type() == FChannelPanel::CHANTYPE_PM)
+			if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE || currentPanel->type() == FChannel::CHANTYPE_PM)
                         {
                                 QString err("You can't use that in this panel.");
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
@@ -2925,7 +2951,7 @@ void flist_messenger::parseInput()
                 }
                 else if ( slashcommand == "/roll" )
                 {
-			if (currentPanel == 0 || currentPanel->type() == FChannelPanel::CHANTYPE_CONSOLE || currentPanel->type() == FChannelPanel::CHANTYPE_PM)
+			if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE || currentPanel->type() == FChannel::CHANTYPE_PM)
                         {
                                 QString err("You can't use that in this panel.");
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
@@ -3180,7 +3206,7 @@ void flist_messenger::saveSettings()
 	FChannelPanel* c;
 	defaultChannels.clear();
 	foreach(c, channelList) {
-		if (c->getActive() && c->type() != FChannelPanel::CHANTYPE_CONSOLE && c->type() != FChannelPanel::CHANTYPE_PM) {
+		if (c->getActive() && c->type() != FChannel::CHANTYPE_CONSOLE && c->type() != FChannel::CHANTYPE_PM) {
 			defaultChannels.append(c->getChannelName());
                 }
         }
@@ -3193,7 +3219,7 @@ void flist_messenger::loadSettings()
 	defaultChannels = settings->getDefaultChannels().split("|||", QString::SkipEmptyParts);
 
 	keywordlist = settings->qsettings->value("Global/keywords").toString().split(",", QString::SkipEmptyParts);
-	for(int i; i < keywordlist.size(); i++) {
+	for(int i = 0; i < keywordlist.size(); i++) {
 		keywordlist[i] = keywordlist[i].trimmed();
 		if(keywordlist[i].isEmpty()) {
 			keywordlist.removeAt(i);
@@ -3251,12 +3277,17 @@ void flist_messenger::addCharacterChat(FSession *session, QString charactername)
 	QString panelname = "PM|||" + session->getSessionID() + "|||" + charactername;
 	FChannelPanel *channelpanel = channelList.value(panelname);
 	if(!channelpanel) {
-		channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, charactername, FChannelPanel::CHANTYPE_PM);
+		channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, charactername, FChannel::CHANTYPE_PM);
 		channelList[panelname] = channelpanel;
 		channelpanel->setTitle(charactername);
 		channelpanel->setRecipient(charactername);
 		FCharacter *character = session->getCharacter(charactername);
-		QString title = character->PMTitle();
+		QString title;
+		if(character) {
+			title = character->PMTitle();
+		} else {
+			title = QString("Private chat with %1 (Offline)").arg(charactername);
+		}
 		channelpanel->pushButton = addToActivePanels(panelname, charactername, title);
 	}
 	if(channelpanel->getActive() == false) {
@@ -3274,9 +3305,9 @@ void flist_messenger::addChannel(FSession *session, QString channelname, QString
 	QString panelname = PANELNAME(channelname, session->getSessionID());
 	if(!channelList.contains(panelname)) {
 		if(channelname.startsWith("ADH-")) {
-			channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, channelname, FChannelPanel::CHANTYPE_ADHOC);
+			channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, channelname, FChannel::CHANTYPE_ADHOC);
 		} else {
-			channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, channelname, FChannelPanel::CHANTYPE_NORMAL);
+			channelpanel = new FChannelPanel(this, session->getSessionID(), panelname, channelname, FChannel::CHANTYPE_NORMAL);
 		}
 		channelList[panelname] = channelpanel;
 		channelpanel->setTitle(title);
@@ -3530,7 +3561,7 @@ void flist_messenger::setIgnoreCharacter(FSession *session, QString characternam
 bool flist_messenger::getChannelBool(QString key, FChannelPanel *channelpanel, bool dflt)
 {
 	QString channelkey;
-	if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
+	if(channelpanel->type() == FChannel::CHANTYPE_PM) {
 		channelkey = QString("Character/%1/%2").arg(channelpanel->recipient(), key);
 	} else {
 		channelkey = QString("Character/%1/%2").arg(channelpanel->getChannelName(), key);
@@ -3542,7 +3573,7 @@ bool flist_messenger::needsAttention(QString key, FChannelPanel *channelpanel, A
 	//todo: check settings from the channel itself
 	AttentionMode attentionmode;
 	QString channelkey;
-	if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
+	if(channelpanel->type() == FChannel::CHANTYPE_PM) {
 		channelkey = QString("Character/%1/%2").arg(channelpanel->recipient(), key);
 	} else {
 		channelkey = QString("Character/%1/%2").arg(channelpanel->getChannelName(), key);
@@ -3702,7 +3733,7 @@ void flist_messenger::messageMessage(FMessage message)
 				message_rpad_flash |= needsAttention("message_rpad_flash", channelpanel, ATTENTION_NEVER);
 				break;
 			case MESSAGE_TYPE_CHAT:
-				if(channelpanel->type() == FChannelPanel::CHANTYPE_PM) {
+				if(channelpanel->type() == FChannel::CHANTYPE_PM) {
 					message_character_ding |= needsAttention("message_character_ding", channelpanel, ATTENTION_ALWAYS);
 					message_character_flash |= needsAttention("message_character_flash", channelpanel, ATTENTION_NEVER);
 				} else {
@@ -3713,14 +3744,15 @@ void flist_messenger::messageMessage(FMessage message)
 			default:
 				break;
 			}
-			//todo: Per channel keyword matching.
-			//foreach(QString keyword, channelpanel->keywordlist) {
-			//	if(plaintext.contains(keyword, Qt::CaseInsensitive)) {
-			//		message_keyword_ding |= true;
-			//		message_keyword_flash |= true;
-			//		break;
-			//	}
-			//}
+			//Per channel keyword matching.
+			foreach(QString keyword, channelpanel->getKeywordList()) {
+				if(plaintext.contains(keyword, Qt::CaseInsensitive)) {
+					message_keyword_ding |= true;
+					message_keyword_flash |= true;
+					break;
+				}
+			}
+			//Can it match global keywords?
 			if(globalkeywordmatched && !getChannelBool("ignore_global_keywords", channelpanel, false)) {
 				message_keyword_ding |= true;
 				message_keyword_flash |= true;

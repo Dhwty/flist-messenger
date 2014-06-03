@@ -72,7 +72,7 @@ private:
 	QHash<QString, FCharacter *> characterlist; //< List of all known characters on the server/session.
 	QStringList friendslist; //<List of friends for this session's character.
 	QStringList bookmarklist; //<List of friends for this session's character.
-	QStringList operatorlist; //<List of all known characters that are chat operators (stored in lower case).
+	QMap<QString, QString> operatorlist; //<List of all known characters that are chat operators (indexed by lower case).
 	QStringList ignorelist; //<List of all characters that are being ignored.
 	QHash<QString, FChannel *> channellist; //<List of channels that this session has joined (or was previously joined to).
 public:

@@ -57,8 +57,11 @@
 #include <QVBoxLayout>
 #include <QPlainTextEdit>
 #include <QTextBrowser>
+#include <QStringList>
 
 #include <time.h>
+
+#include "flist_channel.h"
 
 class iUserInterface;
 class QStringList;
@@ -67,16 +70,8 @@ class FChannelPanel
 {
 
 public:
-	enum channelType
-	{
-		CHANTYPE_NORMAL,
-		CHANTYPE_ADHOC,
-		CHANTYPE_PM,
-		CHANTYPE_CONSOLE,
-		CHANTYPE_MAX
-	};
 
-	FChannelPanel(iUserInterface *ui, QString sessionid, QString panelname, QString channelname, channelType type);
+	FChannelPanel(iUserInterface *ui, QString sessionid, QString panelname, QString channelname, FChannel::ChannelType type);
 	~FChannelPanel() {}
 	static void initClass();
 	void setRecipient ( QString& name ){recipientName = name;}
@@ -87,8 +82,8 @@ public:
 	QString& getPanelName(){return panelname;}
 	void setInput ( QString& input ){this->input = input;}
 	QString& getInput(){return input;}
-	void setType ( channelType type );
-	channelType type(){return chanType;}
+	void setType ( FChannel::ChannelType type );
+	FChannel::ChannelType type(){return chanType;}
 	void setDescription ( QString& desc );
 	QString& description(){return chanDesc;}
 	void setTitle ( QString& title );
@@ -97,7 +92,7 @@ public:
 	void setOps ( QStringList& oplist );
 	void addOp(QString &charactername);
 	void removeOp(QString &charactername);
-	QList<QString> opList(){return chanOps;}
+	QMap<QString,QString> opList(){return chanOps;}
 	void setTyping ( TypingStatus status );
 	TypingStatus getTyping(){return typing;}
 	void setTypingSelf ( TypingStatus status ){typingSelf = status;}
@@ -121,6 +116,8 @@ public:
 	bool getAlwaysPing(){return alwaysPing;}
 	JSONNode* toJSON();
 	QString* toString();
+	QStringList &getKeywordList() {return keywordlist;}
+	void loadSettings();
 
 	void addLine(QString chanLine, bool log);
 	void clearLines();
@@ -146,11 +143,13 @@ private:
 	QString					chanTitle;
 	QString					chanDesc;
 	QList<FCharacter*>  	chanChars;
-	QList<QString>      	chanOps;
-	channelType         	chanType;
+	QMap<QString,QString>      	chanOps;
+	QString chanowner;
+	FChannel::ChannelType         	chanType;
 	QVector<QString>    	chanLines;
 	quint64					chanLastActivity;
 	time_t					creationTime;
+	QStringList keywordlist;
 
 	static QColor			colorInactive;
 	static QColor			colorHighlighted;

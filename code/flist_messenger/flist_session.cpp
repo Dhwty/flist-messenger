@@ -406,7 +406,7 @@ COMMAND(ADL)
 
 	for(int i = 0; i < size; ++i) {
 		QString op = childnode[i].as_string().c_str();
-		operatorlist.append(op.toLower());
+		operatorlist[op.toLower()] = op;
 
 		if(isCharacterOnline(op)) {
 			// Set flag in character
@@ -423,7 +423,7 @@ COMMAND(AOP)
 	//Add a character to the list of known chat-operators.
 	//AOP {"character": "Viona"}
 	QString op = nodes.at("character").as_string().c_str();
-	operatorlist.append(op.toLower());
+	operatorlist[op.toLower()] = op;
 	
 	if(isCharacterOnline(op)) {
 		// Set flag in character
@@ -439,7 +439,7 @@ COMMAND(DOP)
 	//Remove a character from the list of  chat operators.
 	//DOP {"character": "Viona"}
 	QString op = nodes.at("character").as_string().c_str();
-	operatorlist.removeAll(op.toLower());
+	operatorlist.remove(op.toLower());
 
 	if(isCharacterOnline(op)) {
 		// Set flag in character
