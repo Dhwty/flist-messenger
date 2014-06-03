@@ -58,7 +58,8 @@ HEADERS += \
     flist_logtextbrowser.h \
     flist_settings.h \
     flist_attentionsettingswidget.h \
-    flist_channellistdialog.h
+    flist_channellistdialog.h \
+    flist_characterinfodialog.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -89,6 +90,7 @@ SOURCES += \
     flist_settings.cpp \
     flist_enums.cpp \
     flist_attentionsettingswidget.cpp \
-    flist_channellistdialog.cpp
+    flist_channellistdialog.cpp \
+    flist_characterinfodialog.cpp
 RESOURCES += resources.qrc
 FORMS += flist_channellistdialog.ui

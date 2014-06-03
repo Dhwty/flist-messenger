@@ -85,6 +85,7 @@
 #include "flist_channeltab.h"
 #include "flist_iuserinterface.h"
 #include "flist_logtextbrowser.h"
+#include "flist_characterinfodialog.h"
 
 #include "flist_channellistdialog.h"
 
@@ -251,7 +252,6 @@ private slots:
 	void timeoutDialogRequested();
 	void setupMakeRoomUI();
 	void setupSetStatusUI();
-	void setupCharacterInfoUI();
 	void setupFriendsDialog();
 	void setupAddIgnoreDialog();
 	void setupReportDialog();
@@ -307,7 +307,6 @@ private slots:
 	void ul_chatOpRemove();
 	void to_btnSubmitClicked();
 	void to_btnCancelClicked();
-	void ci_btnCloseClicked();
 	void fr_btnFriendsPMClicked();
 	void fr_btnIgnoreRemoveClicked();
 	void fr_btnCloseClicked();
@@ -420,11 +419,7 @@ private:
 	QCheckBox* se_chbHelpdesk;
 	FAttentionSettingsWidget *se_attentionsettings;
 
-	QDialog* characterInfoDialog; // ci stands for character info
-	QLabel* ci_lblName;
-	QLabel* ci_lblStatusMessage;
-	QTextEdit* ci_teKinks;
-	QTextEdit* ci_teProfile;
+	FCharacterInfoDialog *ci_dialog; // ci stands for character info
 
 	QDialog* friendsDialog; // fr stands for friends
 	QVBoxLayout* fr_vblOverview;

@@ -145,8 +145,8 @@ flist_messenger::flist_messenger(bool d)
         friendsDialog = 0;
 	addIgnoreDialog = 0;
         makeRoomDialog = 0;
-        setStatusDialog = 0;
-        characterInfoDialog = 0;
+				setStatusDialog = 0;
+				ci_dialog = 0;
         recentCharMenu = 0;
         recentChannelMenu = 0;
         reportDialog = 0;
@@ -1012,50 +1012,7 @@ void flist_messenger::tb_settingsClicked()
 {
         channelSettingsDialogRequested();
 }
-void flist_messenger::setupCharacterInfoUI()
-{
-        characterInfoDialog = new QDialog ( this );
-        QVBoxLayout* ci_vblOverview;
-        QVBoxLayout* ci_vblContents;
-        QGroupBox* ci_gbOverview;
-        QTabWidget* ci_twKP;
-        QHBoxLayout* ci_hblButtons;
-        QPushButton* ci_btnClose;
-        ci_vblOverview = new QVBoxLayout;
-        ci_vblContents = new QVBoxLayout;
-        ci_gbOverview = new QGroupBox;
-        ci_lblName = new QLabel;
-        ci_lblStatusMessage = new QLabel;
-        ci_lblStatusMessage->setWordWrap ( true );
-        ci_hblButtons = new QHBoxLayout;
-        ci_btnClose = new QPushButton;
-        ci_teKinks = new QTextEdit;
-        ci_teProfile = new QTextEdit;
-        ci_twKP = new QTabWidget;
 
-        characterInfoDialog->setLayout ( ci_vblOverview );
-        ci_vblOverview->addWidget ( ci_gbOverview );
-        ci_vblOverview->addLayout ( ci_hblButtons );
-        ci_gbOverview->setTitle ( QString ( "Character Info" ) );
-        ci_gbOverview->setLayout ( ci_vblContents );
-        ci_vblContents->addWidget ( ci_lblName );
-        ci_vblContents->addWidget ( ci_lblStatusMessage );
-        ci_vblContents->addWidget ( ci_twKP );
-        ci_twKP->addTab ( ci_teProfile, QString ( "Profile" ) );
-        ci_twKP->addTab ( ci_teKinks, QString ( "Kinks" ) );
-        ci_hblButtons->addStretch();
-        ci_hblButtons->addWidget ( ci_btnClose );
-        ci_btnClose->setIcon ( QIcon ( ":/images/cross.png" ) );
-        ci_btnClose->setText ( QString ( "Close" ) );
-        ci_teKinks->setReadOnly ( true );
-        ci_teProfile->setReadOnly ( true );
-
-        connect ( ci_btnClose, SIGNAL ( clicked() ), this, SLOT ( ci_btnCloseClicked() ) );
-}
-void flist_messenger::ci_btnCloseClicked()
-{
-        characterInfoDialog->close();
-}
 void flist_messenger::setupMakeRoomUI()
 {
         makeRoomDialog = new QDialog ( this );
@@ -1665,19 +1622,11 @@ void flist_messenger::characterInfoDialogRequested()
         std::string out = "PRO " + outNode.write();
         sendWS ( out );
         out = "KIN " + outNode.write();
-        sendWS ( out );
+				sendWS ( out );
 
-        if ( characterInfoDialog == 0 || characterInfoDialog->parent() != this )
-                setupCharacterInfoUI();
-
-        QString n = "<b>";
-        n += ch->name();
-        n += "</b> (";
-        n += ch->statusString();
-        n += ")";
-        ci_lblName->setText ( n );
-        ci_lblStatusMessage->setText ( ch->statusMsg() );
-        characterInfoDialog->show();
+				if (!ci_dialog) { ci_dialog = new FCharacterInfoDialog(this); }
+				ci_dialog->setDisplayedCharacter(ch);
+				ci_dialog->show();
 }
 void flist_messenger::reportDialogRequested()
 {
@@ -3347,39 +3296,30 @@ void flist_messenger::setCharacterTypingStatus(FSession *session, QString charac
 }
 void flist_messenger::notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername)
 {
-	if(!ci_teKinks) {
+	if(!ci_dialog) {
 		debugMessage(QString("Received custom kink data for the character '%1' but the profile window has not been created.").arg(charactername));
-		return;
+		ci_dialog = new FCharacterInfoDialog(this);
 	}
 	FCharacter *character = session->getCharacter(charactername);
 	if(!character) {
 		debugMessage(QString("Received custom kink data for the character '%1' but the character is not known.").arg(charactername));
 		return;
 	}
-	QStringList &keys = character->getCustomKinkDataKeys();
-	QHash<QString, QString> &kinkdata = character->getCustomKinkData();
-	ci_teKinks->clear();
-	foreach(QString key, keys) {
-		ci_teKinks->append(QString("<b>%1:</b> %2").arg(key).arg(kinkdata[key]));
-	}
+	ci_dialog->updateKinks(character);
 }
 void flist_messenger::notifyCharacterProfileDataUpdated(FSession *session, QString charactername)
 {
-	if(!ci_teProfile) {
+	if(!ci_dialog) {
 		debugMessage(QString("Received profile data for the character '%1' but the profile window has not been created.").arg(charactername));
-		return;
+		ci_dialog = new FCharacterInfoDialog(this);
 	}
 	FCharacter *character = session->getCharacter(charactername);
 	if(!character) {
 		debugMessage(QString("Received profile data for the character '%1' but the character is not known.").arg(charactername));
 		return;
 	}
-	QStringList &keys = character->getProfileDataKeys();
-	QHash<QString, QString> &profiledata = character->getProfileData();
-	ci_teProfile->clear();
-	foreach(QString key, keys) {
-		ci_teProfile->append(QString("<b>%1:</b> %2").arg(key).arg(profiledata[key]));
-	}
+
+	ci_dialog->updateProfile(character);
 }
 
 void flist_messenger::notifyIgnoreUpdate(FSession *session)
