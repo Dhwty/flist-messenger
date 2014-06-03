@@ -9,6 +9,7 @@ A multi-platform desktop client for the F-Chat protocol. If you have any questio
 * '/close' has been added.
 * Right clicking URLs in chat view will now bring up a smarter context menu based upon the URL.
 * The user list can be resized to see more of character names, or to show more of the chat view.
+* The channel list dialog has been improved to allow sorting and filtering. (Thanks to Kithyria.)
 * bugfix: Regular URLs in the chat view and logs will no longer have wacky prefixes.
 * bugfix: Switching between tabs should no longer put double time stamps on every line.
 * bugfix: The current character selection in channels should no longer deselect when characters join or leave the channel.
@@ -18,7 +19,6 @@ A multi-platform desktop client for the F-Chat protocol. If you have any questio
 * bugfix: '/setdescription' will no longer convert line breaks into spaces.
 
 **Known issues:**
-* Sound functionality is currently reduced when compared to version 0.8.5.
 * The code only implements a small subset of HyBi WebSockets. This is enough to work with F-Chat but may cause problems in the future if the server starts using more features.
 * SSL connections are not verified. I had problems with F-List's SSL certificate verifying correctly. Because my attention was focused on get the HyBi WebSockets working, I've set it so that it currently ignores any errors in the certificate. The initial login will display a popup listing the errors encountered while verifying the SSL connection but it should continue as normal.
 
