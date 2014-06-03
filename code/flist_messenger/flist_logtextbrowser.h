@@ -26,6 +26,7 @@ public slots:
 	void copyName();
 	void joinChannel();
 	void confirmReport();
+	void append(const QString & text);
 
 private:
 	QString flist_copylink;
