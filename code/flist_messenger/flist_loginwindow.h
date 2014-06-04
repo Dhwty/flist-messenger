@@ -20,7 +20,8 @@ public:
 signals:
 	void loginRequested(QString username, QString password);
 	void saveCredentialsRequested(QString username, QString password);
-	void connectRequested(FAccount *account, QString characterName);
+	void clearCredentialsRequested();
+	void connectRequested(QString characterName);
 
 public slots:
 	void showError(QString message);

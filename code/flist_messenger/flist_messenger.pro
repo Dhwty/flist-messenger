@@ -59,7 +59,11 @@ HEADERS += \
     flist_attentionsettingswidget.h \
     flist_channellistdialog.h \
     flist_loginwindow.h \
-    usereturn.h
+    usereturn.h \
+    flist_logincontroller.h \
+    flist_api.h \
+    api/endpoint_v1.h \
+    api/data.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -88,7 +92,10 @@ SOURCES += \
     flist_logtextbrowser.cpp \
     flist_channellistdialog.cpp \
 	flist_loginwindow.cpp \
-    usereturn.cpp
+    usereturn.cpp \
+    flist_logincontroller.cpp \
+    api/endpoint_v1.cpp \
+    api/apihelpers.cpp
 RESOURCES += resources.qrc
 FORMS += flist_channellistdialog.ui \
     flist_loginwindow.ui
