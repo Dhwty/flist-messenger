@@ -1,5 +1,8 @@
 #include "flist_loginwindow.h"
 #include "ui_flist_loginwindow.h"
+#include "usereturn.h"
+
+#include <QMessageBox>
 
 FLoginWindow::FLoginWindow(QWidget *parent) :
 	QWidget(parent),
@@ -20,6 +23,11 @@ FLoginWindow::FLoginWindow(QWidget *parent) :
 	connect(csok, SIGNAL(clicked()), this, SLOT(connectClicked()));
 	connect(cscancel, SIGNAL(clicked()), this, SLOT(showLoginPage()));
 	connect(ui->dismissMessage, SIGNAL(clicked()), this, SLOT(dismissMessage()));
+
+	ReturnFilter *rf = new ReturnFilter(this);
+	this->installEventFilter(rf);
+
+	connect(rf, SIGNAL(plainEnter()), this, SLOT(enterPressed()));
 }
 
 FLoginWindow::~FLoginWindow()
@@ -74,4 +82,25 @@ void FLoginWindow::loginClicked()
 void FLoginWindow::connectClicked()
 {
 	emit connectRequested(ui->character->currentText());
+}
+
+void FLoginWindow::enterPressed()
+{
+	QWidget *cw = ui->outerStack->currentWidget();
+	if (cw == ui->loginPage)
+	{
+		loginClicked();
+	}
+	else if (cw == ui->charselectPage)
+	{
+		connectClicked();
+	}
+	else if (cw == ui->messagePage)
+	{
+		dismissMessage();
+	}
+	else
+	{
+		QMessageBox::critical(this, "This shouldn't happen", "You somehow managed to press enter while a nonexistent page was selected. Please file a bug report explaining what you just did.");
+	}
 }
