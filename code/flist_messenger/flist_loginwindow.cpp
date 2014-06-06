@@ -37,9 +37,19 @@ FLoginWindow::~FLoginWindow()
 
 void FLoginWindow::showError(QString message)
 {
-	ui->message->setText(message);
-	lastPage = ui->outerStack->currentIndex();
-	ui->outerStack->setCurrentWidget(ui->messagePage);
+	if (ui->outerStack->currentWidget() == ui->messagePage)
+	{
+		QString currentText = ui->message->text();
+		currentText.append("\n");
+		currentText.append(message);
+		ui->message->setText(currentText);
+	}
+	else
+	{
+		ui->message->setText(message);
+		lastPage = ui->outerStack->currentIndex();
+		ui->outerStack->setCurrentWidget(ui->messagePage);
+	}
 }
 
 void FLoginWindow::showLoginPage()

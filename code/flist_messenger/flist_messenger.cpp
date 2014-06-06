@@ -28,7 +28,6 @@
 #include "flist_account.h"
 #include "flist_server.h"
 #include "flist_session.h"
-#include "flist_loginwindow.h"
 
 // Bool to string macro
 #define BOOLSTR(b) ( (b) ? "true" : "false" )
@@ -45,75 +44,19 @@ void flist_messenger::prepareLogin ( QString username, QString password )
 
 	account->loginUserPass(username, password);
 }
-void flist_messenger::handleSslErrors( QList<QSslError> sslerrors )
-{
-        QMessageBox msgbox;
-        QString errorstring;
-        foreach(const QSslError &error, sslerrors) {
-                if(!errorstring.isEmpty()) {
-                        errorstring += ", ";
-                }
-                errorstring += error.errorString();
-        }
-        msgbox.critical ( this, "SSL ERROR DURING LOGIN!", errorstring );
-}
-void flist_messenger::handleLogin()
-{
-        QMessageBox msgbox;
-
-	if ( account->loginreply->error() != QNetworkReply::NoError )
-        {
-                QString message = "Response error during login step ";
-                message.append ( NumberToString::_uitoa<unsigned int> ( loginStep ).c_str() );
-                message.append ( " of type " );
-		message.append ( NumberToString::_uitoa<unsigned int> ( ( unsigned int ) account->loginreply->error() ).c_str() );
-                msgbox.critical ( this, "FATAL ERROR DURING LOGIN!", message );
-                if (btnConnect) btnConnect->setEnabled(true);
-                return;
-        }
-
-	QByteArray respbytes = account->loginreply->readAll();
-
-	account->loginreply->deleteLater();
-        std::string response ( respbytes.begin(), respbytes.end() );
-        JSONNode respnode = libJSON::parse ( response );
-        JSONNode childnode = respnode.at ( "error" );
-
-        if ( childnode.as_string() != "" )
-        {
-                if (btnConnect) btnConnect->setEnabled(true);
-                std::string message = "Error from server: " + childnode.as_string();
-                QMessageBox::critical ( this, "Error", message.c_str() );
-                return;
-        }
-
-        JSONNode subnode = respnode.at ( "ticket" );
-
-	account->ticket = subnode.as_string().c_str();
-        subnode = respnode.at ( "default_character" );
-        account->defaultCharacter = subnode.as_string().c_str();
-        childnode = respnode.at ( "characters" );
-        int children = childnode.size();
-
-        for ( int i = 0; i < children; ++i )
-        {
-                QString addchar = childnode[i].as_string().c_str();
-                account->characterList.append ( addchar );
-        }
-        setupLoginBox();
-}
 
 void flist_messenger::loginError(FAccount *account, QString errortitle, QString errorstring)
 {
-	(void) account; //todo:
-	if (btnConnect) btnConnect->setEnabled(true);
-	QMessageBox msgbox;
-	msgbox.critical(this, errortitle, errorstring);
+	(void) account;
+	QString msg = QString("%1: %2").arg(errortitle).arg(errorstring);
+	loginWidget->showError(msg);
+
 }
 void flist_messenger::loginComplete(FAccount *account)
 {
-        (void) account; //todo: initialise window with username
-        setupLoginBox();
+	(void) account; //todo: initialise window with username
+	loginWidget->showConnectPage(account);
+	connect(loginWidget,SIGNAL(connectRequested(QString)),this,SLOT(startConnect(QString)));
 }
 
 void flist_messenger::versionInfoReceived()
@@ -131,7 +74,6 @@ flist_messenger::flist_messenger(bool d)
 	account = server->addAccount();
 	account->ui = this;
 	//account = new FAccount(0, 0);
-        versionIsOkay = true;
         doingWS = true;
         notificationsAreaMessageShown = false;
         console = 0;
@@ -155,7 +97,7 @@ flist_messenger::flist_messenger(bool d)
         channelSettingsDialog = 0;
         createTrayIcon();
         loadSettings();
-        setupConnectBox();
+				setupLoginBox();
 				cl_data = new FChannelListModel();
 				cl_dialog = 0;
 
@@ -243,28 +185,20 @@ void flist_messenger::printDebugInfo(std::string s)
                 }
         }
 }
-void flist_messenger::setupConnectBox()
+void flist_messenger::setupLoginBox()
 {
         this->setWindowTitle ( "F-chat messenger - Login" );
         this->setWindowIcon ( QIcon ( ":/images/icon.png" ) );
 
-				FLoginWindow *lw = new FLoginWindow(this);
-				this->setCentralWidget(lw);
-				connect(lw, SIGNAL(loginRequested(QString,QString)), this, SLOT(prepareLogin(QString,QString)));
+				loginWidget = new FLoginWindow(this);
+				this->setCentralWidget(loginWidget);
+				connect(loginWidget, SIGNAL(loginRequested(QString,QString)), this, SLOT(prepareLogin(QString,QString)));
 
         int wid = QApplication::desktop()->width();
         int hig = QApplication::desktop()->height();
         int mwid = 265;
         int mhig = 100;
 				setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
-}
-
-void flist_messenger::setupLoginBox()
-{
-				FLoginWindow* lw = dynamic_cast<FLoginWindow*>(this->centralWidget());
-
-				lw->showConnectPage(account);
-				connect(lw,SIGNAL(connectRequested(QString)),this,SLOT(startConnect(QString)));
 }
 
 void flist_messenger::startConnect(QString charName)
@@ -790,8 +724,7 @@ void flist_messenger::reportTicketFinished()
 {
     if ( lreply->error() != QNetworkReply::NoError )
         {
-                QString message = "Response error during fetching of ticket ";
-                message.append ( NumberToString::_uitoa<unsigned int> ( loginStep ).c_str() );
+								QString message = "Response error during fetching of ticket ";
                 message.append ( " of type " );
                 message.append ( NumberToString::_uitoa<unsigned int> ( ( unsigned int ) lreply->error() ).c_str() );
                 QMessageBox::critical ( this, "FATAL ERROR DURING TICKET RETRIEVAL!", message );
@@ -1009,31 +942,6 @@ void flist_messenger::setupMakeRoomUI()
         connect ( mr_btnCancel, SIGNAL ( clicked() ), this, SLOT ( mr_btnCancelClicked() ) );
 }
 
-void flist_messenger::loginClicked()
-{
-        charName = comboBox->currentText();
-	FSession *session = account->addSession(charName);
-
-	session->autojoinchannels = defaultChannels;
-
-        clearLoginBox();
-
-        setupRealUI();
-
-        connect ( session, SIGNAL ( socketErrorSignal ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
-
-	session->connectSession();
-		
-}
-void flist_messenger::clearConnectBox()
-{
-        btnConnect = 0;
-        verticalLayoutWidget->deleteLater();
-}
-void flist_messenger::clearLoginBox()
-{
-        groupBox->deleteLater();
-}
 void flist_messenger::setupRealUI()
 {
         // Setting up console first because it needs to receive server output.

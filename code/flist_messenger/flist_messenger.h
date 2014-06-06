@@ -85,6 +85,7 @@
 #include "flist_channeltab.h"
 #include "flist_iuserinterface.h"
 #include "flist_logtextbrowser.h"
+#include "flist_loginwindow.h"
 #include "usereturn.h"
 
 #include "flist_channellistdialog.h"
@@ -204,15 +205,9 @@ public slots:
 
 private slots:
 	void prepareLogin ( QString username, QString password );
-	void handleLogin();
 	void loginError(FAccount *account, QString errortitle, QString errorstring);
 	void loginComplete(FAccount *account);
-	void handleSslErrors( QList<QSslError> sslerrors );
-	void setupConnectBox();			// The connect box is used for account login
 	void setupLoginBox();			// The login box is used for character selection
-	void clearLoginBox();			// Destroys login box
-	void clearConnectBox();			// Destroys connect box
-	void loginClicked();			// Called by the login button during character selection
 	void startConnect(QString charName);
 	void setupRealUI();				// Creation of the chat environment GUI
 	void setupSettingsDialog();
@@ -315,7 +310,6 @@ private:
 	FServer *server;
 
 	bool debugging;
-	bool versionIsOkay;
 	bool notificationsAreaMessageShown;
 	void printDebugInfo(std::string s);
 	void createTrayIcon();
@@ -342,7 +336,7 @@ private:
 	QUrl lurl;
 	QUrlQuery lparam;
 
-	unsigned int loginStep;
+	FLoginWindow *loginWidget;
 	FChannelPanel* console;	// We could just put this into the channel list, but the console needs to be accessed quite often. So here we go...
 	FChannelPanel* currentPanel;
 	FSound soundPlayer;
