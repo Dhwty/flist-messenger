@@ -17,6 +17,10 @@ public:
 	explicit FLoginWindow(QWidget *parent = 0);
 	~FLoginWindow();
 
+	void setLoginCredentials(QString name, QString password);
+	void clearCredentials();
+	void clearPassword();
+
 signals:
 	void loginRequested(QString username, QString password);
 	void saveCredentialsRequested(QString username, QString password);

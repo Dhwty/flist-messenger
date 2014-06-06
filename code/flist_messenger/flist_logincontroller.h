@@ -37,8 +37,8 @@ private:
 	FAccount *account;
 
 private slots:
-	void ticketRequestSucceeded();
-	void ticketRequestFailed(QString error_id, QString error_message);
+	void loginError(FAccount *a, QString errorTitle, QString errorMsg);
+	void loginComplete(FAccount *a);
 };
 
 #endif // FLIST_LOGINCONTROLLER_H

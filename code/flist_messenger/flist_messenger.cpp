@@ -36,33 +36,6 @@
 
 QString flist_messenger::settingsPath = "./settings.ini";
 
-//get ticket, get characters, get friends list, get default character
-void flist_messenger::prepareLogin ( QString username, QString password )
-{
-	connect(account, SIGNAL( loginError(FAccount *, QString, QString) ), this, SLOT( loginError(FAccount *, QString, QString ) ));
-	connect(account, SIGNAL( loginComplete(FAccount *) ), this, SLOT( loginComplete(FAccount *) ));
-
-	account->loginUserPass(username, password);
-}
-
-void flist_messenger::loginError(FAccount *account, QString errortitle, QString errorstring)
-{
-	(void) account;
-	QString msg = QString("%1: %2").arg(errortitle).arg(errorstring);
-	loginWidget->showError(msg);
-
-}
-void flist_messenger::loginComplete(FAccount *account)
-{
-	(void) account; //todo: initialise window with username
-	loginWidget->showConnectPage(account);
-	connect(loginWidget,SIGNAL(connectRequested(QString)),this,SLOT(startConnect(QString)));
-}
-
-void flist_messenger::versionInfoReceived()
-{
-}
-
 void flist_messenger::init()
 {
         settingsPath = QApplication::applicationDirPath() + "/settings.ini";
@@ -71,6 +44,7 @@ void flist_messenger::init()
 flist_messenger::flist_messenger(bool d)
 {
 	server = new FServer(this);
+	api = new FHttpApi::Endpoint_v1(&qnam);
 	account = server->addAccount();
 	account->ui = this;
 	//account = new FAccount(0, 0);
@@ -97,6 +71,7 @@ flist_messenger::flist_messenger(bool d)
         channelSettingsDialog = 0;
         createTrayIcon();
         loadSettings();
+				loginController = new FLoginController(api,account,this);
 				setupLoginBox();
 				cl_data = new FChannelListModel();
 				cl_dialog = 0;
@@ -168,6 +143,7 @@ flist_messenger::~flist_messenger()
 				// TODO: Delete everything
 	delete cl_dialog;
 	delete cl_data;
+	delete api;
 }
 void flist_messenger::printDebugInfo(std::string s)
 {
@@ -191,8 +167,8 @@ void flist_messenger::setupLoginBox()
         this->setWindowIcon ( QIcon ( ":/images/icon.png" ) );
 
 				loginWidget = new FLoginWindow(this);
+				loginController->setWidget(loginWidget);
 				this->setCentralWidget(loginWidget);
-				connect(loginWidget, SIGNAL(loginRequested(QString,QString)), this, SLOT(prepareLogin(QString,QString)));
 
         int wid = QApplication::desktop()->width();
         int hig = QApplication::desktop()->height();

@@ -48,6 +48,7 @@ namespace FHttpApi
 	{
 	public:
 		Endpoint(QNetworkAccessManager *n) : qnam(n) { }
+		virtual ~Endpoint() { };
 
 		typedef const QString &crQString;
 		typedef const Ticket *cpTicket;

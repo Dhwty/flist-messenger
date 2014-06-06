@@ -1,32 +1,29 @@
 #include "flist_logincontroller.h"
+#include "flist_messenger.h"
 
 FLoginController::FLoginController(FHttpApi::Endpoint *e, FAccount *a, QObject *parent) :
-	QObject(parent), ep(e), account(a)
+	QObject(parent), display(0), ep(e), account(a)
 {
+}
+
+void FLoginController::setWidget(FLoginWindow *w)
+{
+	display = w;
+	connect(display, SIGNAL(loginRequested(QString,QString)), this, SLOT(requestLogin(QString,QString)));
 }
 
 void FLoginController::requestLogin(QString username, QString password)
 {
-	ticketrequest = ep->getTicket(username, password);
-	QObject::connect(ticketrequest, SIGNAL(succeeded()), this, SLOT(ticketRequestSucceeded()));
-	QObject::connect(ticketrequest, SIGNAL(failed(QString,QString)), this, SLOT(ticketRequestFailed(QString,QString)));
-}
+	display->setEnabled(false);
 
-void FLoginController::ticketRequestSucceeded()
-{
-	account->ticket = ticketrequest->ticket->ticket;
-}
-
-void FLoginController::ticketRequestFailed(QString error_id, QString error_message)
-{
-	emit loginFailed(error_id, error_message);
-	QString msg("%1 (%2)");
-	display->showError(msg.arg(error_message, error_id));
+	connect(account, SIGNAL(loginError(FAccount*,QString,QString)), this, SLOT(loginError(FAccount*,QString,QString)));
+	connect(account, SIGNAL(loginComplete(FAccount*)), this, SLOT(loginComplete(FAccount*)));
+	account->loginUserPass(username, password);
 }
 
 void FLoginController::requestConnect(QString character)
 {
-	(void)character;
+	static_cast<flist_messenger*>(parent())->startConnect(character);
 }
 
 void FLoginController::saveCredentials(QString username, QString password)
@@ -36,5 +33,21 @@ void FLoginController::saveCredentials(QString username, QString password)
 
 void FLoginController::clearCredentials()
 {
+
+}
+
+void FLoginController::loginError(FAccount *a, QString errorTitle, QString errorMsg)
+{
+	(void)a;
+	QString msg = QString("%1: %2").arg(errorTitle).arg(errorMsg);
+	display->showError(msg);
+	display->clearPassword();
+}
+
+void FLoginController::loginComplete(FAccount *a)
+{
+	(void)a;
+	display->showConnectPage(account);
+	connect(display,SIGNAL(connectRequested(QString)),this,SLOT(requestConnect(QString)));
 
 }

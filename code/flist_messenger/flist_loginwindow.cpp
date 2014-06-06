@@ -35,6 +35,17 @@ FLoginWindow::~FLoginWindow()
 	delete ui;
 }
 
+void FLoginWindow::clearCredentials()
+{
+	ui->username->clear();
+	ui->password->clear();
+}
+
+void FLoginWindow::clearPassword()
+{
+	ui->password->clear();
+}
+
 void FLoginWindow::showError(QString message)
 {
 	if (ui->outerStack->currentWidget() == ui->messagePage)
@@ -48,12 +59,14 @@ void FLoginWindow::showError(QString message)
 	{
 		ui->message->setText(message);
 		lastPage = ui->outerStack->currentIndex();
+		setEnabled(true);
 		ui->outerStack->setCurrentWidget(ui->messagePage);
 	}
 }
 
 void FLoginWindow::showLoginPage()
 {
+	setEnabled(true);
 	ui->outerStack->setCurrentWidget(ui->loginPage);
 }
 
@@ -64,6 +77,7 @@ void FLoginWindow::showConnectPage(FAccount *account)
 	{
 		ui->character->addItem(c);
 	}
+	setEnabled(true);
 	ui->outerStack->setCurrentWidget(ui->charselectPage);
 	QString defaultCharacter = account->defaultCharacter;
 	ui->character->setCurrentIndex(ui->character->findText(defaultCharacter));
@@ -71,6 +85,7 @@ void FLoginWindow::showConnectPage(FAccount *account)
 
 void FLoginWindow::dismissMessage()
 {
+	setEnabled(true);
 	ui->outerStack->setCurrentIndex(lastPage);
 }
 
