@@ -198,7 +198,6 @@ public:
 public slots:
 	void anchorClicked ( QUrl link );	// Handles anchor clicks in the main text field.
 	void insertLineBreak();				// Called when shift+enter is pressed while typing.
-	void connectClicked();			// Called by the connect button during account login
 	void closeEvent(QCloseEvent *event);
 	void iconActivated(QSystemTrayIcon::ActivationReason reason);
 	void enterPressed();
@@ -214,6 +213,7 @@ private slots:
 	void clearLoginBox();			// Destroys login box
 	void clearConnectBox();			// Destroys connect box
 	void loginClicked();			// Called by the login button during character selection
+	void startConnect(QString charName);
 	void setupRealUI();				// Creation of the chat environment GUI
 	void setupSettingsDialog();
 	void setupTimeoutDialog();

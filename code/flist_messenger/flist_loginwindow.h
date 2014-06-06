@@ -34,6 +34,8 @@ private:
 
 private slots:
 	void dismissMessage();
+	void loginClicked();
+	void connectClicked();
 };
 
 #endif // FLIST_LOGINWINDOW_H

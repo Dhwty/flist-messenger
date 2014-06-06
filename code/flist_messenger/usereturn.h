@@ -19,13 +19,4 @@ protected:
 	bool eventFilter ( QObject *obj, QEvent *event );
 };
 
-class ReturnLogin : public QObject
-{
-	Q_OBJECT
-public:
-	ReturnLogin ( QObject* parent) {setParent(parent);}
-protected:
-	bool eventFilter(QObject *obj, QEvent *event);
-};
-
 #endif // USERETURN_H

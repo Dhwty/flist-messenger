@@ -14,7 +14,11 @@ FLoginWindow::FLoginWindow(QWidget *parent) :
 	csok->setText(QString("Connect"));
 	cscancel = ui->charSelectButtons->button(QDialogButtonBox::Cancel);
 	cscancel->setIcon(QIcon(":/images/cross.png"));
-	cscancel->setText("Logout");
+	cscancel->setText("Cancel");
+
+	connect(ui->loginButton, SIGNAL(clicked()), this, SLOT(loginClicked()));
+	connect(csok, SIGNAL(clicked()), this, SLOT(connectClicked()));
+	connect(cscancel, SIGNAL(clicked()), this, SLOT(showLoginPage()));
 }
 
 FLoginWindow::~FLoginWindow()
@@ -42,9 +46,31 @@ void FLoginWindow::showConnectPage(FAccount *account)
 		ui->character->addItem(c);
 	}
 	ui->outerStack->setCurrentWidget(ui->charselectPage);
+	QString defaultCharacter = account->defaultCharacter;
+	ui->character->setCurrentIndex(ui->character->findText(defaultCharacter));
 }
 
 void FLoginWindow::dismissMessage()
 {
 	ui->outerStack->setCurrentIndex(lastPage);
+}
+
+void FLoginWindow::loginClicked()
+{
+	QString un = ui->username->text();
+	QString pass = ui->password->text();
+
+	if(un.isEmpty() || pass.isEmpty())
+	{
+		showError("Please enter both username and password");
+	}
+	else
+	{
+		emit loginRequested(un, pass);
+	}
+}
+
+void FLoginWindow::connectClicked()
+{
+	emit connectRequested(ui->character->currentText());
 }

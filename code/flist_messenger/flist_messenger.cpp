@@ -248,110 +248,36 @@ void flist_messenger::setupConnectBox()
         this->setWindowTitle ( "F-chat messenger - Login" );
         this->setWindowIcon ( QIcon ( ":/images/icon.png" ) );
 
-        // The "please log in" label
-        verticalLayoutWidget = new QWidget ( this );
-        verticalLayout = new QVBoxLayout ( verticalLayoutWidget );
-        label = new QLabel();
-        label->setText ( "Please log in using your F-list details." );
-        verticalLayout->addWidget ( label );
-
-        // The acc and pass textfields, along with labels
-        gridLayout = new QGridLayout;
-        label = new QLabel ( QString ( "Account:" ) );
-        gridLayout->addWidget ( label, 0, 0 );
-        label = new QLabel ( QString ( "Password:" ) );
-        gridLayout->addWidget ( label, 1, 0 );
-        ReturnLogin* loginreturn = new ReturnLogin(this);
-	lineEdit = new QLineEdit(account->getUserName());
-        lineEdit->installEventFilter(loginreturn);
-        lineEdit->setObjectName ( QString ( "accountNameInput" ) );
-        gridLayout->addWidget ( lineEdit, 0, 1 );
-        lineEdit = new QLineEdit;
-        lineEdit->installEventFilter(loginreturn);
-        lineEdit->setEchoMode ( QLineEdit::Password );
-        lineEdit->setObjectName ( QString ( "passwordInput" ) );
-        gridLayout->addWidget ( lineEdit, 1, 1 );
-
-//        // "Checking version" label
-//        lblCheckingVersion = new QLabel( QString ( "Checking version..." ) );
-//        gridLayout->addWidget ( lblCheckingVersion, 2, 1 );
-
-        // The login button
-        btnConnect = new QPushButton;
-        btnConnect->setObjectName ( QString ( "loginButton" ) );
-        btnConnect->setText ( "Login" );
-        btnConnect->setIcon ( QIcon ( ":/images/tick.png" ) );
-//        btnConnect->hide();
-        gridLayout->addWidget ( btnConnect, 2, 1 );
-        verticalLayout->addLayout ( gridLayout );
 				FLoginWindow *lw = new FLoginWindow(this);
-				verticalLayout->addWidget(lw);
-				verticalLayout->setAlignment(lw, Qt::AlignHCenter|Qt::AlignVCenter);
-        this->setCentralWidget ( verticalLayoutWidget );
-        connect ( btnConnect, SIGNAL ( clicked() ), this, SLOT ( connectClicked() ) );
+				this->setCentralWidget(lw);
+				connect(lw, SIGNAL(loginRequested(QString,QString)), this, SLOT(prepareLogin(QString,QString)));
 
         int wid = QApplication::desktop()->width();
         int hig = QApplication::desktop()->height();
         int mwid = 265;
         int mhig = 100;
-        setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
-
-//        // Fetch version.
-//        lurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
-//        lreply = qnam.get ( QNetworkRequest ( lurl ) );
-//        connect ( lreply, SIGNAL ( finished() ), this, SLOT ( versionInfoReceived() ) );
-
-}
-void flist_messenger::connectClicked()
-{
-        if (versionIsOkay)
-        {
-                btnConnect->setEnabled(false);
-                lineEdit = this->findChild<QLineEdit *> ( QString ( "accountNameInput" ) );
-		account->setUserName(lineEdit->text());
-                lineEdit = this->findChild<QLineEdit *> ( QString ( "passwordInput" ) );
-                QString password = lineEdit->text();
-                loginStep = 1;
-		prepareLogin ( account->getUserName(), password );
-        }
-}
-void flist_messenger::setupLoginBox()
-{
-        clearConnectBox();
-        groupBox = new QGroupBox ( this );
-        groupBox->setObjectName ( QString::fromUtf8 ( "loginGroup" ) );
-        groupBox->setGeometry ( QRect ( 0, 0, 250, 30 ) );
-        pushButton = new QPushButton ( groupBox );
-        pushButton->setObjectName ( QString::fromUtf8 ( "loginButton" ) );
-        pushButton->setGeometry ( QRect ( 5, 40, 255, 26 ) );
-        pushButton->setText ( "Login" );
-        comboBox = new QComboBox ( groupBox );
-        comboBox->setObjectName ( QString::fromUtf8 ( "charSelectBox" ) );
-        comboBox->setGeometry ( QRect ( 80, 10, 180, 27 ) );
-
-        for ( int i = 0;i < account->characterList.count();++i )
-        {
-                comboBox->addItem ( account->characterList[i] );
-
-                if ( account->characterList[i] == account->defaultCharacter )
-                {
-                        comboBox->setCurrentIndex ( i );
-                }
-        }
-
-        label = new QLabel ( groupBox );
-
-        label->setObjectName ( QString::fromUtf8 ( "charlabel" ) );
-        label->setGeometry ( QRect ( 10, 13, 71, 21 ) );
-        label->setText ( "Character:" );
-        setCentralWidget ( groupBox );
-				connect ( pushButton, SIGNAL ( clicked() ), this, SLOT ( loginClicked() ) );
-				int wid = QApplication::desktop()->width();
-				int hig = QApplication::desktop()->height();
-        int mwid = 265;
-        int mhig = height();
 				setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
 }
+
+void flist_messenger::setupLoginBox()
+{
+				FLoginWindow* lw = dynamic_cast<FLoginWindow*>(this->centralWidget());
+
+				lw->showConnectPage(account);
+				connect(lw,SIGNAL(connectRequested(QString)),this,SLOT(startConnect(QString)));
+}
+
+void flist_messenger::startConnect(QString charName)
+{
+	FSession *session = account->addSession(charName);
+	session->autojoinchannels = defaultChannels;
+	this->centralWidget()->deleteLater();
+
+	setupRealUI();
+	connect ( session, SIGNAL ( socketErrorSignal ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
+	session->connectSession();
+}
+
 void flist_messenger::setupSetStatusUI()
 {
         setStatusDialog = new QDialog ( this );
