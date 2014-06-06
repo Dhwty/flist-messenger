@@ -19,6 +19,7 @@ FLoginWindow::FLoginWindow(QWidget *parent) :
 	connect(ui->loginButton, SIGNAL(clicked()), this, SLOT(loginClicked()));
 	connect(csok, SIGNAL(clicked()), this, SLOT(connectClicked()));
 	connect(cscancel, SIGNAL(clicked()), this, SLOT(showLoginPage()));
+	connect(ui->dismissMessage, SIGNAL(clicked()), this, SLOT(dismissMessage()));
 }
 
 FLoginWindow::~FLoginWindow()
