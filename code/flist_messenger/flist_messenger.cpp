@@ -3389,10 +3389,6 @@ void flist_messenger::messageMessage(FMessage message)
 	QStringList panelnames;
 	QString sessionid = message.getSessionID();
 	FSession *session = getSession(sessionid);
-	bool destinationcharacter = false; //1 or more characters are the destination
-	bool destinationcharacterunfocussed = false; //1 or more destination characters that don't have focus
-	bool destinationchannel = false;
-	bool destinationchannelunfocussed = false;
 	//bool destinationchannelalwaysding = false; //1 or more destination channels that are set to always ding
 	bool message_rpad_ding = false;
 	bool message_channel_ding = false;
@@ -3403,7 +3399,6 @@ void flist_messenger::messageMessage(FMessage message)
 	bool message_character_flash = false;
 	bool message_keyword_flash = false;
 	QString panelname;
-	FChannelPanel *channelpanel;
 	bool globalkeywordmatched = false;
 	QString plaintext = message.getPlainTextMessage();
 	switch(message.getMessageType()) {
@@ -3438,25 +3433,10 @@ void flist_messenger::messageMessage(FMessage message)
 			foreach(QString charactername, message.getDestinationCharacterList()) {
 				panelname = "PM|||" + sessionid + "|||" + charactername;
 				panelnames.append(panelname);
-				channelpanel = channelList.value(panelname);
-				if(channelpanel) {
-					destinationcharacter = true;
-					if(channelpanel != currentPanel) {
-						destinationcharacterunfocussed = true;
-					}
-				}
 			}
 			foreach(QString channelname, message.getDestinationChannelList()) {
 				panelname = PANELNAME(channelname, sessionid);
 				panelnames.append(panelname);
-				channelpanel = channelList.value(panelname);
-				if(channelpanel) {
-					destinationchannel = true;
-					if(channelpanel != currentPanel) {
-						destinationchannelunfocussed = true;
-					}
-					//todo: detect if a channel is set to always ding
-				}
 			}
 			if(message.getConsole()) {
 				panelnames.append("FCHATSYSTEMCONSOLE");
