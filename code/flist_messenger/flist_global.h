@@ -20,6 +20,10 @@ void fix_broken_escaped_apos (std::string &data);
 QString escapeFileName(QString infilename);
 QString htmlToPlainText(QString input);
 
+// Centre a window on the screen it's mostly on. No idea what happens if
+// the window is not on any screen.
+void centerOnScreen(QWidget *widge);
+
 #define FLIST_VERSIONNUM "0.9.1.dev"
 #define FLIST_VERSION "F-List Messenger [Beta] " FLIST_VERSIONNUM
 #define FLIST_CLIENTID "F-List Desktop Client"
