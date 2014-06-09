@@ -658,8 +658,7 @@ void flist_messenger::handleReportFinished()
         JSONNode respnode = libJSON::parse ( response );
         JSONNode childnode = respnode.at ( "error" );
         if ( childnode.as_string() != "" )
-        {
-            btnConnect->setEnabled(true);
+				{
             std::string message = "Error from server: " + childnode.as_string();
             QMessageBox::critical ( this, "Error", message.c_str() );
             return;
@@ -711,8 +710,7 @@ void flist_messenger::reportTicketFinished()
         JSONNode respnode = libJSON::parse ( response );
         JSONNode childnode = respnode.at ( "error" );
         if ( childnode.as_string() != "" )
-        {
-                btnConnect->setEnabled(true);
+				{
                 std::string message = "Error from server: " + childnode.as_string();
                 QMessageBox::critical ( this, "Error", message.c_str() );
                 return;
@@ -1584,9 +1582,7 @@ void flist_messenger::socketError ( QAbstractSocket::SocketError socketError )
 {
         (void) socketError;
         FSession *session = account->getSession(charName); //todo: fix this
-        QString sockErrorStr = session->tcpsocket->errorString();
-        if (btnConnect)
-                btnConnect->setEnabled(true);
+				QString sockErrorStr = session->tcpsocket->errorString();
         if ( currentPanel )
         {
                 QString errorstring = "<b>Socket Error: </b>" + sockErrorStr;

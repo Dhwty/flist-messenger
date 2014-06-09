@@ -184,7 +184,6 @@ public:
 	QPushButton *btnReport;
 	QPushButton *btnSendChat;
 	QPushButton *btnSendAdv;
-	QPushButton *btnConnect;
 	QLabel *lblCheckingVersion;
 	QLabel *lblChannelName;
 	FLogTextBrowser *chatview;

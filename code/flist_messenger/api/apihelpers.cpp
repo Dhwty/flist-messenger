@@ -29,7 +29,7 @@ QNetworkReply *Endpoint::request(QUrl u, QHash<QString, QString> params)
 BaseRequest::BaseRequest(QNetworkReply *r) : reply(r)
 {
 	QObject::connect(reply, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(onSslError(QList<QSslError>)));
-	QObject::connect(reply, SIGNAL(error), this, SLOT(onError));
+	QObject::connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(onError(QNetworkReply::NetworkError)));
 	QObject::connect(reply, SIGNAL(finished()), this, SLOT(onRequestFinished()));
 }
 BaseRequest::~BaseRequest() { }
