@@ -57,9 +57,10 @@ void Endpoint_v1::TicketRequest::onRequestFinished()
 		return;
 	}
 
-	resp->available = FHttpApi::Data_GetTicketDefault;
+	available = FHttpApi::Data_GetTicketDefault;
 
 	JSONNode subnode = respnode.at ("ticket");
+	ticket = new Ticket();
 	ticket->ticket = subnode.as_string().c_str();
 	ticket->name = _un;
 	ticket->password = _p;

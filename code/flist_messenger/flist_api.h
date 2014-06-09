@@ -5,6 +5,7 @@
 #include <QFlags>
 #include <QHash>
 #include <QNetworkAccessManager>
+#include <QSslError>
 #include <QNetworkReply>
 #include <QUrl>
 
@@ -24,6 +25,7 @@ namespace FHttpApi
 	signals:
 		void succeeded();
 		void failed(QString error_id, QString error_message);
+		void sslErrors(QList<QSslError> sslerrors);
 
 	public slots:
 		virtual void onRequestFinished() = 0;
@@ -48,7 +50,7 @@ namespace FHttpApi
 	{
 	public:
 		Endpoint(QNetworkAccessManager *n) : qnam(n) { }
-		virtual ~Endpoint() { };
+		virtual ~Endpoint() { }
 
 		typedef const QString &crQString;
 		typedef const Ticket *cpTicket;

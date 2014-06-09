@@ -2,12 +2,13 @@
 #define FLIST_GLOBAL_H
 
 #include <QNetworkAccessManager>
+#include "flist_api.h"
 
 class BBCodeParser; 
 
 extern QNetworkAccessManager *networkaccessmanager;
 extern BBCodeParser *bbcodeparser;
-
+extern FHttpApi::Endpoint *fapi;
 
 void debugMessage(QString str);
 void debugMessage(std::string str);

@@ -17,85 +17,29 @@ FAccount::FAccount(QObject *parent, FServer *server) :
 {
 }
 
-
-void FAccount::loginHttps()
-{
-	debugMessage("account->loginHttps()");
-	ticketvalid = false;
-	//send HTTPS request for ticket
-	loginurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
-        //loginurl.addQueryItem("secure", "yes");
-        //loginurl.addQueryItem("account", username);
-        //loginurl.addQueryItem("password", password);
-	loginparam = QUrlQuery();
-	loginparam.addQueryItem("secure", "yes");
-	loginparam.addQueryItem("account", username);
-	loginparam.addQueryItem("password", password);
-	QNetworkRequest request( loginurl );
-        //request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-        QByteArray postData;
-#if QT_VERSION >= 0x050000
-	postData = loginparam.query(QUrl::FullyEncoded).toUtf8();
-#else
-	postData = loginparam.encodedQuery();
-#endif
-	loginreply = networkaccessmanager->post ( request, postData ); //using account.loginreply since this will replace the existing login system.
-	loginreply->ignoreSslErrors();
-	connect ( loginreply, SIGNAL ( finished() ), this, SLOT ( loginHandle() ) );
-	connect ( loginreply, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( loginSslErrors( QList<QSslError> ) ) );
-}
-
 void FAccount::loginSslErrors( QList<QSslError> sslerrors )
 {
 	//todo: handle SSL error and pass on error message, or suppress if appropriate
     (void) sslerrors;
 }
 
+void FAccount::onLoginError(QString error_id, QString error_message)
+{
+	debugMessage("account->loginHttps() error!");
+	emit loginError(this, "Login Error", QString("%1 (%2)").arg(error_message).arg(error_id));
+}
+
 void FAccount::loginHandle()
 {
 	debugMessage("account->loginHandle()");
-	//handle the HTTPS reply
-	if(loginreply->error() != QNetworkReply::NoError) {
-		debugMessage("account->loginHandle() error!");
-		//Bad response, emit error.
-		QString title = "Response Error";
-                QString message = "Response error while connecting for login ticket. Error: ";
-		message.append ( NumberToString::_uitoa<unsigned int> ( ( unsigned int ) loginreply->error() ).c_str() );
-                
-		emit loginError(this, title, message);
-		return;
-	}
+	loginReply->deleteLater();
 
-	QByteArray respbytes = loginreply->readAll();
-
-	loginreply->deleteLater();
-        std::string response ( respbytes.begin(), respbytes.end() );
-	//debugMessage(response);
-        JSONNode respnode = libJSON::parse ( response );
-        JSONNode childnode = respnode.at ( "error" );
-
-        if (childnode.as_string() != "") {
-		QString title = "Login Error";
-		QString message = ("Error from server: " + childnode.as_string()).c_str();
-		emit loginError(this, title, message);
-                return;
-        }
-
-        JSONNode subnode = respnode.at ("ticket");
-
+	ticket = loginReply->ticket->ticket;
+	delete loginReply->ticket;
 	ticketvalid = true;
-	ticket = subnode.as_string().c_str();
 
-        subnode = respnode.at("default_character");
-	defaultCharacter = subnode.as_string().c_str();
-        childnode = respnode.at("characters");
-        int children = childnode.size();
-	characterList.clear();
-        for (int i = 0; i < children; ++i) {
-                QString addchar = childnode[i].as_string().c_str();
-                characterList.append(addchar);
-        }
+	defaultCharacter = loginReply->defaultCharacter;
+	characterList = loginReply->characters;
 
 	//todo: extract bookmarks
 	//todo: extract friends list
@@ -112,11 +56,12 @@ void FAccount::loginHandle()
 void FAccount::loginStart()
 {
 	debugMessage("account->loginStart()");
-	if(username.length() == 0 || password.length() == 0 || !valid) {
-		emit loginGetLogin(this, username, password);
-	}
 	ticketvalid = false;
-	loginHttps();
+
+	loginReply = fapi->getTicket(username, password);
+	connect(loginReply, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(loginSslErrors(QList<QSslError>)));
+	connect(loginReply, SIGNAL(failed(QString,QString)), this, SLOT(onLoginError(QString, QString)));
+	connect(loginReply, SIGNAL(succeeded()), this, SLOT(loginHandle()));
 }
 
 void FAccount::loginUserPass(QString user, QString pass)
@@ -125,7 +70,6 @@ void FAccount::loginUserPass(QString user, QString pass)
 	username = user;
 	password = pass;
 	valid = true;
-	ticketvalid = false;
 	loginStart();
 }
 

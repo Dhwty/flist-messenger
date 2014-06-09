@@ -23,7 +23,6 @@ public:
 		virtual void onRequestFinished();
 
 	private:
-		TicketResponse *resp;
 		QString _un;
 		QString _p;
 	};

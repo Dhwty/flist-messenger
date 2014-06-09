@@ -44,7 +44,6 @@ void flist_messenger::init()
 flist_messenger::flist_messenger(bool d)
 {
 	server = new FServer(this);
-	api = new FHttpApi::Endpoint_v1(&qnam);
 	account = server->addAccount();
 	account->ui = this;
 	//account = new FAccount(0, 0);
@@ -71,7 +70,7 @@ flist_messenger::flist_messenger(bool d)
         channelSettingsDialog = 0;
         createTrayIcon();
         loadSettings();
-				loginController = new FLoginController(api,account,this);
+				loginController = new FLoginController(fapi,account,this);
 				setupLoginBox();
 				cl_data = new FChannelListModel();
 				cl_dialog = 0;
@@ -143,7 +142,6 @@ flist_messenger::~flist_messenger()
 				// TODO: Delete everything
 	delete cl_dialog;
 	delete cl_data;
-	delete api;
 }
 void flist_messenger::printDebugInfo(std::string s)
 {
@@ -179,6 +177,7 @@ void flist_messenger::setupLoginBox()
 
 void flist_messenger::startConnect(QString charName)
 {
+	this->charName = charName;
 	FSession *session = account->addSession(charName);
 	session->autojoinchannels = defaultChannels;
 	this->centralWidget()->deleteLater();

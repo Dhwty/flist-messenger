@@ -3,9 +3,11 @@
 #include <QByteArray>
 #include <iostream>
 #include "flist_parser.h"
+#include "api/endpoint_v1.h"
 
 QNetworkAccessManager *networkaccessmanager = 0;
 BBCodeParser *bbcodeparser = 0;
+FHttpApi::Endpoint *fapi = 0;
 
 void debugMessage(QString str) {
 	std::cout << str.toUtf8().data() << std::endl;
@@ -23,6 +25,7 @@ void globalInit()
 {
 	networkaccessmanager = new QNetworkAccessManager(qApp);
 	bbcodeparser = new BBCodeParser();
+	fapi = new FHttpApi::Endpoint_v1(networkaccessmanager);
 }
 
 void globalQuit()

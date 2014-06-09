@@ -305,7 +305,6 @@ public:
 private:
 	FAccount *account;
 	FServer *server;
-	FHttpApi::Endpoint *api;
 
 	bool debugging;
 	bool notificationsAreaMessageShown;

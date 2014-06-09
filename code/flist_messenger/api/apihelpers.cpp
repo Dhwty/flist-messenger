@@ -32,7 +32,7 @@ BaseRequest::BaseRequest(QNetworkReply *r) : reply(r)
 	QObject::connect(reply, SIGNAL(error), this, SLOT(onError));
 	QObject::connect(reply, SIGNAL(finished()), this, SLOT(onRequestFinished()));
 }
-BaseRequest::~BaseRequest() { delete reply; }
+BaseRequest::~BaseRequest() { }
 
 void BaseRequest::onError(QNetworkReply::NetworkError code)
 {

@@ -42,8 +42,6 @@ struct Ticket
 	QString ticket;
 	QString name;
 	QString password;
-
-	Ticket(QString &t, QString &n);
 };
 
 struct Friendship
@@ -55,7 +53,7 @@ struct Friendship
 struct TicketResponse
 {
 	DataTypes available;
-	Ticket *ticket;
+	Ticket *ticket; // If you made the request, it's your responsibility to delete this.
 	QString defaultCharacter;
 	QStringList characters;
 	QStringList bookmarks;

@@ -11,6 +11,7 @@
 #include <QUrlQuery>
 #endif
 #include <QNetworkReply>
+#include "flist_api.h"
 
 class FSession;
 class FServer;
@@ -34,12 +35,11 @@ public slots:
 	void loginUserPass(QString user, QString pass);
 
 private slots:
-	void loginHttps();
 	void loginSslErrors( QList<QSslError> sslerrors );
+	void onLoginError(QString error_id, QString error_message);
 	void loginHandle();
 
 signals:
-	void loginGetLogin(FAccount *account, QString username, QString password);
 	void loginError(FAccount *account, QString errortitle, QString errorsring);
 	void loginComplete(FAccount *account);
 
@@ -49,7 +49,7 @@ public:
 	//todo: make this stuff private
 	QUrl loginurl; //< URL used by the ticket login process.
 	QUrlQuery loginparam; //< Holds parameter passed to the URL ticket login.
-	QNetworkReply *loginreply; //< The reply yo the URL ticket login.
+	//QNetworkReply *loginreply; //< The reply yo the URL ticket login.
 
 	QString defaultCharacter;
 	QList<QString> characterList;
@@ -64,6 +64,8 @@ private:
 	bool valid;
 
 	bool ticketvalid;
+
+	FHttpApi::Request<FHttpApi::TicketResponse> *loginReply;
 
 public:
 	FServer *server;
