@@ -85,6 +85,9 @@
 #include "flist_channeltab.h"
 #include "flist_iuserinterface.h"
 #include "flist_logtextbrowser.h"
+#include "flist_loginwindow.h"
+#include "flist_logincontroller.h"
+#include "usereturn.h"
 #include "flist_characterinfodialog.h"
 
 #include "flist_channellistdialog.h"
@@ -94,35 +97,6 @@ class QSplitter;
 class FAccount;
 class FServer;
 class FAttentionSettingsWidget;
-
-#ifndef USERETURN_CLASS
-#define USERETURN_CLASS
-
-
-class UseReturn : public QObject
-{
-	Q_OBJECT
-
-public:
-	UseReturn ( QObject* parent )
-	{
-		setParent ( parent );
-	}
-
-protected:
-	bool eventFilter ( QObject *obj, QEvent *event );
-};
-
-class ReturnLogin : public QObject
-{
-	Q_OBJECT
-public:
-	ReturnLogin ( QObject* parent) {setParent(parent);}
-protected:
-	bool eventFilter(QObject *obj, QEvent *event);
-};
-
-#endif
 
 // This is a complete mess, login should be pulled out into another class somehow, and decoupled from the UI.
 
@@ -214,7 +188,6 @@ public:
 	QPushButton *btnReport;
 	QPushButton *btnSendChat;
 	QPushButton *btnSendAdv;
-	QPushButton *btnConnect;
 	QLabel *lblCheckingVersion;
 	QLabel *lblChannelName;
 	FLogTextBrowser *chatview;
@@ -230,22 +203,13 @@ public:
 public slots:
 	void anchorClicked ( QUrl link );	// Handles anchor clicks in the main text field.
 	void insertLineBreak();				// Called when shift+enter is pressed while typing.
-	void connectClicked();			// Called by the connect button during account login
 	void closeEvent(QCloseEvent *event);
 	void iconActivated(QSystemTrayIcon::ActivationReason reason);
 	void enterPressed();
+	void startConnect(QString charName);
 
 private slots:
-	void prepareLogin ( QString username, QString password );
-	void handleLogin();
-	void loginError(FAccount *account, QString errortitle, QString errorstring);
-	void loginComplete(FAccount *account);
-	void handleSslErrors( QList<QSslError> sslerrors );
-	void setupConnectBox();			// The connect box is used for account login
 	void setupLoginBox();			// The login box is used for character selection
-	void clearLoginBox();			// Destroys login box
-	void clearConnectBox();			// Destroys connect box
-	void loginClicked();			// Called by the login button during character selection
 	void setupRealUI();				// Creation of the chat environment GUI
 	void setupSettingsDialog();
 	void setupTimeoutDialog();
@@ -283,7 +247,6 @@ private slots:
 	void submitReport();
 	void handleReportFinished();
 	void reportTicketFinished();
-	void versionInfoReceived();
 	void btnSendAdvClicked();
 	void btnSendChatClicked();
 	void mr_btnSubmitClicked();
@@ -346,7 +309,6 @@ private:
 	FServer *server;
 
 	bool debugging;
-	bool versionIsOkay;
 	bool notificationsAreaMessageShown;
 	void printDebugInfo(std::string s);
 	void createTrayIcon();
@@ -373,7 +335,8 @@ private:
 	QUrl lurl;
 	QUrlQuery lparam;
 
-	unsigned int loginStep;
+	FLoginWindow *loginWidget;
+	FLoginController *loginController;
 	FChannelPanel* console;	// We could just put this into the channel list, but the console needs to be accessed quite often. So here we go...
 	FChannelPanel* currentPanel;
 	FSound soundPlayer;

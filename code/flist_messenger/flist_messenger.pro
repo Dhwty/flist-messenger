@@ -30,8 +30,6 @@ HEADERS += \
            flist_character.h \
            flist_common.h \
            flist_global.h \
-           flist_loginselectwindow.h \
-           flist_loginwindow.h \
            flist_messenger.h \
            flist_parser.h \
            flist_session.h \
@@ -59,6 +57,12 @@ HEADERS += \
     flist_settings.h \
     flist_attentionsettingswidget.h \
     flist_channellistdialog.h \
+    flist_loginwindow.h \
+    usereturn.h \
+    flist_logincontroller.h \
+    flist_api.h \
+    api/endpoint_v1.h \
+	api/data.h \
     flist_characterinfodialog.h
 SOURCES += \
            flist_account.cpp \
@@ -66,8 +70,6 @@ SOURCES += \
            flist_channeltab.cpp \
            flist_character.cpp \
            flist_global.cpp \
-           flist_loginselectwindow.cpp \
-           flist_loginwindow.cpp \
            flist_messenger.cpp \
            flist_parser.cpp \
            flist_session.cpp \
@@ -87,10 +89,16 @@ SOURCES += \
     flist_channel.cpp \
     flist_message.cpp \
     flist_logtextbrowser.cpp \
+    flist_channellistdialog.cpp \
+	flist_loginwindow.cpp \
+    usereturn.cpp \
+    flist_logincontroller.cpp \
+    api/endpoint_v1.cpp \
+	api/apihelpers.cpp \
     flist_settings.cpp \
     flist_enums.cpp \
-    flist_attentionsettingswidget.cpp \
-    flist_channellistdialog.cpp \
+	flist_attentionsettingswidget.cpp \
     flist_characterinfodialog.cpp
 RESOURCES += resources.qrc
-FORMS += flist_channellistdialog.ui
+FORMS += flist_channellistdialog.ui \
+    flist_loginwindow.ui

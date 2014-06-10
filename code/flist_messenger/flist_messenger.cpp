@@ -40,89 +40,6 @@
 
 QString flist_messenger::settingsPath = "./settings.ini";
 
-//get ticket, get characters, get friends list, get default character
-void flist_messenger::prepareLogin ( QString username, QString password )
-{
-	connect(account, SIGNAL( loginError(FAccount *, QString, QString) ), this, SLOT( loginError(FAccount *, QString, QString ) ));
-	connect(account, SIGNAL( loginComplete(FAccount *) ), this, SLOT( loginComplete(FAccount *) ));
-
-	account->loginUserPass(username, password);
-}
-void flist_messenger::handleSslErrors( QList<QSslError> sslerrors )
-{
-        QMessageBox msgbox;
-        QString errorstring;
-        foreach(const QSslError &error, sslerrors) {
-                if(!errorstring.isEmpty()) {
-                        errorstring += ", ";
-                }
-                errorstring += error.errorString();
-        }
-        msgbox.critical ( this, "SSL ERROR DURING LOGIN!", errorstring );
-}
-void flist_messenger::handleLogin()
-{
-        QMessageBox msgbox;
-
-	if ( account->loginreply->error() != QNetworkReply::NoError )
-        {
-                QString message = "Response error during login step ";
-                message.append ( NumberToString::_uitoa<unsigned int> ( loginStep ).c_str() );
-                message.append ( " of type " );
-		message.append ( NumberToString::_uitoa<unsigned int> ( ( unsigned int ) account->loginreply->error() ).c_str() );
-                msgbox.critical ( this, "FATAL ERROR DURING LOGIN!", message );
-                if (btnConnect) btnConnect->setEnabled(true);
-                return;
-        }
-
-	QByteArray respbytes = account->loginreply->readAll();
-
-	account->loginreply->deleteLater();
-        std::string response ( respbytes.begin(), respbytes.end() );
-        JSONNode respnode = libJSON::parse ( response );
-        JSONNode childnode = respnode.at ( "error" );
-
-        if ( childnode.as_string() != "" )
-        {
-                if (btnConnect) btnConnect->setEnabled(true);
-                std::string message = "Error from server: " + childnode.as_string();
-                QMessageBox::critical ( this, "Error", message.c_str() );
-                return;
-        }
-
-        JSONNode subnode = respnode.at ( "ticket" );
-
-	account->ticket = subnode.as_string().c_str();
-        subnode = respnode.at ( "default_character" );
-        account->defaultCharacter = subnode.as_string().c_str();
-        childnode = respnode.at ( "characters" );
-        int children = childnode.size();
-
-        for ( int i = 0; i < children; ++i )
-        {
-                QString addchar = childnode[i].as_string().c_str();
-                account->characterList.append ( addchar );
-        }
-        setupLoginBox();
-}
-
-void flist_messenger::loginError(FAccount *account, QString errortitle, QString errorstring)
-{
-	(void) account; //todo:
-	if (btnConnect) btnConnect->setEnabled(true);
-	QMessageBox msgbox;
-	msgbox.critical(this, errortitle, errorstring);
-}
-void flist_messenger::loginComplete(FAccount *account)
-{
-        (void) account; //todo: initialise window with username
-        setupLoginBox();
-}
-
-void flist_messenger::versionInfoReceived()
-{
-}
-
 void flist_messenger::init()
 {
         settingsPath = QApplication::applicationDirPath() + "/settings.ini";
@@ -134,7 +51,6 @@ flist_messenger::flist_messenger(bool d)
 	account = server->addAccount();
 	account->ui = this;
 	//account = new FAccount(0, 0);
-        versionIsOkay = true;
         doingWS = true;
         notificationsAreaMessageShown = false;
         console = 0;
@@ -158,7 +74,10 @@ flist_messenger::flist_messenger(bool d)
         channelSettingsDialog = 0;
         createTrayIcon();
         loadSettings();
-        setupConnectBox();
+        loginController = new FLoginController(fapi,account,this);
+        setupLoginBox();
+	cl_data = new FChannelListModel();
+	cl_dialog = 0;
 	cl_data = new FChannelListModel();
 	cl_dialog = 0;
 
@@ -246,112 +165,34 @@ void flist_messenger::printDebugInfo(std::string s)
                 }
         }
 }
-void flist_messenger::setupConnectBox()
+void flist_messenger::setupLoginBox()
 {
         this->setWindowTitle ( "F-chat messenger - Login" );
         this->setWindowIcon ( QIcon ( ":/images/icon.png" ) );
 
-        // The "please log in" label
-        verticalLayoutWidget = new QWidget ( this );
-        verticalLayout = new QVBoxLayout ( verticalLayoutWidget );
-        label = new QLabel();
-        label->setText ( "Please log in using your F-list details." );
-        verticalLayout->addWidget ( label );
-
-        // The acc and pass textfields, along with labels
-        gridLayout = new QGridLayout;
-        label = new QLabel ( QString ( "Account:" ) );
-        gridLayout->addWidget ( label, 0, 0 );
-        label = new QLabel ( QString ( "Password:" ) );
-        gridLayout->addWidget ( label, 1, 0 );
-        ReturnLogin* loginreturn = new ReturnLogin(this);
-	lineEdit = new QLineEdit(account->getUserName());
-        lineEdit->installEventFilter(loginreturn);
-        lineEdit->setObjectName ( QString ( "accountNameInput" ) );
-        gridLayout->addWidget ( lineEdit, 0, 1 );
-        lineEdit = new QLineEdit;
-        lineEdit->installEventFilter(loginreturn);
-        lineEdit->setEchoMode ( QLineEdit::Password );
-        lineEdit->setObjectName ( QString ( "passwordInput" ) );
-        gridLayout->addWidget ( lineEdit, 1, 1 );
-
-//        // "Checking version" label
-//        lblCheckingVersion = new QLabel( QString ( "Checking version..." ) );
-//        gridLayout->addWidget ( lblCheckingVersion, 2, 1 );
-
-        // The login button
-        btnConnect = new QPushButton;
-        btnConnect->setObjectName ( QString ( "loginButton" ) );
-        btnConnect->setText ( "Login" );
-        btnConnect->setIcon ( QIcon ( ":/images/tick.png" ) );
-//        btnConnect->hide();
-        gridLayout->addWidget ( btnConnect, 2, 1 );
-        verticalLayout->addLayout ( gridLayout );
-        this->setCentralWidget ( verticalLayoutWidget );
-        connect ( btnConnect, SIGNAL ( clicked() ), this, SLOT ( connectClicked() ) );
+				loginWidget = new FLoginWindow(this);
+				loginController->setWidget(loginWidget);
+				this->setCentralWidget(loginWidget);
 
         int wid = QApplication::desktop()->width();
         int hig = QApplication::desktop()->height();
         int mwid = 265;
         int mhig = 100;
-        setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
-
-//        // Fetch version.
-//        lurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
-//        lreply = qnam.get ( QNetworkRequest ( lurl ) );
-//        connect ( lreply, SIGNAL ( finished() ), this, SLOT ( versionInfoReceived() ) );
-
+				setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
 }
-void flist_messenger::connectClicked()
+
+void flist_messenger::startConnect(QString charName)
 {
-        if (versionIsOkay)
-        {
-                btnConnect->setEnabled(false);
-                lineEdit = this->findChild<QLineEdit *> ( QString ( "accountNameInput" ) );
-		account->setUserName(lineEdit->text());
-                lineEdit = this->findChild<QLineEdit *> ( QString ( "passwordInput" ) );
-                QString password = lineEdit->text();
-                loginStep = 1;
-		prepareLogin ( account->getUserName(), password );
-        }
+	this->charName = charName;
+	FSession *session = account->addSession(charName);
+	session->autojoinchannels = defaultChannels;
+	this->centralWidget()->deleteLater();
+
+	setupRealUI();
+	connect ( session, SIGNAL ( socketErrorSignal ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
+	session->connectSession();
 }
-void flist_messenger::setupLoginBox()
-{
-        clearConnectBox();
-        groupBox = new QGroupBox ( this );
-        groupBox->setObjectName ( QString::fromUtf8 ( "loginGroup" ) );
-        groupBox->setGeometry ( QRect ( 0, 0, 250, 30 ) );
-        pushButton = new QPushButton ( groupBox );
-        pushButton->setObjectName ( QString::fromUtf8 ( "loginButton" ) );
-        pushButton->setGeometry ( QRect ( 5, 40, 255, 26 ) );
-        pushButton->setText ( "Login" );
-        comboBox = new QComboBox ( groupBox );
-        comboBox->setObjectName ( QString::fromUtf8 ( "charSelectBox" ) );
-        comboBox->setGeometry ( QRect ( 80, 10, 180, 27 ) );
 
-        for ( int i = 0;i < account->characterList.count();++i )
-        {
-                comboBox->addItem ( account->characterList[i] );
-
-                if ( account->characterList[i] == account->defaultCharacter )
-                {
-                        comboBox->setCurrentIndex ( i );
-                }
-        }
-
-        label = new QLabel ( groupBox );
-
-        label->setObjectName ( QString::fromUtf8 ( "charlabel" ) );
-        label->setGeometry ( QRect ( 10, 13, 71, 21 ) );
-        label->setText ( "Character:" );
-        setCentralWidget ( groupBox );
-        connect ( pushButton, SIGNAL ( clicked() ), this, SLOT ( loginClicked() ) );
-        int wid = QApplication::desktop()->width();
-        int hig = QApplication::desktop()->height();
-        int mwid = 265;
-        int mhig = height();
-        setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
-}
 void flist_messenger::setupSetStatusUI()
 {
         setStatusDialog = new QDialog ( this );
@@ -839,8 +680,7 @@ void flist_messenger::handleReportFinished()
         JSONNode respnode = libJSON::parse ( response );
         JSONNode childnode = respnode.at ( "error" );
         if ( childnode.as_string() != "" )
-        {
-            btnConnect->setEnabled(true);
+				{
             std::string message = "Error from server: " + childnode.as_string();
             QMessageBox::critical ( this, "Error", message.c_str() );
             return;
@@ -880,8 +720,7 @@ void flist_messenger::reportTicketFinished()
 {
     if ( lreply->error() != QNetworkReply::NoError )
         {
-                QString message = "Response error during fetching of ticket ";
-                message.append ( NumberToString::_uitoa<unsigned int> ( loginStep ).c_str() );
+								QString message = "Response error during fetching of ticket ";
                 message.append ( " of type " );
                 message.append ( NumberToString::_uitoa<unsigned int> ( ( unsigned int ) lreply->error() ).c_str() );
                 QMessageBox::critical ( this, "FATAL ERROR DURING TICKET RETRIEVAL!", message );
@@ -893,8 +732,7 @@ void flist_messenger::reportTicketFinished()
         JSONNode respnode = libJSON::parse ( response );
         JSONNode childnode = respnode.at ( "error" );
         if ( childnode.as_string() != "" )
-        {
-                btnConnect->setEnabled(true);
+				{
                 std::string message = "Error from server: " + childnode.as_string();
                 QMessageBox::critical ( this, "Error", message.c_str() );
                 return;
@@ -1047,31 +885,6 @@ void flist_messenger::setupMakeRoomUI()
         connect ( mr_btnCancel, SIGNAL ( clicked() ), this, SLOT ( mr_btnCancelClicked() ) );
 }
 
-void flist_messenger::loginClicked()
-{
-        charName = comboBox->currentText();
-	FSession *session = account->addSession(charName);
-
-	session->autojoinchannels = defaultChannels;
-
-        clearLoginBox();
-
-        setupRealUI();
-
-        connect ( session, SIGNAL ( socketErrorSignal ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
-
-	session->connectSession();
-		
-}
-void flist_messenger::clearConnectBox()
-{
-        btnConnect = 0;
-        verticalLayoutWidget->deleteLater();
-}
-void flist_messenger::clearLoginBox()
-{
-        groupBox->deleteLater();
-}
 void flist_messenger::setupRealUI()
 {
         // Setting up console first because it needs to receive server output.
@@ -1726,9 +1539,7 @@ void flist_messenger::socketError ( QAbstractSocket::SocketError socketError )
 {
         (void) socketError;
         FSession *session = account->getSession(charName); //todo: fix this
-        QString sockErrorStr = session->tcpsocket->errorString();
-        if (btnConnect)
-                btnConnect->setEnabled(true);
+				QString sockErrorStr = session->tcpsocket->errorString();
         if ( currentPanel )
         {
                 QString errorstring = "<b>Socket Error: </b>" + sockErrorStr;
@@ -1760,62 +1571,6 @@ void flist_messenger::sendWS ( std::string& input )
 {
 	FSession *session = account->getSession(charName);
 	session->wsSend(input);
-}
-
-bool UseReturn::eventFilter ( QObject* obj, QEvent* event )
-{
-        if ( event->type() == QEvent::KeyPress )
-        {
-                QKeyEvent *keyEvent = static_cast<QKeyEvent *> ( event );
-                if (keyEvent->modifiers() == Qt::ShiftModifier)
-                {
-                        switch ( keyEvent->key() )
-                        {
-                        case Qt::Key_Enter:
-                        case Qt::Key_Return:
-                                static_cast<flist_messenger*>(parent())->insertLineBreak();
-                                return true;
-                                break;
-                        default:
-                                return QObject::eventFilter( obj, event);
-                        }
-                }
-                else
-                {
-                        switch ( keyEvent->key() )
-                        {
-                        case Qt::Key_Enter:
-
-                        case Qt::Key_Return:
-                static_cast<flist_messenger*> ( parent() )->enterPressed();
-                                return true;
-                                break;
-                        default:
-                                return QObject::eventFilter ( obj, event );
-                        }
-                }
-        }
-        else
-        {
-                return QObject::eventFilter ( obj, event );
-        }
-}
-bool ReturnLogin::eventFilter(QObject *obj, QEvent *event)
-{
-        if (event->type() == QEvent::KeyPress)
-        {
-                QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
-                switch(keyEvent->key())
-                {
-                case Qt::Key_Enter:
-                case Qt::Key_Return:
-                        static_cast<flist_messenger*>(parent())->connectClicked();
-                default:
-                        return QObject::eventFilter(obj, event);
-                }
-        } else {
-                return QObject::eventFilter(obj, event);
-        }
 }
 
 void flist_messenger::sendIgnoreAdd (QString& character )
