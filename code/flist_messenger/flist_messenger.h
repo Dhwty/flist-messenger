@@ -88,6 +88,7 @@
 #include "flist_loginwindow.h"
 #include "flist_logincontroller.h"
 #include "usereturn.h"
+#include "flist_characterinfodialog.h"
 
 #include "flist_channellistdialog.h"
 
@@ -95,6 +96,7 @@ class QSplitter;
 
 class FAccount;
 class FServer;
+class FAttentionSettingsWidget;
 
 // This is a complete mess, login should be pulled out into another class somehow, and decoupled from the UI.
 
@@ -136,6 +138,7 @@ public:
 	virtual void notifyIgnoreUpdate(FSession *session);
 	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore);
 
+	virtual void messageMessage(FMessage message);
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype);
 	virtual void messageAll(FSession *session, QString message, MessageType messagetype);
 	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console = false, bool notify = false);
@@ -147,7 +150,8 @@ public:
 
 private:
 	void messageMany(QList<QString> &panelnames, QString message, MessageType messagetype);
-
+	bool getChannelBool(QString key, FChannelPanel *channelpanel, bool dflt);
+	bool needsAttention(QString key, FChannelPanel *channelpanel, AttentionMode dflt);
 
 public:
 	QPushButton* pushButton;
@@ -212,7 +216,6 @@ private slots:
 	void timeoutDialogRequested();
 	void setupMakeRoomUI();
 	void setupSetStatusUI();
-	void setupCharacterInfoUI();
 	void setupFriendsDialog();
 	void setupAddIgnoreDialog();
 	void setupReportDialog();
@@ -262,11 +265,11 @@ private slots:
 	void ul_channelOpAdd();
 	void ul_channelOpRemove();
 	void ul_profileRequested();
+	void ul_copyLink();
 	void ul_chatOpAdd();
 	void ul_chatOpRemove();
 	void to_btnSubmitClicked();
 	void to_btnCancelClicked();
-	void ci_btnCloseClicked();
 	void fr_btnFriendsPMClicked();
 	void fr_btnIgnoreRemoveClicked();
 	void fr_btnCloseClicked();
@@ -338,7 +341,7 @@ private:
 	FChannelPanel* currentPanel;
 	FSound soundPlayer;
 	BBCodeParser bbparser;
-	QStringList selfPingList;
+	QStringList keywordlist;
 	QStringList defaultChannels;
 	QString charName;
 	QString selfStatus;
@@ -376,23 +379,10 @@ private:
 	QCheckBox* se_chbOnlineOffline;
 	QCheckBox* se_chbEnableChatLogs;
 	QCheckBox* se_chbMute;
-	QCheckBox* se_chbAlwaysPing;
-	QCheckBox* se_chbEnablePing;
-	QLineEdit* se_lePingList;
 	QCheckBox* se_chbHelpdesk;
-	bool se_leaveJoin;
-	bool se_onlineOffline;
-	bool se_chatLogs;
-	bool se_sounds;
-	bool se_alwaysPing;
-	bool se_ping;
-	bool se_helpdesk;
+	FAttentionSettingsWidget *se_attentionsettings;
 
-	QDialog* characterInfoDialog; // ci stands for character info
-	QLabel* ci_lblName;
-	QLabel* ci_lblStatusMessage;
-	QTextEdit* ci_teKinks;
-	QTextEdit* ci_teProfile;
+	FCharacterInfoDialog *ci_dialog; // ci stands for character info
 
 	QDialog* friendsDialog; // fr stands for friends
 	QVBoxLayout* fr_vblOverview;
@@ -440,6 +430,7 @@ private:
 	QLineEdit* to_leReason;
 
 	QDialog* channelSettingsDialog; // cs stands for channel settings
+
 	QTextEdit* cs_teDescription;
 	QTextBrowser* cs_tbDescription;
 	QCheckBox* cs_chbEditDescription;
@@ -450,8 +441,8 @@ private:
 	QPushButton* cs_btnCancel;
 	QPushButton* cs_btnSave;
 	QString cs_qsPlainDescription;
-	QCheckBox* cs_chbAlwaysPing;
 	FChannelPanel* cs_chanCurrent;
+	FAttentionSettingsWidget *cs_attentionsettings;
     
 	FChannelListDialog *cl_dialog;
 	FChannelListModel  *cl_data;

@@ -89,6 +89,15 @@ QLabel {
 	font-size:15px;
 }
 
+QLabel#settingslabel {
+	color:#000000;
+	font-size:12px;
+}
+
+QGroupBox {
+}
+
+
 QAbstractScrollArea { 
 	background-color:#444444;
 	color:#ffffff;

@@ -4,6 +4,7 @@
 #include "flist_enums.h"
 
 class FSession;
+class FMessage;
 
 class iUserInterface
 {
@@ -34,7 +35,7 @@ public:
 	virtual void notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername) = 0;
 	virtual void notifyCharacterProfileDataUpdated(FSession *session, QString charactername) = 0;
 
-
+	virtual void messageMessage(FMessage message) = 0;
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype) = 0;
 	virtual void messageAll(FSession *session, QString message, MessageType messagetype) = 0;
 	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console = false, bool notify = false) = 0;

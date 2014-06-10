@@ -9,6 +9,7 @@
 #include "flist_iuserinterface.h"
 #include "flist_channel.h"
 #include "flist_parser.h"
+#include "flist_message.h"
 
 
 #include "../libjson/libJSON.h"
@@ -405,7 +406,7 @@ COMMAND(ADL)
 
 	for(int i = 0; i < size; ++i) {
 		QString op = childnode[i].as_string().c_str();
-		operatorlist.append(op.toLower());
+		operatorlist[op.toLower()] = op;
 
 		if(isCharacterOnline(op)) {
 			// Set flag in character
@@ -422,7 +423,7 @@ COMMAND(AOP)
 	//Add a character to the list of known chat-operators.
 	//AOP {"character": "Viona"}
 	QString op = nodes.at("character").as_string().c_str();
-	operatorlist.append(op.toLower());
+	operatorlist[op.toLower()] = op;
 	
 	if(isCharacterOnline(op)) {
 		// Set flag in character
@@ -438,7 +439,7 @@ COMMAND(DOP)
 	//Remove a character from the list of  chat operators.
 	//DOP {"character": "Viona"}
 	QString op = nodes.at("character").as_string().c_str();
-	operatorlist.removeAll(op.toLower());
+	operatorlist.remove(op.toLower());
 
 	if(isCharacterOnline(op)) {
 		// Set flag in character
@@ -833,7 +834,7 @@ COMMAND(BRO)
 	//Broadcast message.
 	//BRO {"message": "Message Text"}
 	QString message = nodes.at("message").as_string().c_str();
-	account->ui->messageAll(this, QString("<b>Broadcast message:</b> %1").arg(message), MESSAGE_TYPE_SYSTEM);
+	account->ui->messageAll(this, QString("<b>Broadcast message:</b> %1").arg(bbcodeparser->parse(message)), MESSAGE_TYPE_SYSTEM);
 }
 COMMAND(SYS)
 {
@@ -1017,7 +1018,9 @@ COMMAND(LRP)
 		return;
 	}
 	QString messagefinal = makeMessage(message, charactername, character, channel, "<font color=\"green\"><b>Roleplay ad by</b></font> ", "");
-	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_RPAD);
+	FMessage fmessage(messagefinal, MESSAGE_TYPE_RPAD);
+	fmessage.toChannel(channelname).fromChannel(channelname).fromCharacter(charactername).fromSession(sessionid);
+	account->ui->messageMessage(fmessage);
 }
 COMMAND(MSG)
 {
@@ -1042,7 +1045,9 @@ COMMAND(MSG)
 		return;
 	}
 	QString messagefinal = makeMessage(message, charactername, character, channel);
-	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_CHAT);
+	FMessage fmessage(messagefinal, MESSAGE_TYPE_CHAT);
+	fmessage.toChannel(channelname).fromChannel(channelname).fromCharacter(charactername).fromSession(sessionid);
+	account->ui->messageMessage(fmessage);
 }
 COMMAND(PRI)
 {
@@ -1063,7 +1068,9 @@ COMMAND(PRI)
 	
 	QString messagefinal = makeMessage(message, charactername, character);
 	account->ui->addCharacterChat(this, charactername);
-	account->ui->messageCharacter(this, charactername, messagefinal, MESSAGE_TYPE_CHAT);
+	FMessage fmessage(messagefinal, MESSAGE_TYPE_CHAT);
+	fmessage.toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+	account->ui->messageMessage(fmessage);
 }
 COMMAND(RLL)
 {
@@ -1300,7 +1307,9 @@ void FSession::sendChannelMessage(QString channelname, QString message)
         message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
 	//Send the message to the UI now.
 	QString messagefinal = makeMessage(message, character, getCharacter(character), channel);
-	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_CHAT);
+	FMessage fmessage(messagefinal, MESSAGE_TYPE_CHAT);
+	fmessage.toChannel(channelname).fromChannel(channelname).fromCharacter(this->character).fromSession(sessionid);
+	account->ui->messageMessage(fmessage);
 }
 void FSession::sendChannelAdvertisement(QString channelname, QString message)
 {
@@ -1326,7 +1335,9 @@ void FSession::sendChannelAdvertisement(QString channelname, QString message)
         message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
 	//Send the message to the UI now.
 	QString messagefinal = makeMessage(message, character, getCharacter(character), channel, "<font color=\"green\"><b>Roleplay ad by</font> ", "");
-	account->ui->messageChannel(this, channelname, messagefinal, MESSAGE_TYPE_RPAD);
+	FMessage fmessage(messagefinal, MESSAGE_TYPE_RPAD);
+	fmessage.toChannel(channelname).fromChannel(channelname).fromCharacter(this->character).fromSession(sessionid);
+	account->ui->messageMessage(fmessage);
 }
 void FSession::sendCharacterMessage(QString charactername, QString message)
 {
@@ -1349,7 +1360,9 @@ void FSession::sendCharacterMessage(QString charactername, QString message)
         message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
 	//Send the message to the UI now.
 	QString messagefinal = makeMessage(message, this->character, getCharacter(this->character));
-	account->ui->messageCharacter(this, charactername, messagefinal, MESSAGE_TYPE_CHAT);
+	FMessage fmessage(messagefinal, MESSAGE_TYPE_CHAT);
+	fmessage.toCharacter(charactername).fromCharacter(this->character).fromSession(sessionid);
+	account->ui->messageMessage(fmessage);
 }
 
 void FSession::sendChannelLeave(QString channelname)

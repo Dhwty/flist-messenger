@@ -22,6 +22,8 @@
 #include "flist_sound.h"
 #include <iostream>
 #include <QFile>
+#include "flist_global.h"
+#include "flist_settings.h"
 
 FSound::FSound()
 {
@@ -29,44 +31,44 @@ FSound::FSound()
 
 void FSound::play ( soundName sound )
 {
-
+	if(sound == SOUND_NONE) {
+		return;
+	}
 	QString soundFile = soundToString ( sound );
 
-	if ( !QFile::exists ( soundFile ) )
-	{
-		std::cout << "Error!  Soundfile not found: " + soundFile.toStdString() + "\n";
-	}
-	else
-	{
-		std::cout << "Playing sound " + soundFile.toStdString() + "\n";
-		QSound::play ( soundFile );
-	}
+	std::cout << "Playing sound " + soundFile.toStdString() + "\n";
+	QSound::play ( soundFile );
 }
 
 QString FSound::soundToString ( soundName sound )
 {
-	QString soundFile;
+	QString soundKey, soundFile, soundPath;
 
 	switch ( sound )
 	{
 
 	case SOUND_ATTENTION:
+		soundKey = "attention";
 		soundFile = "attention.wav";
 		break;
 
 	case SOUND_CHAT:
+		soundKey = "chat";
 		soundFile = "chat.wav";
 		break;
 
 	case SOUND_LOGIN:
+		soundKey = "login";
 		soundFile = "login.wav";
 		break;
 
 	case SOUND_MODALERT:
+		soundKey = "modalert";
 		soundFile = "modalert.wav";
 		break;
 
 	case SOUND_NEWNOTE:
+		soundKey = "newnote";
 		soundFile = "newnote.wav";
 		break;
 
@@ -76,11 +78,19 @@ QString FSound::soundToString ( soundName sound )
 
 	default:
 		std::cout << "Invalid sound.\n";
+		soundKey = "INVALID";
 		soundFile = "INVALID";
 		break;
 	}
 
-	soundFile = "./sounds/" + soundFile;
+	soundPath = settings->getString(QString("Global/Sounds/%1").arg(soundKey));
+	if(soundPath.isEmpty() || !QFile::exists ( soundPath )) {
+		soundPath = "./sounds/" + soundFile;
+	}
+	if  (!QFile::exists ( soundPath ) )
+	{
+		soundPath = ":/sounds/" + soundFile;
+	}
 
-	return soundFile;
+	return soundPath;
 }

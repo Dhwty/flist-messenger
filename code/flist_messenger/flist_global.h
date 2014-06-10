@@ -5,10 +5,12 @@
 #include "flist_api.h"
 
 class BBCodeParser; 
+class FSettings;
 
 extern QNetworkAccessManager *networkaccessmanager;
 extern BBCodeParser *bbcodeparser;
 extern FHttpApi::Endpoint *fapi;
+extern FSettings *settings;
 
 void debugMessage(QString str);
 void debugMessage(std::string str);
@@ -18,6 +20,7 @@ void globalQuit();
 bool is_broken_escaped_apos(std::string const &data, std::string::size_type n);
 void fix_broken_escaped_apos (std::string &data);
 QString escapeFileName(QString infilename);
+QString htmlToPlainText(QString input);
 
 #define FLIST_VERSIONNUM "0.9.1.dev"
 #define FLIST_VERSION "F-List Messenger [Beta] " FLIST_VERSIONNUM

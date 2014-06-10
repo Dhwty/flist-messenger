@@ -29,6 +29,7 @@ public:
 	FMessage &fromChannel(QString channelname);
 	FMessage &fromCharacter(QString charactername);
 
+	QString getPlainTextMessage();
 	QString getFormattedMessage();
 	QString getMessage();
 	MessageType getMessageType();

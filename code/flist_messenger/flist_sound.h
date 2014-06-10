@@ -34,6 +34,7 @@ class FSound
 public:
 	enum soundName
 	{
+		SOUND_NONE,
 		SOUND_ATTENTION,
 		SOUND_CHAT,
 		SOUND_LOGIN,
