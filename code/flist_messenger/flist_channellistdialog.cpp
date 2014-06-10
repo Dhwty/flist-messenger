@@ -104,6 +104,7 @@ FChannelListSortProxy::FChannelListSortProxy(QObject *parent) :
 	QSortFilterProxyModel(parent),
 	_showType(FChannelSummary::Unknown)
 {
+	setDynamicSortFilter(true);
 	setSortRole(FChannelListModel::SortKeyRole);
 	setFilterRole(FChannelListModel::SortKeyRole);
 	setFilterKeyColumn(FChannelListModel::colTitle);
@@ -132,7 +133,7 @@ FChannelSummary::Type FChannelListSortProxy::showType()
 void FChannelListSortProxy::setShowType(FChannelSummary::Type t)
 {
 	_showType = t;
-	invalidateFilter();
+	invalidate();
 }
 
 FChannelListDialog::FChannelListDialog(FChannelListModel *m, QWidget *parent = 0) : QDialog(parent), Ui::FChannelListDialogUi()
