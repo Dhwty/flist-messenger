@@ -62,7 +62,7 @@ HEADERS += \
     flist_logincontroller.h \
     flist_api.h \
     api/endpoint_v1.h \
-    api/data.h
+	api/data.h \
     flist_characterinfodialog.h
 SOURCES += \
            flist_account.cpp \
@@ -94,11 +94,10 @@ SOURCES += \
     usereturn.cpp \
     flist_logincontroller.cpp \
     api/endpoint_v1.cpp \
-    api/apihelpers.cpp
+	api/apihelpers.cpp \
     flist_settings.cpp \
     flist_enums.cpp \
-    flist_attentionsettingswidget.cpp \
-    flist_channellistdialog.cpp \
+	flist_attentionsettingswidget.cpp \
     flist_characterinfodialog.cpp
 RESOURCES += resources.qrc
 FORMS += flist_channellistdialog.ui \

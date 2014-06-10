@@ -78,7 +78,6 @@ flist_messenger::flist_messenger(bool d)
         setupLoginBox();
 	cl_data = new FChannelListModel();
 	cl_dialog = 0;
-        setupConnectBox();
 	cl_data = new FChannelListModel();
 	cl_dialog = 0;
 
