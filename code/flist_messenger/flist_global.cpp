@@ -5,6 +5,7 @@
 #include <QByteArray>
 #include <iostream>
 #include "flist_parser.h"
+#include "api/endpoint_v1.h"
 #include "flist_settings.h"
 
 QNetworkAccessManager *networkaccessmanager = 0;
@@ -12,6 +13,7 @@ BBCodeParser *bbcodeparser = 0;
 QString settingsfile;
 QString logpath;
 FSettings *settings = 0;
+FHttpApi::Endpoint *fapi = 0;
 
 void debugMessage(QString str) {
 	std::cout << str.toUtf8().data() << std::endl;
@@ -35,6 +37,8 @@ void globalInit()
 
 	networkaccessmanager = new QNetworkAccessManager(qApp);
 	bbcodeparser = new BBCodeParser();
+	fapi = new FHttpApi::Endpoint_v1(networkaccessmanager);
+
 	//settings = new QSettings(settingsfile, QSettings::IniFormat);
 	settings = new FSettings(settingsfile, qApp);
 }

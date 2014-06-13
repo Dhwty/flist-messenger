@@ -1,34 +1,46 @@
 #ifndef FLIST_LOGINWINDOW_H
 #define FLIST_LOGINWINDOW_H
 
-#include <QObject>
 #include <QDialog>
-#include <QMainWindow>
 
 #include "flist_account.h"
 
-class FLoginWindow : public QObject
+namespace Ui {
+class FLoginWindow;
+}
+
+class FLoginWindow : public QWidget
 {
-Q_OBJECT
+	Q_OBJECT
+
 public:
-	explicit FLoginWindow(FAccount *account, QMainWindow *mainwindow, QObject *parent = 0);
+	explicit FLoginWindow(QWidget *parent = 0);
+	~FLoginWindow();
+
+	void setLoginCredentials(QString name, QString password);
+	void clearCredentials();
+	void clearPassword();
 
 signals:
+	void loginRequested(QString username, QString password);
+	void saveCredentialsRequested(QString username, QString password);
+	void clearCredentialsRequested();
+	void connectRequested(QString characterName);
 
 public slots:
-
-	void loginGetUserPass(QString &username, QString &password);
-	void loginError(QString &title, QString &message);
-	void loginComplete();
-	void connectClicked();
-	void cancelClicked();
+	void showError(QString message);
+	void showLoginPage();
+	void showConnectPage(FAccount *account);
 
 private:
-	void createWindow();
-	void destroyWindow();
-	FAccount *account;
-	QMainWindow *mainwindow;
-	QDialog *dialog;
+	Ui::FLoginWindow *ui;
+	int lastPage;
+
+private slots:
+	void dismissMessage();
+	void loginClicked();
+	void connectClicked();
+	void enterPressed();
 };
 
 #endif // FLIST_LOGINWINDOW_H
