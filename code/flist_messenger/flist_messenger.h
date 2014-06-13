@@ -85,9 +85,10 @@
 #include "flist_channeltab.h"
 #include "flist_iuserinterface.h"
 #include "flist_logtextbrowser.h"
-#include "flist_characterinfodialog.h"
 
-#include "flist_channellistdialog.h"
+#include "ui/characterinfodialog.h"
+#include "ui/channellistdialog.h"
+#include "ui/helpdialog.h"
 
 class QSplitter;
 
@@ -271,7 +272,7 @@ private slots:
 	void destroyMenu();
 	void destroyChanMenu();
 	void socketError ( QAbstractSocket::SocketError socketError );
-        void socketSslError ( QList<QSslError> sslerrors );
+	void socketSslError ( QList<QSslError> sslerrors );
 	void quitApp();
 	void aboutApp();
 	void channelButtonMenuRequested();
@@ -459,7 +460,7 @@ private:
 	QPushButton* re_btnCancel;
 	QPushButton* re_btnSubmit;
 
-	QDialog* helpDialog; // he stands for help
+	FHelpDialog* helpDialog; // he stands for help
 
 	QDialog* timeoutDialog; // to stands for timeout
 	QLineEdit* to_leWho;
