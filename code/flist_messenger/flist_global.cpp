@@ -1,5 +1,6 @@
 #include "flist_global.h"
 #include <QApplication>
+#include <QDesktopWidget>
 #include <QSettings>
 #include <QByteArray>
 #include <iostream>
@@ -96,4 +97,13 @@ QString htmlToPlainText(QString input) {
 	output.replace("&nbsp;", " ");
 	output.replace("&amp;", "&");
 	return output;
+}
+
+void centerOnScreen(QWidget *widge)
+{
+	QRect screen = QApplication::desktop()->availableGeometry(widge);
+	QSize size = widge->size();
+	int x = ((screen.width() - size.width()) / 2) + screen.x();
+	int y = ((screen.height() - size.height()) / 2) + screen.y();
+	widge->setGeometry(x, y, size.width(), size.height());
 }

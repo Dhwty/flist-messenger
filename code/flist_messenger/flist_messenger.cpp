@@ -290,12 +290,8 @@ void flist_messenger::setupConnectBox()
         this->setCentralWidget ( verticalLayoutWidget );
         connect ( btnConnect, SIGNAL ( clicked() ), this, SLOT ( connectClicked() ) );
 
-        int wid = QApplication::desktop()->width();
-        int hig = QApplication::desktop()->height();
-        int mwid = 265;
-        int mhig = 100;
-        setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
-
+				this->resize(265, 100);
+				centerOnScreen(this);
 //        // Fetch version.
 //        lurl = QString ( "https://www.f-list.net/json/getApiTicket.json" );
 //        lreply = qnam.get ( QNetworkRequest ( lurl ) );
@@ -346,11 +342,9 @@ void flist_messenger::setupLoginBox()
         label->setText ( "Character:" );
         setCentralWidget ( groupBox );
         connect ( pushButton, SIGNAL ( clicked() ), this, SLOT ( loginClicked() ) );
-        int wid = QApplication::desktop()->width();
-        int hig = QApplication::desktop()->height();
-        int mwid = 265;
-        int mhig = height();
-        setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
+
+				resize(265, height());
+				centerOnScreen(this);
 }
 void flist_messenger::setupSetStatusUI()
 {
@@ -1269,12 +1263,8 @@ void flist_messenger::setupRealUI()
         connect(actionHelp, SIGNAL(triggered()), this, SLOT(helpDialogRequested()));
         connect ( actionAbout, SIGNAL ( triggered() ), this, SLOT ( aboutApp() ) );
         connect ( actionQuit, SIGNAL ( triggered() ), this, SLOT ( quitApp() ) );
-        int wid = QApplication::desktop()->width();
-        int hig = QApplication::desktop()->height();
-        int mwid = width();
-        int mhig = height();
-        setGeometry ( ( wid / 2 ) - ( int ) ( mwid*0.5 ), ( hig / 2 ) - ( int ) ( mhig*0.5 ), mwid, mhig );
-        setupConsole();
+				centerOnScreen(this);
+				setupConsole();
 }
 void flist_messenger::setupConsole()
 {
