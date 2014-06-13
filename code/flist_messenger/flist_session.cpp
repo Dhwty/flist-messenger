@@ -1075,16 +1075,22 @@ COMMAND(PRI)
 COMMAND(RLL)
 {
 	//Dice roll or bottle spin result.
-	//RLL {"message": "Message Text", "channel": "Channel Name", "character": "Character Name"}
-	//todo: Check if the "character" field is actually sent.
+	//Bottle spin:
+	//RLL {"type": "bottle", "message": "Message Text", "channel": "Channel Name", "character": "Character Name", "target": "Character Name"}
+	//Dice roll:
+	//RLL {"type": "dice", "message": "Message Text", "channel": "Channel Name", "character": "Character Name", "results": [number], "endresult": number}
 	QString channelname = nodes.at("channel").as_string().c_str();
-	//QString charactername = nodes.at("character").as_string().c_str();
+	QString charactername = nodes.at("character").as_string().c_str();
 	QString message = nodes.at("message").as_string().c_str();
 	FChannel *channel = getChannel(channelname);
 	//FCharacter *character = getCharacter(charactername);
 	if(!channel) {
 		debugMessage(QString("[SERVER BUG] Received a dice roll result from the channel '%1' but the channel '%1' is unknown. %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
 		//todo: Dump the message to console anyway?
+		return;
+	}
+	if(isCharacterIgnored(charactername)) {
+		//Ignore message
 		return;
 	}
 	//todo: Maybe extract character name and make it a link and colored like normal.
