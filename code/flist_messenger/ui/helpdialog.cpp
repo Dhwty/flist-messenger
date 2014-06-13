@@ -23,8 +23,8 @@ class FHelpDialog
 		QTextBrowser *te = new QTextBrowser();
 		tabs->addTab(te, name);
 		te->setHtml(content);
-		te->viewport()->setAutoFillBackground(false);
-		te->setFrameStyle(QFrame::NoFrame);
+		//te->viewport()->setAutoFillBackground(false);
+		//te->setFrameStyle(QFrame::NoFrame);
 		return te;
 	}
 

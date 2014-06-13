@@ -508,8 +508,8 @@ void flist_messenger::setupHelpDialog()
 void flist_messenger::helpDialogRequested()
 {
         if (helpDialog == 0 || helpDialog->parent() != this)
-				helpDialog = new FHelpDialog();
-        helpDialog->show();
+				helpDialog = new FHelpDialog(this);
+		helpDialog->show();
 }
 void flist_messenger::channelSettingsDialogRequested()
 {
