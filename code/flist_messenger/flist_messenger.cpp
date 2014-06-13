@@ -991,19 +991,22 @@ void flist_messenger::setupRealUI()
 
         resize ( 836, 454 );
         setWindowTitle ( FLIST_VERSION );
-        setWindowIcon ( QIcon ( ":/images/apple-touch-icon.png" ) );
+		setWindowIcon ( QIcon ( ":/images/icon.ico" ) );
         actionDisconnect = new QAction ( this );
         actionDisconnect->setObjectName ( "actionDisconnect" );
         actionDisconnect->setText ( "Disconnect (WIP)" );
+		actionDisconnect->setIcon(QIcon(":/images/plug-disconnect.png"));
         actionQuit = new QAction ( this );
         actionQuit->setObjectName ( "actionQuit" );
         actionQuit->setText ( "&Quit" );
         actionHelp = new QAction ( this );
         actionHelp->setObjectName ( "actionHelp" );
         actionHelp->setText ( "Help" );
+		actionHelp->setIcon(QIcon(":/images/question.png"));
         actionAbout = new QAction ( this );
         actionAbout->setObjectName ( QString::fromUtf8 ( "actionAbout" ) );
         actionAbout->setText ( QString::fromUtf8 ( "About" ) );
+		actionAbout->setIcon(QIcon(":/images/icon.ico"));
         verticalLayoutWidget = new QWidget ( this );
         verticalLayoutWidget->setObjectName ( QString::fromUtf8 ( "overview" ) );
         verticalLayoutWidget->setGeometry ( QRect ( 5, -1, 841, 511 ) );
