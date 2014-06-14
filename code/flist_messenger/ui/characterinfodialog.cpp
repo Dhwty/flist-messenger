@@ -1,4 +1,4 @@
-#include "flist_characterinfodialog.h"
+#include "ui/characterinfodialog.h"
 
 #include <QVBoxLayout>
 #include <QTextEdit>

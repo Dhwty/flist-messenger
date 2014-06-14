@@ -66,7 +66,8 @@ flist_messenger::flist_messenger(bool d)
         recentCharMenu = 0;
         recentChannelMenu = 0;
         reportDialog = 0;
-        helpDialog = 0;
+	helpDialog = 0;
+	aboutDialog = 0;
         timeoutDialog = 0;
         settingsDialog = 0;
         trayIcon = 0;
@@ -333,117 +334,12 @@ void flist_messenger::setupReportDialog()
         connect ( re_btnSubmit, SIGNAL ( clicked() ), this, SLOT ( re_btnSubmitClicked() ) );
         connect ( re_btnCancel, SIGNAL ( clicked() ), this, SLOT ( re_btnCancelClicked() ) );
 }
-void flist_messenger::setupHelpDialog()
-{
-        helpDialog = new QDialog(this);
-        QVBoxLayout* he_vblOverview;
-        QTabWidget* he_twOverview;
-        QTextEdit* he_teCommands;
-        QTextEdit* he_teColors;
-        QTextEdit* he_teTags;
-        QTextEdit* he_teAdmin;
-        QTextBrowser* he_teHelp;
-        helpDialog->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
-        he_vblOverview = new QVBoxLayout;
-        he_twOverview = new QTabWidget;
-        he_teCommands = new QTextEdit;
-        he_teColors = new QTextEdit;
-        he_teTags = new QTextEdit;
-        he_teHelp = new QTextBrowser;
-        he_teAdmin = new QTextEdit;
-        helpDialog->setLayout(he_vblOverview);
-        he_vblOverview->addWidget(he_twOverview);
-        he_twOverview->addTab(he_teCommands, QString("Commands"));
-        he_twOverview->addTab(he_teAdmin, QString("Admin"));
-        he_twOverview->addTab(he_teColors, QString("Colours"));
-        he_twOverview->addTab(he_teTags, QString("BBCode"));
-        he_twOverview->addTab(he_teHelp, QString("Info"));
-        he_teCommands->setReadOnly(true);
-        he_teHelp->setReadOnly(true);
-        he_teColors->setReadOnly(true);
-        he_teAdmin->setReadOnly(true);
-        he_teTags->setReadOnly(true);
-        QString str = "/me <message><br />";
-        str +=        "/join &lt;channel&gt;<br />";
-        str +=        "/priv &lt;character&gt;<br />";
-        str +=        "/ignore &lt;character&gt;<br />";
-        str +=        "/unignore &lt;character&gt;<br />";
-        str +=        "/ignorelist<br />";
-        str +=        "/code<br />";
-        str +=        "/roll &lt;1d10&gt; (WIP)<br />";
-        str +=        "/status &lt;Online|Looking|Busy|DND&gt; &lt;optional message&gt;<br />";
-        str +=        "<b>Channel owners:</b><br />";
-        str +=        "/makeroom &lt;name&gt;<br />";
-        str +=        "/invite &lt;person&gt;<br />";
-        str +=        "/openroom<br />";
-        str +=        "/closeroom<br />";
-        str +=        "/setdescription &lt;description&gt;<br />";
-        str +=        "/getdescription<br />";
-        str +=        "/setmode &lt;chat|ads|both&gt;";
-        he_teCommands->setHtml(str);
-        str = "<b>Genders:</b><br />";
-        str += "<span style=\"color:"+QString(FCharacter::genderColors[FCharacter::GENDER_NONE].name())+"\">" + FCharacter::genderStrings[FCharacter::GENDER_NONE] + "</span><br />";
-        str += "<span style=\"color:"+QString(FCharacter::genderColors[FCharacter::GENDER_MALE].name())+"\">" + FCharacter::genderStrings[FCharacter::GENDER_MALE] + "</span><br />";
-        str += "<span style=\"color:"+QString(FCharacter::genderColors[FCharacter::GENDER_FEMALE].name())+"\">" + FCharacter::genderStrings[FCharacter::GENDER_FEMALE] + "</span><br />";
-        str += "<span style=\"color:"+QString(FCharacter::genderColors[FCharacter::GENDER_TRANSGENDER].name())+"\">" + FCharacter::genderStrings[FCharacter::GENDER_TRANSGENDER] + "</span><br />";
-        str += "<span style=\"color:"+QString(FCharacter::genderColors[FCharacter::GENDER_SHEMALE].name())+"\">" + FCharacter::genderStrings[FCharacter::GENDER_SHEMALE] + "</span><br />";
-        str += "<span style=\"color:"+QString(FCharacter::genderColors[FCharacter::GENDER_HERM].name())+"\">" + FCharacter::genderStrings[FCharacter::GENDER_HERM] + "</span><br />";
-        str += "<span style=\"color:"+QString(FCharacter::genderColors[FCharacter::GENDER_MALEHERM].name())+"\">" + FCharacter::genderStrings[FCharacter::GENDER_MALEHERM] + "</span><br />";
-        str += "<span style=\"color:"+QString(FCharacter::genderColors[FCharacter::GENDER_CUNTBOY].name())+"\">" + FCharacter::genderStrings[FCharacter::GENDER_CUNTBOY] + "</span><br /><br />";
-        str += "<b><i>Global OP</i></b><br />";
-        str += "<b>Channel OP</b><br />";
-        he_teColors->setHtml(str);
-        str="<b>Admin commands</b><br /><br />";
-        str+="/broadcast <message><br />";
-        str+="/op<br />";
-        str+="/deop<br />";
-        str+="<b>Chatop commands</b><br />";
-        str+="<br />";
-        str+="/gkick<br />";
-        str+="/timeout<br />";
-        str+="/ipban<br />";
-        str+="/accountban<br />";
-        str+="/gunban<br />";
-        str+="/createchannel<br />";
-        str+="/killchannel<br />";
-        str+="<b>Chan-Op commands</b><br />";
-        str+="<br />";
-        str+="/warn<br />";
-        str+="/kick<br />";
-        str+="/ban<br />";
-        str+="/unban<br />";
-        str+="/banlist<br />";
-        str+="/coplist<br />";
-        str+="<b>Chan Owner commands</b><br />";
-        str+="<br />";
-        str+="/cop<br />";
-        str+="/cdeop<br />";
-        str+="/setmode $lt;chat|ads|both&gt;<br />";
-        he_teAdmin->setHtml(str);
-        str = "<b>BBCode tags:</b><br /><br />"
-                        "<i>[i]italic[/i]</i><br />"
-                        "<u>[u]underline[/u]</u><br />"
-                        "<b>[b]bold[/b]</b><br />"
-                        "[user]name[/user] - Link to user<br />"
-                        "[channel]channel name[/channel] - Link to channel<br />"
-                        "[session=name]linkcode[/session] - Link to private room<br />"
-                        "[url=address]label[/url] - The word \"label\" will link to the address<br />";
-        he_teTags->setHtml(str);
-        str = "<b>F-chat Desktop Messenger</b><br />";
-        str+= "by <a href=\"#USR-Viona\">Viona</a>, <a href=\"#USR-Kira\">Kira</a>, <a href=\"#USR-Aniko\">Aniko</a>, <a href=\"#USR-Hexxy\">Hexxy</a> & <a href=\"#USR-Eager\">Eager</a>.<br />";
-        str+= "For bug reports, PM Viona or post <a href=\"#LNK-https://www.f-list.net/forum.php?forum=1698\">here</a>.<br />";
-        str+= "(Please do not use the helpdesk or contact other staff for this.)<br /><br />";
-        str+= "Thank you for using the messenger's beta version. For updates, regularly check the F-chat Desktop Client group forums.<br />";
-        str+= "To get debug output, run the application with the \"-d\" argument.<br />";
-        he_teHelp->setHtml(str);
-        helpDialog->resize(500, 400);
-        connect(he_teHelp, SIGNAL(anchorClicked(QUrl)), this, SLOT(anchorClicked(QUrl)));
-}
+
 void flist_messenger::helpDialogRequested()
 {
         if (helpDialog == 0 || helpDialog->parent() != this)
-                setupHelpDialog();
-        helpDialog->show();
+				helpDialog = new FHelpDialog(this);
+		helpDialog->show();
 }
 void flist_messenger::channelSettingsDialogRequested()
 {
@@ -897,19 +793,23 @@ void flist_messenger::setupRealUI()
 
         resize ( 836, 454 );
         setWindowTitle ( FLIST_VERSION );
-        setWindowIcon ( QIcon ( ":/images/apple-touch-icon.png" ) );
+		setWindowIcon ( QIcon ( ":/images/icon.ico" ) );
         actionDisconnect = new QAction ( this );
         actionDisconnect->setObjectName ( "actionDisconnect" );
         actionDisconnect->setText ( "Disconnect (WIP)" );
+		actionDisconnect->setIcon(QIcon(":/images/plug-disconnect.png"));
         actionQuit = new QAction ( this );
         actionQuit->setObjectName ( "actionQuit" );
         actionQuit->setText ( "&Quit" );
+		actionQuit->setIcon(QIcon(":/images/cross-button.png"));
         actionHelp = new QAction ( this );
         actionHelp->setObjectName ( "actionHelp" );
         actionHelp->setText ( "Help" );
+		actionHelp->setIcon(QIcon(":/images/question.png"));
         actionAbout = new QAction ( this );
         actionAbout->setObjectName ( QString::fromUtf8 ( "actionAbout" ) );
         actionAbout->setText ( QString::fromUtf8 ( "About" ) );
+		actionAbout->setIcon(QIcon(":/images/icon.ico"));
         verticalLayoutWidget = new QWidget ( this );
         verticalLayoutWidget->setObjectName ( QString::fromUtf8 ( "overview" ) );
         verticalLayoutWidget->setGeometry ( QRect ( 5, -1, 841, 511 ) );
@@ -1518,7 +1418,12 @@ FChannelTab* flist_messenger::addToActivePanels ( QString& panelname, QString &c
 
 void flist_messenger::aboutApp()
 {
-        QMessageBox::about ( this, "About F-List Messenger", "Created by:\n* Viona\n* Kira\n* Aniko\n* Hexxy\n* Eager\n\nCopyright(c) 2010-2011 F-list Team" );
+	if (!aboutDialog)
+	{
+		aboutDialog = new FAboutDialog(this);
+		connect(aboutDialog, SIGNAL(anchorClicked(QUrl)), this, SLOT(anchorClicked(QUrl)));
+	}
+	aboutDialog->show();
 }
 void flist_messenger::quitApp()
 {

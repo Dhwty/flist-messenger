@@ -1,4 +1,4 @@
-#include "flist_channellistdialog.h"
+#include "ui/channellistdialog.h"
 
 FChannelListModel::FChannelListModel()
 {
