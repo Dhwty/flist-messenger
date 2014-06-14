@@ -89,6 +89,7 @@
 #include "ui/characterinfodialog.h"
 #include "ui/channellistdialog.h"
 #include "ui/helpdialog.h"
+#include "ui/aboutdialog.h"
 
 class QSplitter;
 
@@ -256,7 +257,6 @@ private slots:
 	void setupFriendsDialog();
 	void setupAddIgnoreDialog();
 	void setupReportDialog();
-	void setupHelpDialog();
 	bool setupChannelSettingsDialog();
 	void settingsDialogRequested();
 	void friendsDialogRequested();
@@ -460,7 +460,8 @@ private:
 	QPushButton* re_btnCancel;
 	QPushButton* re_btnSubmit;
 
-	FHelpDialog* helpDialog; // he stands for help
+	FHelpDialog *helpDialog;
+	FAboutDialog *aboutDialog;
 
 	QDialog* timeoutDialog; // to stands for timeout
 	QLineEdit* to_leWho;

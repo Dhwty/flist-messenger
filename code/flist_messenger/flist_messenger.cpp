@@ -150,7 +150,8 @@ flist_messenger::flist_messenger(bool d)
         recentCharMenu = 0;
         recentChannelMenu = 0;
         reportDialog = 0;
-        helpDialog = 0;
+	helpDialog = 0;
+	aboutDialog = 0;
         timeoutDialog = 0;
         settingsDialog = 0;
         trayIcon = 0;
@@ -495,16 +496,7 @@ void flist_messenger::setupReportDialog()
         connect ( re_btnSubmit, SIGNAL ( clicked() ), this, SLOT ( re_btnSubmitClicked() ) );
         connect ( re_btnCancel, SIGNAL ( clicked() ), this, SLOT ( re_btnCancelClicked() ) );
 }
-void flist_messenger::setupHelpDialog()
-{
-        QString str = "/me <message><br />";
-        str = "<b>F-chat Desktop Messenger</b><br />";
-        str+= "by <a href=\"#USR-Viona\">Viona</a>, <a href=\"#USR-Kira\">Kira</a>, <a href=\"#USR-Aniko\">Aniko</a>, <a href=\"#USR-Hexxy\">Hexxy</a> & <a href=\"#USR-Eager\">Eager</a>.<br />";
-        str+= "For bug reports, PM Viona or post <a href=\"#LNK-https://www.f-list.net/forum.php?forum=1698\">here</a>.<br />";
-        str+= "(Please do not use the helpdesk or contact other staff for this.)<br /><br />";
-        str+= "Thank you for using the messenger's beta version. For updates, regularly check the F-chat Desktop Client group forums.<br />";
-        str+= "To get debug output, run the application with the \"-d\" argument.<br />";
-}
+
 void flist_messenger::helpDialogRequested()
 {
         if (helpDialog == 0 || helpDialog->parent() != this)
@@ -999,6 +991,7 @@ void flist_messenger::setupRealUI()
         actionQuit = new QAction ( this );
         actionQuit->setObjectName ( "actionQuit" );
         actionQuit->setText ( "&Quit" );
+		actionQuit->setIcon(QIcon(":/images/cross-button.png"));
         actionHelp = new QAction ( this );
         actionHelp->setObjectName ( "actionHelp" );
         actionHelp->setText ( "Help" );
@@ -1619,7 +1612,12 @@ FChannelTab* flist_messenger::addToActivePanels ( QString& panelname, QString &c
 
 void flist_messenger::aboutApp()
 {
-        QMessageBox::about ( this, "About F-List Messenger", "Created by:\n* Viona\n* Kira\n* Aniko\n* Hexxy\n* Eager\n\nCopyright(c) 2010-2011 F-list Team" );
+	if (!aboutDialog)
+	{
+		aboutDialog = new FAboutDialog(this);
+		connect(aboutDialog, SIGNAL(anchorClicked(QUrl)), this, SLOT(anchorClicked(QUrl)));
+	}
+	aboutDialog->show();
 }
 void flist_messenger::quitApp()
 {
