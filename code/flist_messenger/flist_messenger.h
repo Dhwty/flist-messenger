@@ -92,6 +92,7 @@
 #include "ui/channellistdialog.h"
 #include "ui/helpdialog.h"
 #include "ui/aboutdialog.h"
+#include "ui/makeroomdialog.h"
 
 class QSplitter;
 
@@ -215,7 +216,6 @@ private slots:
 	void setupSettingsDialog();
 	void setupTimeoutDialog();
 	void timeoutDialogRequested();
-	void setupMakeRoomUI();
 	void setupSetStatusUI();
 	void setupFriendsDialog();
 	void setupAddIgnoreDialog();
@@ -249,8 +249,8 @@ private slots:
 	void reportTicketFinished();
 	void btnSendAdvClicked();
 	void btnSendChatClicked();
-	void mr_btnSubmitClicked();
-	void mr_btnCancelClicked();
+	void createPublicChannel(QString name);
+	void createPrivateChannel(QString name);
 	void ss_btnSubmitClicked();
 	void ss_btnCancelClicked();
 	void ul_pmRequested();
@@ -358,17 +358,7 @@ private:
 	QSystemTrayIcon* trayIcon;
 	QMenu* trayIconMenu;
 
-	QDialog* makeRoomDialog; // mr stands for makeroom
-	QGroupBox* mr_gbOverview;
-	QLabel* mr_lblNameRequest;
-	QLabel* mr_lblInstructions;
-	QLabel* mr_lblWarning;
-	QLineEdit* mr_leName;
-	QPushButton* mr_btnCancel;
-	QPushButton* mr_btnSubmit;
-	QVBoxLayout* mr_vblOverview;
-	QVBoxLayout* mr_vblContents;
-	QHBoxLayout* mr_hblButtons;
+	FMakeRoomDialog* makeRoomDialog; // mr stands for makeroom
 
 	QDialog* setStatusDialog; // ss stands for setstatus
 	QLineEdit* ss_leMessage;

@@ -39,5 +39,6 @@ void FMakeRoomDialog::onAccept()
 
 void FMakeRoomDialog::onNameChange(QString newtext)
 {
-	ui->buttonBox->setDisabled(newtext.isEmpty());
+	QPushButton *okButton = ui->buttonBox->button(QDialogButtonBox::Ok);
+	okButton->setDisabled(newtext.isEmpty());
 }
