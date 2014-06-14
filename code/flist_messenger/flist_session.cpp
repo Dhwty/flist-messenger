@@ -74,6 +74,24 @@ void FSession::joinChannel(QString name)
 	joinnode.push_back(JSONNode("channel", name.toStdString()));
 	wsSend("JCH", joinnode);
 }
+void FSession::createPublicChannel(QString name)
+{
+	// [0:59 AM]>>CRC {"channel":"test"}
+	JSONNode node;
+	JSONNode channode ( "channel", name.toStdString() );
+	node.push_back ( channode );
+	std::string out = "CRC " + node.write();
+	wsSend( out );
+}
+void FSession::createPrivateChannel(QString name)
+{
+	// [17:24 PM]>>CCR {"channel":"abc"}
+	JSONNode makenode;
+	JSONNode namenode ( "channel", name.toStdString() );
+	makenode.push_back ( namenode );
+	std::string out = "CCR " + makenode.write();
+	wsSend ( out );
+}
 
 FChannel *FSession::addChannel(QString name, QString title)
 {

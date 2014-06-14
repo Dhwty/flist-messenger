@@ -42,6 +42,8 @@ public:
 	QStringList &getIgnoreList() {return ignorelist;}
 
 	void joinChannel(QString name);
+	void createPublicChannel(QString name);
+	void createPrivateChannel(QString name);
 	FChannel *addChannel(QString name, QString title);
 	FChannel *getChannel(QString name);
 

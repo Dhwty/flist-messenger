@@ -744,40 +744,6 @@ void flist_messenger::tb_settingsClicked()
         channelSettingsDialogRequested();
 }
 
-void flist_messenger::setupMakeRoomUI()
-{
-        makeRoomDialog = new QDialog ( this );
-        mr_gbOverview = new QGroupBox ( QString ( "Making a private room" ) );
-        mr_lblNameRequest = new QLabel ( QString ( "Room name:" ) );
-        mr_lblInstructions = new QLabel ( QString ( "Rooms are always invite-only when first made. If you want to make your room public, type /openroom in it." ) );
-        mr_lblInstructions->setWordWrap ( true );
-        mr_lblWarning = new QLabel ( QString ( "<b>Note:</b> It is your own responsibility to moderate your room. If your room breaks public rules, it can be deleted by staff members." ) );
-        mr_lblWarning->setWordWrap ( true );
-        mr_leName = new QLineEdit();
-        mr_btnCancel = new QPushButton ( QString ( "Cancel" ) );
-        mr_btnCancel->setIcon ( QIcon ( ":/images/cross.png" ) );
-        mr_btnSubmit = new QPushButton ( QString ( "Submit" ) );
-        mr_btnSubmit->setIcon ( QIcon ( ":/images/tick.png" ) );
-        mr_hblButtons = new QHBoxLayout;
-        mr_vblOverview = new QVBoxLayout;
-        mr_vblContents = new QVBoxLayout;
-
-        makeRoomDialog->setWindowTitle ( QString ( "F-chat - Make Room" ) );
-        makeRoomDialog->setLayout ( mr_vblOverview );
-        mr_vblOverview->addWidget ( mr_gbOverview );
-        mr_gbOverview->setLayout ( mr_vblContents );
-        mr_vblContents->addWidget ( mr_lblInstructions );
-        mr_vblContents->addWidget ( mr_lblNameRequest );
-        mr_vblContents->addWidget ( mr_leName );
-        mr_vblContents->addWidget ( mr_lblWarning );
-        mr_vblOverview->addLayout ( mr_hblButtons );
-        mr_hblButtons->addStretch();
-        mr_hblButtons->addWidget ( mr_btnSubmit );
-        mr_hblButtons->addWidget ( mr_btnCancel );
-        connect ( mr_btnSubmit, SIGNAL ( clicked() ), this, SLOT ( mr_btnSubmitClicked() ) );
-        connect ( mr_btnCancel, SIGNAL ( clicked() ), this, SLOT ( mr_btnCancelClicked() ) );
-}
-
 void flist_messenger::setupRealUI()
 {
         // Setting up console first because it needs to receive server output.
@@ -1298,11 +1264,14 @@ void flist_messenger::refreshFriendLists()
 
 void flist_messenger::makeRoomDialogRequested()
 {
-        if ( makeRoomDialog == 0 || makeRoomDialog->parent() != this )
-                setupMakeRoomUI();
-
-        makeRoomDialog->show();
+	if ( makeRoomDialog == 0 || makeRoomDialog->parent() != this )
+	{
+		makeRoomDialog = new FMakeRoomDialog(this);
+		connect(makeRoomDialog, SIGNAL(requestedRoomCreation(QString)), this, SLOT(createPrivateChannel(QString)));
+	}
+	makeRoomDialog->show();
 }
+
 void flist_messenger::setStatusDialogRequested()
 {
         if ( setStatusDialog == 0 || setStatusDialog->parent() != this )
@@ -2210,16 +2179,10 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( slashcommand == "/makeroom" )
-                {
-                        // [17:24 PM]>>CCR {"channel":"abc"}
-                        JSONNode makenode;
-                        JSONNode namenode ( "channel", inputText.mid ( 10 ).simplified().toStdString() );
-                        makenode.push_back ( namenode );
-                        std::string out = "CCR " + makenode.write();
-                        sendWS ( out );
-                        success = true;
-                }
+		else if ( slashcommand == "/makeroom" )
+		{
+			createPrivateChannel(inputText.mid(10));
+		}
                 else if ( slashcommand == "/closeroom")
                 {
                         // [13:12 PM]>>RST {"channel":"ADH-68c2 7 1 4e731ccfbe0","status":"public"}
@@ -2414,16 +2377,10 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( slashcommand == "/createchannel" )
-                {
-                        // [0:59 AM]>>CRC {"channel":"test"}
-                        JSONNode node;
-                        JSONNode channode ( "channel", inputText.mid ( 15 ).simplified().toStdString() );
-                        node.push_back ( channode );
-                        std::string out = "CRC " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
+		else if ( slashcommand == "/createchannel" )
+		{
+			createPublicChannel(inputText.mid(15));
+		}
                 else if ( slashcommand == "/killchannel" )
                 {
                         // [0:59 AM]>>KIC {"channel":"test"}
@@ -2599,23 +2556,6 @@ void flist_messenger::addToIgnoreList ( QListWidgetItem *lwi )
 
         if ( c )
                 fr_lwIgnore->addItem ( lwi );
-}
-void flist_messenger::mr_btnCancelClicked()
-{
-        makeRoomDialog->hide();
-}
-
-void flist_messenger::mr_btnSubmitClicked()
-{
-        QString title = mr_leName->text().simplified();
-        if ( title == "" ) return;
-        mr_leName->clear();
-        makeRoomDialog->hide();
-        JSONNode makenode;
-        JSONNode namenode ( "channel", title.toStdString() );
-        makenode.push_back ( namenode );
-        std::string out = "CCR " + makenode.write();
-        sendWS ( out );
 }
 
 void flist_messenger::ss_btnCancelClicked()
@@ -3448,4 +3388,14 @@ void flist_messenger::updateKnownOpenRoomList(FSession *session)
 				session->knownopenroomlist.begin(),
 				session->knownopenroomlist.end()
 				);
+}
+
+void flist_messenger::createPublicChannel(QString name)
+{
+	account->getSession(charName)->createPublicChannel(name);
+}
+
+void flist_messenger::createPrivateChannel(QString name)
+{
+	account->getSession(charName)->createPrivateChannel(name);
 }
