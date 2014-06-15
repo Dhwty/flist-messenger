@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "flist_channelsummary.h"
-#include "ui_flist_channellistdialog.h"
+#include "ui_channellistdialog.h"
 
 class FChannelListModel : public QAbstractTableModel
 {
