@@ -5,6 +5,7 @@
 #include <QString>
 #include <QStringList>
 #include <QTcpSocket>
+#include <QSslError>
 
 #include "flist_channelsummary.h"
 
@@ -12,6 +13,7 @@ class FAccount;
 class FChannel;
 class FCharacter;
 class JSONNode;
+class QSslSocket;
 
 class FSession : public QObject
 {
@@ -60,6 +62,7 @@ signals:
 public slots:
 	void socketConnected();
 	void socketError(QAbstractSocket::SocketError);
+	void socketSslError(QList<QSslError> sslerrors);
 	void socketReadReady();
 
 public:
@@ -68,7 +71,8 @@ public:
 	QString sessionid;
 	QString character;
 
-	QTcpSocket *tcpsocket;
+	//QTcpSocket *tcpsocket;
+	QSslSocket *tcpsocket;
 
 private:
 	QHash<QString, FCharacter *> characterlist; //< List of all known characters on the server/session.

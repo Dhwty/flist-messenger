@@ -34,7 +34,7 @@ void centerOnScreen(QWidget *widge);
 
 #define FLIST_CHAT_SERVER "chat.f-list.net"
 //#define FLIST_CHAT_SERVER_PORT 8722 //Test server
-#define FLIST_CHAT_SERVER_PORT 9722 //Real server
-
+//#define FLIST_CHAT_SERVER_PORT 9722 //Real server (plain text)
+#define FLIST_CHAT_SERVER_PORT 9799 //Real server (encrypted)
 
 #endif // FLIST_GLOBAL_H

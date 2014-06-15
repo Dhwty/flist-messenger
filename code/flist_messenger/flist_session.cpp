@@ -1,5 +1,6 @@
 
 #include <QTime>
+#include <QSslSocket>
 
 #include "flist_session.h"
 #include "flist_account.h"
@@ -126,18 +127,18 @@ void FSession::connectSession()
 	connected = true;
 	wsready = false;
 	
-        tcpsocket = new QTcpSocket ( this );
-        //tcpsocket = new QSslSocket ( this );
+        //tcpsocket = new QTcpSocket ( this );
+        tcpsocket = new QSslSocket ( this );
         //tcpsocket->ignoreSslErrors();
 	debugMessage("Connecting...");
         //tcpsocket->connectToHost (FLIST_CHAT_SERVER, FLIST_CHAT_SERVER_PORT);
-	tcpsocket->connectToHost (account->server->chatserver_host, account->server->chatserver_port);
-        //tcpsocket->connectToHostEncrypted ( "chat.f-list.net", FLIST_PORT );
+	//tcpsocket->connectToHost (account->server->chatserver_host, account->server->chatserver_port);
+        tcpsocket->connectToHostEncrypted (account->server->chatserver_host, account->server->chatserver_port);
         connect ( tcpsocket, SIGNAL ( connected() ), this, SLOT ( socketConnected() ) );
         //connect ( tcpsocket, SIGNAL ( encrypted() ), this, SLOT ( socketSslConnected() ) );
         connect ( tcpsocket, SIGNAL ( readyRead() ), this, SLOT ( socketReadReady() ) );
         connect ( tcpsocket, SIGNAL ( error ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
-        //connect ( tcpsocket, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( socketSslError ( QList<QSslError> ) ) );
+        connect ( tcpsocket, SIGNAL ( sslErrors( QList<QSslError> ) ), this, SLOT ( socketSslError ( QList<QSslError> ) ) );
 }
 
 void FSession::socketConnected()
@@ -181,6 +182,24 @@ void FSession::socketError(QAbstractSocket::SocketError error)
 		tcpsocket->deleteLater();
 		tcpsocket = 0;
 	}
+}
+
+void FSession::socketSslError(QList<QSslError> sslerrors)
+{
+	//QMessageBox msgbox;
+	QString errorstring;
+	foreach(const QSslError &error, sslerrors) {
+		if(!errorstring.isEmpty()) {
+			errorstring += ", ";
+		}
+		errorstring += error.errorString();
+	}
+	//msgbox.critical ( this, "SSL ERROR DURING LOGIN!", errorstring );
+	//messageSystem(0, errorstring, MESSAGE_TYPE_ERROR);
+	QString message = QString("SSL Socket Error: %1").arg(errorstring);
+	//todo: This should really display message box.
+	account->ui->messageSystem(this, message, MESSAGE_TYPE_ERROR);
+	debugMessage(message);
 }
 
 void FSession::socketReadReady()
