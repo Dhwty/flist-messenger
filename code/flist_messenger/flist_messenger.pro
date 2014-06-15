@@ -111,6 +111,7 @@ SOURCES += \
     ui/makeroomdialog.cpp
 RESOURCES += resources.qrc
 FORMS += \
+    flist_loginwindow.ui \
     ui/channellistdialog.ui \
     ui/aboutdialog.ui \
     ui/makeroomdialog.ui

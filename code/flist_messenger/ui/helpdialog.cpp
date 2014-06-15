@@ -82,7 +82,7 @@ public:
 		str+="<br />";
 		str+="/cop<br />";
 		str+="/cdeop<br />";
-		str+="/setmode $lt;chat|ads|both&gt;<br />";
+		str+="/setmode &lt;chat|ads|both&gt;<br />";
 		admin = addTab("Admin", str);
 
 		str = "<b>BBCode tags:</b><br /><br />"
