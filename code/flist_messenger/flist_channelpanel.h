@@ -126,6 +126,7 @@ public:
 	void printChannel ( QTextBrowser* textEdit );
 	QPushButton*			pushButton;
 	static BBCodeParser* 	bbparser;
+
 private:
 	bool					active;				// Will be no when the user leaves. This way, logs are kept.~
 	QString					recipientName;		// For PM tabs.

@@ -15,7 +15,7 @@ QString logpath;
 FSettings *settings = 0;
 FHttpApi::Endpoint *fapi = 0;
 
-void debugMessage(QString str) {
+void debugMessage(QString str, DebugMessageType::DBG_GENERAL) {
 	std::cout << str.toUtf8().data() << std::endl;
 }
 

@@ -3,6 +3,7 @@
 
 #include <QNetworkAccessManager>
 #include "flist_api.h"
+#include "flist_enums.h"
 
 class BBCodeParser; 
 class FSettings;
@@ -12,9 +13,9 @@ extern BBCodeParser *bbcodeparser;
 extern FHttpApi::Endpoint *fapi;
 extern FSettings *settings;
 
-void debugMessage(QString str);
-void debugMessage(std::string str);
-void debugMessage(const char *str);
+void debugMessage(QString str, DebugMessageType d);
+void debugMessage(std::string str, DebugMessageType d);
+void debugMessage(const char *str, DebugMessageType d);
 void globalInit();
 void globalQuit();
 bool is_broken_escaped_apos(std::string const &data, std::string::size_type n);
@@ -30,6 +31,14 @@ void centerOnScreen(QWidget *widge);
 #define FLIST_VERSIONNUM "0.9.1." GIT_HASH
 #define FLIST_VERSION FLIST_NAME " " FLIST_VERSIONNUM
 #define FLIST_CLIENTID "F-List Desktop Client"
+
+enum dbgMessageTypes {
+    DBG_GENERAL 0,
+    DBG_SERVER 1
+};
+
+#define DBG_GENERAL 0
+#define DBG_SERVER
 
 
 #define FLIST_CHAT_SERVER "chat.f-list.net"

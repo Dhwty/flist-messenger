@@ -63,12 +63,14 @@ public:
 	FChannelListSortProxy(QObject * parent = 0);
 	FChannelSummary::Type showType();
 	void setShowType(FChannelSummary::Type t);
+    void setShowEmpty(bool show);
 
 protected:
 	virtual bool filterAcceptsRow(int source_row, const QModelIndex & source_parent) const;
 
 private:
 	FChannelSummary::Type _showType;
+    bool _showEmpty;
 };
 
 class FChannelListDialog : public QDialog, private Ui::FChannelListDialogUi
@@ -81,6 +83,7 @@ public:
 
 	FChannelListModel *model();
 	void setModel(FChannelListModel*);
+    void setShowEmpty(bool show);
 
 signals:
 	void joinRequested(QStringList channels);
@@ -93,6 +96,7 @@ private:
 private slots:
 	void on_buttonBox_accepted();
 	void on_chFilterText_textChanged(const QString&);
+    void on_chShowEmpty_toggled(bool);
 	void on_chTypeBoth_toggled(bool);
 	void on_chTypePublic_toggled(bool);
 	void on_chTypePrivate_toggled(bool);

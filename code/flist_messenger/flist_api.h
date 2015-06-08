@@ -71,16 +71,13 @@ namespace FHttpApi
 //		virtual Request<void> *remFriend(cpTicket t, crQString from, crQString to) = 0;
 //		virtual Request<void> *acceptFriendRequest(cpTicket t, int request_id) = 0;
 //		virtual Request<void> *cancelFriendRequest(cpTicket t, int request_id) = 0;
-
 //		virtual Request<QList<Character> > *getCharacterList(cpTicket t) = 0;
-
 //		/* Acceptable data types:
 //		 * Data_Kinks, Data_Description, Data_CustomKinks, Data_Images, Data_Infotags
 //		 */
 //		virtual Request<CharacterData> *getCharacterData(cpTicket t, crQString name, DataTypes d = Data_QuickProfile) = 0;
 //		virtual Request<CharacterMemo> *getCharacterMemo(cpTicket t, int idCharacter) = 0;
 //		virtual Request<void> *setCharacterMemo(cpTicket t, int idCharacter, crQString memo);
-
 //		virtual Request *getIgnoreList(cpTicket t) = 0;
 //		virtual Request *addIgnore(cpTicket t, int idCharacter) = 0;
 //		virtual Request *addIgnore(cpTicket t, crQString character) = 0;

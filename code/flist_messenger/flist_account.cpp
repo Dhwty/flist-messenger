@@ -25,13 +25,17 @@ void FAccount::loginSslErrors( QList<QSslError> sslerrors )
 
 void FAccount::onLoginError(QString error_id, QString error_message)
 {
-	debugMessage("account->loginHttps() error!");
-	emit loginError(this, "Login Error", QString("%1 (%2)").arg(error_message).arg(error_id));
+    debugMessage("account->loginHttps() error!");
+    if (error_message.compare("Password mismatch.")) {
+            emit loginError(this, "Login Error", QString("%1 (%2)").arg(error_message).arg(error_id));
+    } else {
+        emit loginError(this, "Login Error", QString("%1").arg(error_message));
+    }
 }
 
 void FAccount::loginHandle()
 {
-	debugMessage("account->loginHandle()");
+    debugMessage("account->loginHandle()");
 	loginReply->deleteLater();
 
 	ticket = loginReply->ticket->ticket;
@@ -55,7 +59,7 @@ void FAccount::loginHandle()
 
 void FAccount::loginStart()
 {
-	debugMessage("account->loginStart()");
+    debugMessage("account->loginStart()");
 	ticketvalid = false;
 
 	loginReply = fapi->getTicket(username, password);
@@ -66,7 +70,7 @@ void FAccount::loginStart()
 
 void FAccount::loginUserPass(QString user, QString pass)
 {
-	debugMessage("account->loginUserPass()");
+    debugMessage("account->loginUserPass()");
 	username = user;
 	password = pass;
 	valid = true;
@@ -75,8 +79,8 @@ void FAccount::loginUserPass(QString user, QString pass)
 
 FSession *FAccount::getSession(QString sessionid)
 {
-	//debugMessage("account->getSession()");
-	int i;
+    //debugMessage("account->getSession()");
+    int i;
 	//Find existing session, if any.
 	for(i = 0; i < charactersessions.length(); i++) {
 		if(charactersessions[i]->sessionid == sessionid) {

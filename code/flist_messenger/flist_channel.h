@@ -25,9 +25,7 @@ public:
 	explicit FChannel(QObject *parent, FSession *session, QString name, QString title);
 
 	bool isCharacterPresent(QString charactername) {return characterlist.contains(charactername.toLower());}
-	bool isCharacterOperator(QString charactername) {return operatorlist.contains(charactername.toLower());}
-	//todo: Figure out a better function name than 'isJoined'.
-	bool isJoined() {return joined;}
+    bool isCharacterOperator(QString charactername) {return operatorlist.contains(charactername.toLower());}
 
 	void addCharacter(QString charactername, bool notify);
 	void removeCharacter(QString charactername);
@@ -38,27 +36,27 @@ public:
 	void join();
 	void leave();
 
-	QString getTitle() {return title;}
-	void setTitle(QString title) {this->title = title;}
+    bool joined() {return _joined;}
+    QString title() {return _title;}
+    QString name() {return _name;}
+    QString description() {return _description;}
 
-	QString getDescription() {return description;}
-	void setDescription(QString &newdescription) {description = newdescription;}
+    void setTitle(const QString &newTitle) {this->_title = newTitle;}
+    void setDescription(const QString &newdescription) {_description = newdescription;}
 
 signals:
 
 public slots:
 
-public:
-	//todo: Make the following private.
-	FSession *session;
-	QString name; //<Server name for this channel/room
-	QString title; //<Title for this room.
-	QString description; //<Long description for the channel/room.
 private:
+    FSession *session;
+    QString _name; //<Server name for this channel/room
+    QString _title; //<Title for this room.
+    QString _description; //<Long description for the channel/room.
 	QMap<QString, QString> characterlist; //<List of all characters within a channel.
 	QMap<QString, QString> operatorlist; //<List of all channel operators.
+    bool _joined; //<Indicates if this session is currently joined with this channel.
 public:
-	bool joined; //<Indicates if this session is currently joined with this channel.
 	ChannelMode mode; //<The mode of the channel.
 	ChannelType type; 
 };
