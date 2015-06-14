@@ -1,4 +1,5 @@
 #include "ui/channellistdialog.h"
+#include "flist_global.h"
 
 FChannelListModel::FChannelListModel()
 {
@@ -102,27 +103,32 @@ const FChannelSummary &FChannelListModel::byIndex(uint index) const
 
 FChannelListSortProxy::FChannelListSortProxy(QObject *parent) :
 	QSortFilterProxyModel(parent),
-	_showType(FChannelSummary::Unknown)
+    _showType(FChannelSummary::Unknown),
+    _showEmpty(false)
 {
 	setDynamicSortFilter(true);
 	setSortRole(FChannelListModel::SortKeyRole);
 	setFilterRole(FChannelListModel::SortKeyRole);
-	setFilterKeyColumn(FChannelListModel::colTitle);
+    setFilterKeyColumn(-1);
 	setSortLocaleAware(true);
 	setSortCaseSensitivity(Qt::CaseInsensitive);
 	setFilterCaseSensitivity(Qt::CaseInsensitive);
 }
 
+// Prevent displaying lists with zero characters
 bool FChannelListSortProxy::filterAcceptsRow(int source_row, const QModelIndex &source_parent) const
 {
 	if (!QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent))
 	{ return false; }
 
-	if (_showType == FChannelSummary::Unknown) { return true; }
 
-	QModelIndex i = sourceModel()->index(source_row, FChannelListModel::colType, source_parent);
+    QModelIndex i = sourceModel()->index(source_row, FChannelListModel::colMembers, source_parent);
+    int nMembers = sourceModel()->data(i,  FChannelListModel::SortKeyRole).toInt();
+    if ((!_showEmpty) && (nMembers == 0)) { return false; }
+    if (_showType == FChannelSummary::Unknown) { return true; }
+    i = sourceModel()->index(source_row, FChannelListModel::colType, source_parent);    
 	FChannelSummary::Type t = static_cast<FChannelSummary::Type>(sourceModel()->data(i, FChannelListModel::SortKeyRole).toInt());
-	return t == _showType;
+    return t == _showType;
 }
 
 FChannelSummary::Type FChannelListSortProxy::showType()
@@ -134,6 +140,12 @@ void FChannelListSortProxy::setShowType(FChannelSummary::Type t)
 {
 	_showType = t;
 	invalidate();
+}
+
+void FChannelListSortProxy::setShowEmpty(bool show)
+{
+    _showEmpty = show;
+    invalidate();
 }
 
 FChannelListDialog::FChannelListDialog(FChannelListModel *m, QWidget *parent = 0) : QDialog(parent), Ui::FChannelListDialogUi()
@@ -201,4 +213,9 @@ void FChannelListDialog::on_chTypePublic_toggled(bool active)
 void FChannelListDialog::on_chTypePrivate_toggled(bool active)
 {
 	if(active) datasort->setShowType(FChannelSummary::Private);
+}
+
+void FChannelListDialog::on_chShowEmpty_toggled(bool showEmpty)
+{
+    datasort->setShowEmpty(showEmpty);
 }

@@ -6,11 +6,11 @@
 FChannel::FChannel(QObject *parent, FSession *session, QString name, QString title) :
 	QObject(parent),
 	session(session),
-	name(name),
-	title(title),
+    _name(name),
+    _title(title),
 	characterlist(),
 	operatorlist(),
-	joined(true),
+    _joined(true),
 	mode(CHANNEL_MODE_BOTH)
 {
 	if(name.startsWith("ADH-")) {
@@ -25,11 +25,11 @@ void FChannel::addCharacter(QString charactername, bool notify) {
 	if(!characterlist.contains(lowername) || characterlist.value(lowername).isEmpty()) {
 		characterlist[lowername] = charactername;
 	}
-	session->account->ui->addChannelCharacter(session, name, charactername, notify);
+    session->account->ui->addChannelCharacter(session, this->name(), charactername, notify);
 }
 void FChannel::removeCharacter(QString charactername) {
 	characterlist.remove(charactername.toLower());
-	session->account->ui->removeChannelCharacter(session, name, charactername);
+    session->account->ui->removeChannelCharacter(session, this->name(), charactername);
 } 
 
 void FChannel::addOperator(QString charactername) {
@@ -37,24 +37,24 @@ void FChannel::addOperator(QString charactername) {
 	if(!operatorlist.contains(lowername) || operatorlist.value(lowername).isEmpty()) {
 		operatorlist[lowername] = charactername;
 	}
-	session->account->ui->setChannelOperator(session, name, charactername, true);	
+    session->account->ui->setChannelOperator(session, this->name(), charactername, true);
 }
 void FChannel::removeOperator(QString charactername) {
 	operatorlist.remove(charactername.toLower());
-	session->account->ui->setChannelOperator(session, name, charactername, false);	
+    session->account->ui->setChannelOperator(session, this->name(), charactername, false);
 }
 
 
 void FChannel::join()
 {
-	joined = true;
-	session->account->ui->joinChannel(session, name);
+    _joined = true;
+    session->account->ui->joinChannel(session, this->name());
 }
 
 void FChannel::leave()
 {
-	joined = false;
+    _joined = false;
 	characterlist.clear();
 	operatorlist.clear();
-	session->account->ui->leaveChannel(session, name);	
+    session->account->ui->leaveChannel(session, this->name());
 }

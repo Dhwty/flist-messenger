@@ -100,7 +100,7 @@ FChannel *FSession::addChannel(QString name, QString title)
 	if(channellist.contains(name)) {
 		channel = channellist[name];
 		//Ensure that the channel's title is set correctly for ad-hoc channels.
-		if(name != title && channel->getTitle() != title) {
+        if(name != title && channel->title() != title) {
 			channel->setTitle(title);
 		}
 		return channel;
@@ -310,7 +310,7 @@ void FSession::wsSend(std::string &input)
 		//textEdit->append ( "Attempted to send a message, but client is disconnected." );
 	} else {
 		fix_broken_escaped_apos ( input );
-		debugMessage( ">>" + input);
+        // debugMessage( ">>" + input);
 		QByteArray buf;
 		QDataStream stream ( &buf, QIODevice::WriteOnly );
 		input.resize ( input.length() );
@@ -356,7 +356,7 @@ void FSession::wsSend(std::string &input)
 
 void FSession::wsRecv(std::string packet)
 {
-	debugMessage("<<" + packet);
+    // debugMessage("<<" + packet);
 	try {
 		std::string cmd = packet.substr(0, 3);
 		JSONNode nodes;
@@ -672,7 +672,7 @@ COMMAND(RMO)
 		return;
 	}
 	QString message = "[session=%1]%2[/session]'s mode has been changed to: %3";
-	message = bbcodeparser->parse(message).arg(channel->getTitle()).arg(channelname).arg(modedescription);
+    message = bbcodeparser->parse(message).arg(channel->title()).arg(channelname).arg(modedescription);
 	account->ui->setChannelMode(this, channelname, channel->mode);
 	account->ui->messageChannel(this, channelname, message, MESSAGE_TYPE_CHANNEL_MODE, true);
 }
@@ -784,7 +784,7 @@ COMMAND(CBUCKU)
 		debugMessage(QString("[SERVER BUG] Was told about character '%1' being %4 from channel '%2' by '%3', but the channel '%2' is unknown (or never joined).  %5").arg(charactername).arg(channelname).arg(operatorname).arg(kicktype).arg(QString::fromStdString(rawpacket)));
 		return;
 	}
-	if(!channel->isJoined()) {
+    if(!channel->joined()) {
 		debugMessage(QString("[SERVER BUG] Was told about character '%1' being %4 from channel '%2' by '%3', but this session is no longer joined with channel '%2'.  %5").arg(charactername).arg(channelname).arg(operatorname).arg(kicktype).arg(QString::fromStdString(rawpacket)));
 		return;
 	}
@@ -795,7 +795,7 @@ COMMAND(CBUCKU)
 	if(!channel->isCharacterOperator(operatorname) && !isCharacterOperator(operatorname)) {
 		debugMessage(QString("[SERVER BUG] Was told about character '%1' being %4 from channel '%2' by '%3', but '%3' is not a channel operator or a server operator!  %5").arg(charactername).arg(channelname).arg(operatorname).arg(kicktype).arg(QString::fromStdString(rawpacket)));
 	}
-	QString message = QString("<b>%1</b> has %4 <b>%2</b> from %3.").arg(operatorname).arg(charactername).arg(channel->getTitle()).arg(kicktype);
+    QString message = QString("<b>%1</b> has %4 <b>%2</b> from %3.").arg(operatorname).arg(charactername).arg(channel->title()).arg(kicktype);
 	if(charactername == character) {
 		account->ui->messageChannel(this, channelname, message, banned ? MESSAGE_TYPE_KICKBAN : MESSAGE_TYPE_KICK, true, true);
 		channel->removeCharacter(charactername);
@@ -1334,7 +1334,7 @@ void FSession::sendChannelMessage(QString channelname, QString message)
 		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but the channel is unknown or has never been joined. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
 		return;
 	}
-	if(!channel->isJoined()) {
+    if(!channel->joined()) {
 		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but you are not currently in the channel. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
 		return;
 	}
@@ -1362,7 +1362,7 @@ void FSession::sendChannelAdvertisement(QString channelname, QString message)
 		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but the channel is unknown or has never been joined. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
 		return;
 	}
-	if(!channel->isJoined()) {
+    if(!channel->joined()) {
 		account->ui->messageSystem(this, QString("Tried to send a message to '%1' but you are not currently in the channel. Message: %2").arg(channelname).arg(message), MESSAGE_TYPE_FEEDBACK);
 		return;
 	}

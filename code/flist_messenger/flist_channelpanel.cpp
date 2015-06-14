@@ -153,8 +153,8 @@ void FChannelPanel::remChar ( FCharacter* character )
 
 void FChannelPanel::sortChars()
 {
-        // Gnome Sort. :3
-        int i;
+    // Gnome Sort. :3
+    int i;
 
 	QList<int> chancharlevels;
 
@@ -188,7 +188,7 @@ void FChannelPanel::sortChars()
                 }
         }
 
-        //std::cout << "Gnome sorted userlist~." << std::endl;
+    //std::cout << "Gnome sorted userlist~." << std::endl;
 }
 
 bool FChannelPanel::isOp ( FCharacter* character )

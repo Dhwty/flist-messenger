@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>458</width>
     <height>580</height>
    </rect>
   </property>
@@ -38,7 +38,7 @@
      <item>
       <widget class="QRadioButton" name="chTypePublic">
        <property name="text">
-        <string>&amp;Public</string>
+        <string>Pub&amp;lic</string>
        </property>
        <property name="checked">
         <bool>true</bool>
@@ -48,7 +48,7 @@
      <item>
       <widget class="QRadioButton" name="chTypePrivate">
        <property name="text">
-        <string>P&amp;rivate</string>
+        <string>Pri&amp;vate</string>
        </property>
       </widget>
      </item>
@@ -137,11 +137,28 @@
     </widget>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Close</set>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QCheckBox" name="chShowEmpty">
+       <property name="text">
+        <string>Show Empty Channels</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Close</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
@@ -163,8 +180,8 @@
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>199</x>
-     <y>559</y>
+     <x>450</x>
+     <y>572</y>
     </hint>
     <hint type="destinationlabel">
      <x>199</x>
