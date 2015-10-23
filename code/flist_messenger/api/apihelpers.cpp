@@ -2,12 +2,19 @@
 
 #include <QUrl>
 #include <QByteArray>
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+#   include <QUrlQuery>
+#endif
 
 namespace FHttpApi {
 
 QNetworkReply *Endpoint::request(QUrl u, QHash<QString, QString> params)
 {
+#if QT_VERSION >= 0x050000
+	QUrlQuery encParams;
+#else
 	QUrl encParams;
+#endif
 	QHashIterator<QString,QString> i(params);
 	while(i.hasNext())
 	{
@@ -18,7 +25,7 @@ QNetworkReply *Endpoint::request(QUrl u, QHash<QString, QString> params)
 	QNetworkRequest request(u);
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
 #if QT_VERSION >= 0x050000
-	QIODevice postData = encParams.query(QUrl::FullyEncoded).toUtf8();
+	QByteArray postData = encParams.query(QUrl::FullyEncoded).toUtf8();
 #else
 	QByteArray postData = encParams.encodedQuery();
 #endif
