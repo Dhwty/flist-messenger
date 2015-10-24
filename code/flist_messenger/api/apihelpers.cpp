@@ -6,14 +6,20 @@
 #   include <QUrlQuery>
 #endif
 
+#include "api/querystringbuilder.h"
+
 namespace FHttpApi {
 
 QNetworkReply *Endpoint::request(QUrl u, QHash<QString, QString> params)
 {
+#if false
 #if QT_VERSION >= 0x050000
 	QUrlQuery encParams;
 #else
 	QUrl encParams;
+#endif
+#else
+	QueryStringBuilder encParams;
 #endif
 	QHashIterator<QString,QString> i(params);
 	while(i.hasNext())
@@ -24,8 +30,12 @@ QNetworkReply *Endpoint::request(QUrl u, QHash<QString, QString> params)
 
 	QNetworkRequest request(u);
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+#if false
 #if QT_VERSION >= 0x050000
 	QByteArray postData = encParams.query(QUrl::FullyEncoded).toUtf8();
+#else
+	QByteArray postData = encParams.encodedQuery();
+#endif
 #else
 	QByteArray postData = encParams.encodedQuery();
 #endif
