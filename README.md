@@ -46,3 +46,12 @@ By default, the project will compile with the options '-Wall' and '-Werror' on. 
 Versions for Other Platforms
 ==============
 0.8.5 for Open Pandora: http://repo.openpandora.org/?page=detail&app=fchat-001
+
+---------------
+
+Whitespace
+==========
+So there's no doubt:
+
+* Indent with one tab
+* Align with spaces
