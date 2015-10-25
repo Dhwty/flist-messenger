@@ -20,7 +20,7 @@ FAccount::FAccount(QObject *parent, FServer *server) :
 void FAccount::loginSslErrors( QList<QSslError> sslerrors )
 {
 	//todo: handle SSL error and pass on error message, or suppress if appropriate
-    (void) sslerrors;
+	(void) sslerrors;
 }
 
 void FAccount::onLoginError(QString error_id, QString error_message)

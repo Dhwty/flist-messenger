@@ -15,14 +15,16 @@ FAboutDialog::FAboutDialog(QWidget *parent) :
 	ui(new Ui::FAboutDialog)
 {
 	ui->setupUi(this);
-	ui->headerText->setText(QString(
-				"<span style=\" font-size:12pt; font-weight:600;\">"
-				FLIST_NAME
-				"</span><br/><span style=\"font-weight:600;\">"
-				FLIST_VERSIONNUM
-				"</span><br/>Using Qt "
-				QT_VERSION_STR
-				));
+
+	QString hdr;
+	hdr = "<span style=\" font-size:12pt; font-weight:600;\">"
+	      FLIST_NAME
+	      "</span><br/><span style=\"font-weight:600;\">"
+	      FLIST_VERSIONNUM
+	      "</span><br/>Using Qt "
+	      QT_VERSION_STR;
+
+	ui->headerText->setText(hdr);
 	QPushButton *close = ui->buttonBox->button(QDialogButtonBox::Close);
 	close->setIcon(QIcon(":/images/cross.png"));
 	setWindowTitle("About F-list Messenger");

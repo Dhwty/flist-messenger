@@ -42,7 +42,7 @@ QString flist_messenger::settingsPath = "./settings.ini";
 
 void flist_messenger::init()
 {
-        settingsPath = QApplication::applicationDirPath() + "/settings.ini";
+	settingsPath = QApplication::applicationDirPath() + "/settings.ini";
 }
 
 flist_messenger::flist_messenger(bool d)
@@ -51,38 +51,38 @@ flist_messenger::flist_messenger(bool d)
 	account = server->addAccount();
 	account->ui = this;
 	//account = new FAccount(0, 0);
-        doingWS = true;
-        notificationsAreaMessageShown = false;
-        console = 0;
-        chatview = 0;
-        //tcpSock = 0;
-        debugging = d;
-        disconnected = true;
-        friendsDialog = 0;
+	doingWS = true;
+	notificationsAreaMessageShown = false;
+	console = 0;
+	chatview = 0;
+	//tcpSock = 0;
+	debugging = d;
+	disconnected = true;
+	friendsDialog = 0;
 	addIgnoreDialog = 0;
-        makeRoomDialog = 0;
-				setStatusDialog = 0;
-				ci_dialog = 0;
-        recentCharMenu = 0;
-        recentChannelMenu = 0;
-        reportDialog = 0;
+	makeRoomDialog = 0;
+	setStatusDialog = 0;
+	ci_dialog = 0;
+	recentCharMenu = 0;
+	recentChannelMenu = 0;
+	reportDialog = 0;
 	helpDialog = 0;
 	aboutDialog = 0;
-        timeoutDialog = 0;
-        settingsDialog = 0;
-        trayIcon = 0;
-        trayIconMenu = 0;
-        channelSettingsDialog = 0;
-        createTrayIcon();
-        loadSettings();
-        loginController = new FLoginController(fapi,account,this);
-        setupLoginBox();
+	timeoutDialog = 0;
+	settingsDialog = 0;
+	trayIcon = 0;
+	trayIconMenu = 0;
+	channelSettingsDialog = 0;
+	createTrayIcon();
+	loadSettings();
+	loginController = new FLoginController(fapi,account,this);
+	setupLoginBox();
 	cl_data = new FChannelListModel();
 	cl_dialog = 0;
 	cl_data = new FChannelListModel();
 	cl_dialog = 0;
 
-        FCharacter::initClass();
+	FCharacter::initClass();
 	FChannelPanel::initClass();
 }
 void flist_messenger::closeEvent(QCloseEvent *event)
