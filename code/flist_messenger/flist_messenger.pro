@@ -70,7 +70,8 @@ HEADERS += \
     ui/characterinfodialog.h \
     ui/channellistdialog.h \
     ui/aboutdialog.h \
-    ui/makeroomdialog.h
+    ui/makeroomdialog.h \
+    api/querystringbuilder.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -108,7 +109,8 @@ SOURCES += \
     ui/characterinfodialog.cpp \
     ui/channellistdialog.cpp \
     ui/aboutdialog.cpp \
-    ui/makeroomdialog.cpp
+    ui/makeroomdialog.cpp \
+    api/querystringbuilder.cpp
 RESOURCES += resources.qrc
 FORMS += \
     flist_loginwindow.ui \
