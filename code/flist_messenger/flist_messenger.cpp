@@ -3295,6 +3295,14 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 			break;
 		case MESSAGE_TYPE_IGNORE_UPDATE:
 			break;
+		case MESSAGE_TYPE_NOTE:
+			soundPlayer.play(FSound::SOUND_NEWNOTE);
+			break;
+		case MESSAGE_TYPE_FRIEND:
+			soundPlayer.play(FSound::SOUND_FRIENDUPDATE);
+			break;
+		case MESSAGE_TYPE_BOOKMARK:
+			break;
 		default:
 			debugMessage("Unhandled sound for message type " + QString::number(messagetype) + " for message '" + message + "'.");
 		}

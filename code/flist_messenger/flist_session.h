@@ -39,6 +39,8 @@ public:
 	FCharacter *getCharacter(QString name) {return characterlist.contains(name) ? characterlist[name] : 0;}
 	void removeCharacter(QString name);
 	int getCharacterCount() {return characterlist.count();}
+	QString getCharacterUrl(QString name) {return "https://www.f-list.net/c/" + name + "/";} //todo: HTTP request character encoding. //todo: Get server address from FServer?
+	QString getCharacterHtml(QString name);
 
 	QStringList &getFriendsList() {return friendslist;}
 	QStringList &getIgnoreList() {return ignorelist;}

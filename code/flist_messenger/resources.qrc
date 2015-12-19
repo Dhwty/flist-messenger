@@ -46,6 +46,7 @@
         <file>images/users.png</file>
         <file>sounds/attention.wav</file>
         <file>sounds/chat.wav</file>
+        <file>sounds/friendupdate.wav</file>
         <file>sounds/login.wav</file>
         <file>sounds/modalert.wav</file>
         <file>sounds/newnote.wav</file>

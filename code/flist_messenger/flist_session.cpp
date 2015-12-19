@@ -65,6 +65,26 @@ void FSession::removeCharacter(QString name)
 	}
 }
 
+/**
+Convert a character's name into a formated hyperlinked HTML text. It will use the correct colors if they're known.
+ */
+QString FSession::getCharacterHtml(QString name) {
+	QString html = "<b><a style=\"color: %1\" href=\"%2\">%3</a></b>";
+	FCharacter *character = getCharacter(name);
+	if(character) {
+		html = html
+			.arg(character->genderColor().name())
+			.arg(character->getUrl())
+			.arg(name);
+	} else {
+		html = html
+			.arg(FCharacter::genderColors[FCharacter::GENDER_OFFLINE_UNKNOWN].name())
+			.arg(getCharacterUrl(name))
+			.arg(name);
+	}
+	return html;
+}
+
 
 /**
 Tell the server that we wish to join the given channel.
@@ -1010,13 +1030,23 @@ QString FSession::makeMessage(QString message, QString charactername, FCharacter
 		messagebody = bbcodeparser->parse(message);
 	}
 	QString messagefinal;
-	messagefinal = QString("<b><a style=\"color: %1\" href=\"%2\">%3%4%5</a></b> %6")
-		.arg(character->genderColor().name())
-		.arg(character->getUrl())
-		.arg(characterprefix)
-		.arg(charactername) //todo: HTML escape
-		.arg(characterpostfix)
-		.arg(messagebody);
+	if(character != NULL) {
+		messagefinal = QString("<b><a style=\"color: %1\" href=\"%2\">%3%4%5</a></b> %6")
+			.arg(character->genderColor().name())
+			.arg(character->getUrl())
+			.arg(characterprefix)
+			.arg(charactername) //todo: HTML escape
+			.arg(characterpostfix)
+			.arg(messagebody);
+	} else {
+		messagefinal = QString("<b><a style=\"color: %1\" href=\"%2\">%3%4%5</a></b> %6")
+			.arg(FCharacter::genderColors[FCharacter::GENDER_OFFLINE_UNKNOWN].name())
+			.arg(getCharacterUrl(charactername))
+			.arg(characterprefix)
+			.arg(charactername) //todo: HTML escape
+			.arg(characterpostfix)
+			.arg(messagebody);
+	}
 	if(message.startsWith("/me")) {
 		messagefinal = QString("%1<i>*%2</i>%3")
 			.arg(prefix)
@@ -1264,10 +1294,85 @@ COMMAND(RTB)
 	(void)rawpacket; (void)nodes;
 	//Real time bridge.
 	//RTB {"type":typeenum, ???}
-	//RTB {"type":"note", "sender": "Character Name", "subject": "Subject Text"}
+	//RTB {"type":"note", "sender": "Character Name", "subject": "Subject Text", "id":id}
 	//RTB {"type":"trackadd","name":"Character Name"}
+	//RTB {"type":"trackrem","name":"Character Name"}
+	//RTB {"type":"friendrequest","name":"Character Name"}
+	//RTB {"type":"friendadd","name":"Character Name"}
+	//RTB {"type":"friendremove","name":"Character Name"}
+
 	//todo: Determine all the RTB messages.
-	debugMessage(QString("Real time bridge: %1").arg(QString::fromStdString(rawpacket)));
+	QString type = nodes.at("type").as_string().c_str();
+	if(type == "note") {
+		QString charactername = nodes.at("sender").as_string().c_str();
+		QString subject = nodes.at("subject").as_string().c_str();
+		QString id = nodes.at("id").as_string().c_str();
+		
+		QString message = "Note recieved from %1: <a href=\"https://www.f-list.net/view_note.php?note_id=%2\">%3</a>";
+		message = message
+			.arg(getCharacterHtml(charactername))
+			.arg(id)
+			.arg(subject);
+		FMessage fmessage(message, MESSAGE_TYPE_NOTE);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_NOTE);
+	} else if(type == "trackadd") {
+		QString charactername = nodes.at("name").as_string().c_str();
+		if(!friendslist.contains(charactername)) {
+			friendslist.append(charactername);
+			//debugMessage(QString("Added friend '%1'.").arg(charactername));
+		}
+		QString message = "Bookmark update: %1 has been added to your bookmarks."; //todo: escape characters?
+		message = message.arg(getCharacterHtml(charactername));
+		FMessage fmessage(message, MESSAGE_TYPE_BOOKMARK);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_BOOKMARK);
+	} else if(type == "trackrem") {
+		//todo: Update bookmark list? (Removing has the complication in that bookmarks and friends aren't distinguished and multiple instances of friends may exist.)
+		QString charactername = nodes.at("name").as_string().c_str();
+		QString message = "Bookmark update: %1 has been removed from your bookmarks."; //todo: escape characters?
+		message = message.arg(getCharacterHtml(charactername));
+		FMessage fmessage(message, MESSAGE_TYPE_BOOKMARK);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_BOOKMARK);
+	} else if(type == "friendrequest") {
+		QString charactername = nodes.at("name").as_string().c_str();
+		QString message = "Friend update: %1 has requested to be friends with one of your characters. Visit <a href=\"%2\">%2</a> to view the request on F-List."; //todo: escape characters?
+		message = message.arg(charactername).arg("https://www.f-list.net/messages.php?show=friends");
+		FMessage fmessage(message, MESSAGE_TYPE_FRIEND);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_FRIEND);
+	} else if(type == "friendadd") {
+		QString charactername = nodes.at("name").as_string().c_str();
+		if(!friendslist.contains(charactername)) {
+			friendslist.append(getCharacterHtml(charactername));
+			//debugMessage(QString("Added friend '%1'.").arg(charactername));
+		}
+		QString message = "Friend update: %1 has become friends with one of your characters."; //todo: escape characters?
+		message = message.arg(getCharacterHtml(charactername));
+		FMessage fmessage(message, MESSAGE_TYPE_FRIEND);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_FRIEND);
+	} else if(type == "friendremove") {
+		//todo: Update bookmark/friend list? (Removing has the complication in that bookmarks and friends aren't distinguished and multiple instances of friends may exist.)
+		QString charactername = nodes.at("name").as_string().c_str();
+		QString message = "Friend update: %1 was removed as a friend from one of your characters."; //todo: escape characters?
+		message = message.arg(getCharacterHtml(charactername));
+		FMessage fmessage(message, MESSAGE_TYPE_FRIEND);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_FRIEND);
+	} else {
+		QString message = "Received an unknown/unhandled Real Time Bridge message of type \"%1\". Received packet: %2"; //todo: escape characters?
+		message = message.arg(type).arg(rawpacket.c_str());
+		account->ui->messageSystem(this, message, MESSAGE_TYPE_ERROR);
+	}
+	//debugMessage(QString("Real time bridge: %1").arg(QString::fromStdString(rawpacket)));
 }
 
 COMMAND(ZZZ)

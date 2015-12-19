@@ -51,6 +51,7 @@ void FCharacter::initClass()
 	genderStrings[ (quint32)GENDER_HERM] = "Hermaphrodite";
 	genderStrings[ (quint32)GENDER_MALEHERM] = "Male Hermaphrodite";
 	genderStrings[ (quint32)GENDER_CUNTBOY] = "Cunt-Boy";
+	genderStrings[ (quint32)GENDER_OFFLINE_UNKNOWN] = "Offline/Unknown";
 
 	genderColors[ (quint32)GENDER_NONE] = QColor ( 255, 255, 255 );
 	genderColors[ (quint32)GENDER_MALE] = QColor ( 102, 247, 255 );
@@ -60,6 +61,7 @@ void FCharacter::initClass()
 	genderColors[ (quint32)GENDER_HERM] = QColor ( 212, 102, 255 );
 	genderColors[ (quint32)GENDER_MALEHERM] = QColor ( 255, 189, 102 );
 	genderColors[ (quint32)GENDER_CUNTBOY] = QColor ( 115, 102, 255 );
+	genderColors[ (quint32)GENDER_OFFLINE_UNKNOWN] = QColor ( 127, 127, 127 );
 
 	QSettings colset("./colors.ini", QSettings::IniFormat);
 	if(colset.status() != QSettings::NoError)
@@ -98,6 +100,10 @@ void FCharacter::initClass()
 	colstr = colset.value("gender/cuntboy").toStringList();
 	if(colstr.size() >= 2) {
 		genderColors[ (quint32)GENDER_CUNTBOY] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
+	}
+	colstr = colset.value("gender/offlineunknown").toStringList();
+	if(colstr.size() >= 2) {
+		genderColors[ (quint32)GENDER_OFFLINE_UNKNOWN] = QColor( colstr[0].toInt(), colstr[1].toInt(), colstr[2].toInt() );
 	}
 }
 
