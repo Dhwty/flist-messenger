@@ -194,6 +194,7 @@ QString BBCodeParser::parse ( QString& input )
                 delete t;
         }
         QString result = stack->top()->content;
+	delete stack->pop();
         delete stack;
         stack = 0;
         result.replace("\n", "<br/>");
