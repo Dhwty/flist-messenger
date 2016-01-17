@@ -1146,22 +1146,40 @@ COMMAND(RLL)
 	//RLL {"type": "bottle", "message": "Message Text", "channel": "Channel Name", "character": "Character Name", "target": "Character Name"}
 	//Dice roll:
 	//RLL {"type": "dice", "message": "Message Text", "channel": "Channel Name", "character": "Character Name", "results": [number], "endresult": number}
-	QString channelname = nodes.at("channel").as_string().c_str();
-	QString charactername = nodes.at("character").as_string().c_str();
-	QString message = nodes.at("message").as_string().c_str();
-	FChannel *channel = getChannel(channelname);
-	//FCharacter *character = getCharacter(charactername);
-	if(!channel) {
-		debugMessage(QString("[SERVER BUG] Received a dice roll result from the channel '%1' but the channel '%1' is unknown. %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
-		//todo: Dump the message to console anyway?
-		return;
+	//PM roll:
+	//RLL {"type": "dice", "message": "Message Text", "recipient": "Partner Character Name", "character": "Rolling Character Name", "endresult": number, "rolls": ["2d20", "3", "-1d10"], "results": [number, number, number]}
+	QString channelname;
+	try {
+		channelname = nodes.at("channel").as_string().c_str();
+	} catch(std::out_of_range) {
 	}
+	QString charactername = nodes.at("character").as_string().c_str();
+	if(channelname.isEmpty() && charactername == this->character) {
+		//We're the character rolling in a PM, so the "recipient" field contains the character we want.
+		charactername = nodes.at("recipient").as_string().c_str();
+	}
+	QString message = nodes.at("message").as_string().c_str();
 	if(isCharacterIgnored(charactername)) {
 		//Ignore message
 		return;
 	}
-	//todo: Maybe extract character name and make it a link and colored like normal.
-	account->ui->messageChannel(this, channelname, bbcodeparser->parse(message), MESSAGE_TYPE_ROLL, true);
+	if(!channelname.isEmpty()) {
+		FChannel *channel = getChannel(channelname);
+		//FCharacter *character = getCharacter(charactername);
+		if(!channel) {
+			debugMessage(QString("[SERVER BUG] Received a dice roll result from the channel '%1' but the channel '%1' is unknown. %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
+			//todo: Dump the message to console anyway?
+			return;
+		}
+		//todo: Maybe extract character name and make it a link and colored like normal.
+		account->ui->messageChannel(this, channelname, bbcodeparser->parse(message), MESSAGE_TYPE_ROLL, true);
+	} else {
+		account->ui->addCharacterChat(this, charactername);
+		QString messagefinal = bbcodeparser->parse(message);
+		FMessage fmessage(messagefinal, MESSAGE_TYPE_ROLL);
+		fmessage.toCharacter(charactername).fromCharacter(this->character).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+	}
 }
 
 COMMAND(TPN)

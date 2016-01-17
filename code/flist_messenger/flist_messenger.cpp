@@ -2450,7 +2450,7 @@ void flist_messenger::parseInput()
                 }
                 else if ( slashcommand == "/roll" )
                 {
-			if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE || currentPanel->type() == FChannel::CHANTYPE_PM)
+			if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE)
                         {
                                 QString err("You can't use that in this panel.");
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
@@ -2466,9 +2466,14 @@ void flist_messenger::parseInput()
                                 }
                                 std::string out = "RLL ";
                                 JSONNode node;
-                                JSONNode channode("channel", currentPanel->getChannelName().toStdString());
-                                JSONNode dicenode("dice", roll.toStdString());
-                                node.push_back(channode);
+				if(currentPanel->type() == FChannel::CHANTYPE_PM) {
+					JSONNode charnode("recipient", currentPanel->recipient().toStdString());
+					node.push_back(charnode);
+				} else {
+					JSONNode channode("channel", currentPanel->getChannelName().toStdString());
+					node.push_back(channode);
+				}
+				JSONNode dicenode("dice", roll.toStdString());
                                 node.push_back(dicenode);
                                 out += node.write();
                                 sendWS(out);
