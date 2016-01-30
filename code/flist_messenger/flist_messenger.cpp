@@ -1921,12 +1921,16 @@ void flist_messenger::openPMTab ( QString &character )
         {
 		channelList[panelname] = new FChannelPanel(this, session->getSessionID(), panelname, character, FChannel::CHANTYPE_PM);
 		FCharacter* charptr = session->getCharacter(character);
-                QString paneltitle = charptr->PMTitle();
+                QString paneltitle;
+		if(charptr != NULL) {
+			paneltitle = charptr->PMTitle();
+		} else {
+			paneltitle = "Private chat with " + character;
+		}
 		FChannelPanel* pmPanel = channelList.value(panelname);
                 pmPanel->setTitle ( paneltitle );
                 pmPanel->setRecipient ( character );
                 pmPanel->pushButton = addToActivePanels ( panelname, character, paneltitle );
-                plainTextEdit->clear();
                 switchTab ( panelname );
         }
 }
@@ -2099,6 +2103,7 @@ void flist_messenger::parseInput()
                 else if ( slashcommand == "/priv" )
                 {
                         QString character = inputText.mid ( 6 ).simplified();
+			plainTextEdit->clear();
                         openPMTab ( character );
                         success = true;
                 }
