@@ -65,6 +65,26 @@ void FSession::removeCharacter(QString name)
 	}
 }
 
+/**
+Convert a character's name into a formated hyperlinked HTML text. It will use the correct colors if they're known.
+ */
+QString FSession::getCharacterHtml(QString name) {
+	QString html = "<b><a style=\"color: %1\" href=\"%2\">%3</a></b>";
+	FCharacter *character = getCharacter(name);
+	if(character) {
+		html = html
+			.arg(character->genderColor().name())
+			.arg(character->getUrl())
+			.arg(name);
+	} else {
+		html = html
+			.arg(FCharacter::genderColors[FCharacter::GENDER_OFFLINE_UNKNOWN].name())
+			.arg(getCharacterUrl(name))
+			.arg(name);
+	}
+	return html;
+}
+
 
 /**
 Tell the server that we wish to join the given channel.
@@ -1010,13 +1030,23 @@ QString FSession::makeMessage(QString message, QString charactername, FCharacter
 		messagebody = bbcodeparser->parse(message);
 	}
 	QString messagefinal;
-	messagefinal = QString("<b><a style=\"color: %1\" href=\"%2\">%3%4%5</a></b> %6")
-		.arg(character->genderColor().name())
-		.arg(character->getUrl())
-		.arg(characterprefix)
-		.arg(charactername) //todo: HTML escape
-		.arg(characterpostfix)
-		.arg(messagebody);
+	if(character != NULL) {
+		messagefinal = QString("<b><a style=\"color: %1\" href=\"%2\">%3%4%5</a></b> %6")
+			.arg(character->genderColor().name())
+			.arg(character->getUrl())
+			.arg(characterprefix)
+			.arg(charactername) //todo: HTML escape
+			.arg(characterpostfix)
+			.arg(messagebody);
+	} else {
+		messagefinal = QString("<b><a style=\"color: %1\" href=\"%2\">%3%4%5</a></b> %6")
+			.arg(FCharacter::genderColors[FCharacter::GENDER_OFFLINE_UNKNOWN].name())
+			.arg(getCharacterUrl(charactername))
+			.arg(characterprefix)
+			.arg(charactername) //todo: HTML escape
+			.arg(characterpostfix)
+			.arg(messagebody);
+	}
 	if(message.startsWith("/me")) {
 		messagefinal = QString("%1<i>*%2</i>%3")
 			.arg(prefix)
@@ -1116,22 +1146,40 @@ COMMAND(RLL)
 	//RLL {"type": "bottle", "message": "Message Text", "channel": "Channel Name", "character": "Character Name", "target": "Character Name"}
 	//Dice roll:
 	//RLL {"type": "dice", "message": "Message Text", "channel": "Channel Name", "character": "Character Name", "results": [number], "endresult": number}
-	QString channelname = nodes.at("channel").as_string().c_str();
-	QString charactername = nodes.at("character").as_string().c_str();
-	QString message = nodes.at("message").as_string().c_str();
-	FChannel *channel = getChannel(channelname);
-	//FCharacter *character = getCharacter(charactername);
-	if(!channel) {
-		debugMessage(QString("[SERVER BUG] Received a dice roll result from the channel '%1' but the channel '%1' is unknown. %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
-		//todo: Dump the message to console anyway?
-		return;
+	//PM roll:
+	//RLL {"type": "dice", "message": "Message Text", "recipient": "Partner Character Name", "character": "Rolling Character Name", "endresult": number, "rolls": ["2d20", "3", "-1d10"], "results": [number, number, number]}
+	QString channelname;
+	try {
+		channelname = nodes.at("channel").as_string().c_str();
+	} catch(std::out_of_range) {
 	}
+	QString charactername = nodes.at("character").as_string().c_str();
+	if(channelname.isEmpty() && charactername == this->character) {
+		//We're the character rolling in a PM, so the "recipient" field contains the character we want.
+		charactername = nodes.at("recipient").as_string().c_str();
+	}
+	QString message = nodes.at("message").as_string().c_str();
 	if(isCharacterIgnored(charactername)) {
 		//Ignore message
 		return;
 	}
-	//todo: Maybe extract character name and make it a link and colored like normal.
-	account->ui->messageChannel(this, channelname, bbcodeparser->parse(message), MESSAGE_TYPE_ROLL, true);
+	if(!channelname.isEmpty()) {
+		FChannel *channel = getChannel(channelname);
+		//FCharacter *character = getCharacter(charactername);
+		if(!channel) {
+			debugMessage(QString("[SERVER BUG] Received a dice roll result from the channel '%1' but the channel '%1' is unknown. %2").arg(channelname).arg(QString::fromStdString(rawpacket)));
+			//todo: Dump the message to console anyway?
+			return;
+		}
+		//todo: Maybe extract character name and make it a link and colored like normal.
+		account->ui->messageChannel(this, channelname, bbcodeparser->parse(message), MESSAGE_TYPE_ROLL, true);
+	} else {
+		account->ui->addCharacterChat(this, charactername);
+		QString messagefinal = bbcodeparser->parse(message);
+		FMessage fmessage(messagefinal, MESSAGE_TYPE_ROLL);
+		fmessage.toCharacter(charactername).fromCharacter(this->character).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+	}
 }
 
 COMMAND(TPN)
@@ -1264,10 +1312,85 @@ COMMAND(RTB)
 	(void)rawpacket; (void)nodes;
 	//Real time bridge.
 	//RTB {"type":typeenum, ???}
-	//RTB {"type":"note", "sender": "Character Name", "subject": "Subject Text"}
+	//RTB {"type":"note", "sender": "Character Name", "subject": "Subject Text", "id":id}
 	//RTB {"type":"trackadd","name":"Character Name"}
+	//RTB {"type":"trackrem","name":"Character Name"}
+	//RTB {"type":"friendrequest","name":"Character Name"}
+	//RTB {"type":"friendadd","name":"Character Name"}
+	//RTB {"type":"friendremove","name":"Character Name"}
+
 	//todo: Determine all the RTB messages.
-	debugMessage(QString("Real time bridge: %1").arg(QString::fromStdString(rawpacket)));
+	QString type = nodes.at("type").as_string().c_str();
+	if(type == "note") {
+		QString charactername = nodes.at("sender").as_string().c_str();
+		QString subject = nodes.at("subject").as_string().c_str();
+		QString id = nodes.at("id").as_string().c_str();
+		
+		QString message = "Note recieved from %1: <a href=\"https://www.f-list.net/view_note.php?note_id=%2\">%3</a>";
+		message = message
+			.arg(getCharacterHtml(charactername))
+			.arg(id)
+			.arg(subject);
+		FMessage fmessage(message, MESSAGE_TYPE_NOTE);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_NOTE);
+	} else if(type == "trackadd") {
+		QString charactername = nodes.at("name").as_string().c_str();
+		if(!friendslist.contains(charactername)) {
+			friendslist.append(charactername);
+			//debugMessage(QString("Added friend '%1'.").arg(charactername));
+		}
+		QString message = "Bookmark update: %1 has been added to your bookmarks."; //todo: escape characters?
+		message = message.arg(getCharacterHtml(charactername));
+		FMessage fmessage(message, MESSAGE_TYPE_BOOKMARK);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_BOOKMARK);
+	} else if(type == "trackrem") {
+		//todo: Update bookmark list? (Removing has the complication in that bookmarks and friends aren't distinguished and multiple instances of friends may exist.)
+		QString charactername = nodes.at("name").as_string().c_str();
+		QString message = "Bookmark update: %1 has been removed from your bookmarks."; //todo: escape characters?
+		message = message.arg(getCharacterHtml(charactername));
+		FMessage fmessage(message, MESSAGE_TYPE_BOOKMARK);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_BOOKMARK);
+	} else if(type == "friendrequest") {
+		QString charactername = nodes.at("name").as_string().c_str();
+		QString message = "Friend update: %1 has requested to be friends with one of your characters. Visit <a href=\"%2\">%2</a> to view the request on F-List."; //todo: escape characters?
+		message = message.arg(charactername).arg("https://www.f-list.net/messages.php?show=friends");
+		FMessage fmessage(message, MESSAGE_TYPE_FRIEND);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_FRIEND);
+	} else if(type == "friendadd") {
+		QString charactername = nodes.at("name").as_string().c_str();
+		if(!friendslist.contains(charactername)) {
+			friendslist.append(getCharacterHtml(charactername));
+			//debugMessage(QString("Added friend '%1'.").arg(charactername));
+		}
+		QString message = "Friend update: %1 has become friends with one of your characters."; //todo: escape characters?
+		message = message.arg(getCharacterHtml(charactername));
+		FMessage fmessage(message, MESSAGE_TYPE_FRIEND);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_FRIEND);
+	} else if(type == "friendremove") {
+		//todo: Update bookmark/friend list? (Removing has the complication in that bookmarks and friends aren't distinguished and multiple instances of friends may exist.)
+		QString charactername = nodes.at("name").as_string().c_str();
+		QString message = "Friend update: %1 was removed as a friend from one of your characters."; //todo: escape characters?
+		message = message.arg(getCharacterHtml(charactername));
+		FMessage fmessage(message, MESSAGE_TYPE_FRIEND);
+		fmessage.toUser().toCharacter(charactername).fromCharacter(charactername).fromSession(sessionid);
+		account->ui->messageMessage(fmessage);
+		//account->ui->messageSystem(this, message, MESSAGE_TYPE_FRIEND);
+	} else {
+		QString message = "Received an unknown/unhandled Real Time Bridge message of type \"%1\". Received packet: %2"; //todo: escape characters?
+		message = message.arg(type).arg(rawpacket.c_str());
+		account->ui->messageSystem(this, message, MESSAGE_TYPE_ERROR);
+	}
+	//debugMessage(QString("Real time bridge: %1").arg(QString::fromStdString(rawpacket)));
 }
 
 COMMAND(ZZZ)

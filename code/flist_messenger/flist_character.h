@@ -52,6 +52,7 @@ public:
 		GENDER_HERM,
 		GENDER_MALEHERM,
 		GENDER_CUNTBOY,
+		GENDER_OFFLINE_UNKNOWN,
 		GENDER_MAX
 	};
 	static QIcon*		statusIcons[STATUS_MAX];

@@ -109,3 +109,23 @@ QMessageBox, QDialog {
 	background-color:#444444;
 	color:#ffffff;
 }
+
+QRadioButton {
+	background-color:#444444;
+	color:#ffffff;
+}
+
+QTableView {
+	color:#ffffff;
+	background-color:#202020;
+	alternate-background-color:#404040;
+	border-top:1px solid #000000;
+	border-left:1px solid #000000;
+	border-right:1px solid #666666;
+	border-bottom:1px solid #666666;
+}
+QHeaderView::section {
+	background-color: solid qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
+					  stop: 0 #a0a0a0, stop: 1 #808080);
+	color:#000000;
+}

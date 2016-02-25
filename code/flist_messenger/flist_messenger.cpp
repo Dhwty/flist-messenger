@@ -1875,12 +1875,16 @@ void flist_messenger::openPMTab ( QString &character )
         {
 		channelList[panelname] = new FChannelPanel(this, session->getSessionID(), panelname, character, FChannel::CHANTYPE_PM);
 		FCharacter* charptr = session->getCharacter(character);
-                QString paneltitle = charptr->PMTitle();
+                QString paneltitle;
+		if(charptr != NULL) {
+			paneltitle = charptr->PMTitle();
+		} else {
+			paneltitle = "Private chat with " + character;
+		}
 		FChannelPanel* pmPanel = channelList.value(panelname);
                 pmPanel->setTitle ( paneltitle );
                 pmPanel->setRecipient ( character );
                 pmPanel->pushButton = addToActivePanels ( panelname, character, paneltitle );
-                plainTextEdit->clear();
                 switchTab ( panelname );
         }
 }
@@ -2051,6 +2055,7 @@ void flist_messenger::parseInput()
                 else if ( slashcommand == "/priv" )
                 {
                         QString character = inputText.mid ( 6 ).simplified();
+			plainTextEdit->clear();
                         openPMTab ( character );
                         success = true;
                 }
@@ -2402,7 +2407,7 @@ void flist_messenger::parseInput()
                 }
                 else if ( slashcommand == "/roll" )
                 {
-			if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE || currentPanel->type() == FChannel::CHANTYPE_PM)
+			if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE)
                         {
                                 QString err("You can't use that in this panel.");
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
@@ -2418,9 +2423,14 @@ void flist_messenger::parseInput()
                                 }
                                 std::string out = "RLL ";
                                 JSONNode node;
-                                JSONNode channode("channel", currentPanel->getChannelName().toStdString());
-                                JSONNode dicenode("dice", roll.toStdString());
-                                node.push_back(channode);
+				if(currentPanel->type() == FChannel::CHANTYPE_PM) {
+					JSONNode charnode("recipient", currentPanel->recipient().toStdString());
+					node.push_back(charnode);
+				} else {
+					JSONNode channode("channel", currentPanel->getChannelName().toStdString());
+					node.push_back(channode);
+				}
+				JSONNode dicenode("dice", roll.toStdString());
                                 node.push_back(dicenode);
                                 out += node.write();
                                 sendWS(out);
@@ -3221,6 +3231,14 @@ void flist_messenger::messageMany(QList<QString> &panelnames, QString message, M
 		case MESSAGE_TYPE_KICKBAN:
 			break;
 		case MESSAGE_TYPE_IGNORE_UPDATE:
+			break;
+		case MESSAGE_TYPE_NOTE:
+			soundPlayer.play(FSound::SOUND_NEWNOTE);
+			break;
+		case MESSAGE_TYPE_FRIEND:
+			soundPlayer.play(FSound::SOUND_FRIENDUPDATE);
+			break;
+		case MESSAGE_TYPE_BOOKMARK:
 			break;
 		default:
 			debugMessage("Unhandled sound for message type " + QString::number(messagetype) + " for message '" + message + "'.");

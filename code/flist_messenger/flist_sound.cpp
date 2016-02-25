@@ -72,6 +72,11 @@ QString FSound::soundToString ( soundName sound )
 		soundFile = "newnote.wav";
 		break;
 
+	case SOUND_FRIENDUPDATE:
+		soundKey = "friendupdate";
+		soundFile = "friendupdate.wav";
+		break;
+
 	case SOUND_SYSTEM:
 		soundFile = "system.wav";
 		break;
