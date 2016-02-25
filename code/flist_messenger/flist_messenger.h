@@ -314,8 +314,6 @@ private:
 	void setupConsole();								// Makes the console channel.
 	void sendWS ( std::string& input );					// Sends messages to the server
 	FChannelTab* addToActivePanels ( QString& channel, QString &channelname, QString& tooltip );	// Adds the newly joined channel to the displayed list of channels
-	void sendIgnoreAdd ( QString& character );			// Sends an ignore request to the server
-	void sendIgnoreDelete ( QString& character );		// Sends an ignore request to the server
 	void refreshUserlist();								// Refreshes the GUI's userlist, based on what the current panel is
 	void refreshChatLines();							// Refreshes the GUI's chat lines, based on what the current panel is
 	void usersCommand();								// Does the /users thing.

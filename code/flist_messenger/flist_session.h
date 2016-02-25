@@ -56,6 +56,8 @@ public:
 	void sendCharacterMessage(QString charactername, QString message);
 	void sendChannelLeave(QString channelname);
 	void sendConfirmStaffReport(QString callid);
+	void sendIgnoreAdd(QString& character);
+	void sendIgnoreDelete(QString& character);
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);

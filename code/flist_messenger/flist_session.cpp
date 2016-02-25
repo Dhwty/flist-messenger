@@ -1546,3 +1546,25 @@ void FSession::sendConfirmStaffReport(QString callid)
 	nodes.push_back(JSONNode("callid", callid.toStdString()));
 	wsSend("SFC", nodes);
 }
+
+void FSession::sendIgnoreAdd(QString &character)
+{
+	character = character.toLower();
+	JSONNode ignorenode;
+	JSONNode targetnode ( "character", character.toStdString() );
+	JSONNode actionnode ( "action", "add" );
+	ignorenode.push_back ( targetnode );
+	ignorenode.push_back ( actionnode );
+	wsSend("IGN", ignorenode);
+}
+
+void FSession::sendIgnoreDelete(QString &character)
+{
+	character = character.toLower();
+	JSONNode ignorenode;
+	JSONNode targetnode ( "character", character.toStdString() );
+	JSONNode actionnode ( "action", "delete" );
+	ignorenode.push_back ( targetnode );
+	ignorenode.push_back ( actionnode );
+	wsSend("IGN", ignorenode);
+}

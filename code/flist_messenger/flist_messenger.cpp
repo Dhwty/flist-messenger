@@ -485,13 +485,13 @@ void flist_messenger::ai_btnCancelClicked()
 void flist_messenger::ai_btnSubmitClicked()
 {
 	FSession *session = account->getSession(charName); //todo: fix this
-        QString character = ai_leName->text().simplified();
+	QString character = ai_leName->text().simplified();
 
-        if(character != "" && !session->isCharacterIgnored(character))
-        {
-                sendIgnoreAdd(character);
-                addIgnoreDialog->hide();
-        }
+	if(character != "" && !session->isCharacterIgnored(character))
+	{
+		session->sendIgnoreAdd(character);
+		addIgnoreDialog->hide();
+	}
 }
 void flist_messenger::re_btnSubmitClicked()
 {
@@ -1394,27 +1394,6 @@ void flist_messenger::sendWS ( std::string& input )
 	session->wsSend(input);
 }
 
-void flist_messenger::sendIgnoreAdd (QString& character )
-{
-        character = character.toLower();
-        JSONNode ignorenode;
-        JSONNode targetnode ( "character", character.toStdString() );
-        JSONNode actionnode ( "action", "add" );
-        ignorenode.push_back ( targetnode );
-        ignorenode.push_back ( actionnode );
-        std::string msg = "IGN " + ignorenode.write();
-        sendWS ( msg );
-}
-void flist_messenger::sendIgnoreDelete ( QString& character )
-{
-        JSONNode ignorenode;
-        JSONNode targetnode ( "character", character.toStdString() );
-        JSONNode actionnode ( "action", "delete" );
-        ignorenode.push_back ( targetnode );
-        ignorenode.push_back ( actionnode );
-        std::string msg = "IGN " + ignorenode.write();
-        sendWS ( msg );
-}
 void flist_messenger::changeStatus (QString status, QString statusmsg )
 {
 	selfStatus = status;
@@ -1461,13 +1440,13 @@ void flist_messenger::fr_btnFriendsPMClicked()
 }
 void flist_messenger::fr_btnIgnoreRemoveClicked()
 {
-        QListWidgetItem* lwi = fr_lwIgnore->selectedItems().at ( 0 );
+	QListWidgetItem* lwi = fr_lwIgnore->selectedItems().at ( 0 );
 
-        if ( lwi )
-        {
-                QString name = lwi->text();
-                sendIgnoreDelete(name);
-        }
+	if ( lwi )
+	{
+		QString name = lwi->text();
+		account->getSessionByCharacter(charName)->sendIgnoreDelete(name);
+	}
 }
 void flist_messenger::fr_btnIgnoreAddClicked()
 {
@@ -1591,7 +1570,7 @@ void flist_messenger::ul_ignoreAdd()
 	if (session->isCharacterIgnored(ul_recent_name)) {
 		printDebugInfo("[CLIENT BUG] Tried to ignore somebody who is already on the ignorelist.");
 	} else {
-		sendIgnoreAdd(ul_recent_name);
+		session->sendIgnoreAdd(ul_recent_name);
 	}
 }
 void flist_messenger::ul_ignoreRemove()
@@ -1600,7 +1579,7 @@ void flist_messenger::ul_ignoreRemove()
 	if (!session->isCharacterIgnored(ul_recent_name)) {
 		printDebugInfo("[CLIENT BUG] Tried to unignore somebody who is not on the ignorelist.");
 	} else {
-		sendIgnoreDelete(ul_recent_name);
+		session->sendIgnoreDelete(ul_recent_name);
 	}
 }
 void flist_messenger::ul_channelBan()
@@ -2059,34 +2038,34 @@ void flist_messenger::parseInput()
                         openPMTab ( character );
                         success = true;
                 }
-                else if ( slashcommand == "/ignore" )
-                {
-                        QString character = inputText.mid ( 8 ).simplified();
+		else if ( slashcommand == "/ignore" )
+		{
+			QString character = inputText.mid ( 8 ).simplified();
 
-                        if ( character != "" )
-                        {
-                                sendIgnoreAdd(character);
-                                success = true;
-                        }
-                }
-                else if ( slashcommand == "/unignore" )
-                {
-                        QString character = inputText.mid ( 10 ).simplified();
+			if ( character != "" )
+			{
+				session->sendIgnoreAdd(character);
+				success = true;
+			}
+		}
+		else if ( slashcommand == "/unignore" )
+		{
+			QString character = inputText.mid ( 10 ).simplified();
 
-                        if ( character != "" )
-                        {
-                                if (!session->isCharacterIgnored(character))
-                                {
-                                        QString out = QString ( "This character is not in your ignore list." );
+			if ( character != "" )
+			{
+				if (!session->isCharacterIgnored(character))
+				{
+					QString out = QString ( "This character is not in your ignore list." );
 					messageSystem(session, out, MESSAGE_TYPE_FEEDBACK);
-                                }
-                                else
-                                {
-                                        sendIgnoreDelete(character);
-                                        success = true;
-                                }
-                        }
-                }
+				}
+				else
+				{
+					session->sendIgnoreDelete(character);
+					success = true;
+				}
+			}
+		}
                 else if ( slashcommand == "/channels" || slashcommand == "/prooms" )
                 {
                         channelsDialogRequested();
