@@ -191,54 +191,6 @@ void flist_messenger::startConnect(QString charName)
 	session->connectSession();
 }
 
-void flist_messenger::setupSetStatusUI()
-{
-        setStatusDialog = new QDialog ( this );
-        QGroupBox* ss_gbOverview;
-        QLabel* ss_lblStatusRequest;
-        QLabel* ss_lblMessageRequest;
-        QLabel* ss_lblInstructions;
-        QPushButton* ss_btnSubmit;
-        QPushButton* ss_btnCancel;
-        QVBoxLayout* ss_vblOverview;
-        QVBoxLayout* ss_vblContents;
-        QHBoxLayout* ss_hblButtons;
-        ss_gbOverview = new QGroupBox ( QString ( "Setting your status" ) );
-        ss_lblStatusRequest = new QLabel ( QString ( "Your status:" ) );
-        ss_lblMessageRequest = new QLabel ( QString ( "Your status message:" ) );
-        ss_lblInstructions = new QLabel ( QString ( "This message will show up when people message you or click your name. Filling it out will also make you show up extra big in character searches, when your status is set to \"Looking\"." ) );
-        ss_lblInstructions->setWordWrap ( true );
-        ss_leMessage = new QLineEdit();
-        ss_btnCancel = new QPushButton ( QString ( "Cancel" ) );
-        ss_btnCancel->setIcon ( QIcon ( ":/images/cross.png" ) );
-        ss_btnSubmit = new QPushButton ( QString ( "Submit" ) );
-        ss_btnSubmit->setIcon ( QIcon ( ":/images/tick.png" ) );
-        ss_hblButtons = new QHBoxLayout;
-        ss_vblOverview = new QVBoxLayout;
-        ss_vblContents = new QVBoxLayout;
-        ss_cbStatus = new QComboBox;
-        ss_cbStatus->addItem ( QIcon ( ":/images/status-default.png" ), QString ( "Online" ) );
-        ss_cbStatus->addItem ( QIcon ( ":/images/status.png" ), QString ( "Looking for play!" ) );
-        ss_cbStatus->addItem ( QIcon ( ":/images/status-blue.png" ), QString ( "Away" ));
-        ss_cbStatus->addItem ( QIcon ( ":/images/status-away.png" ), QString ( "Busy" ) );
-        ss_cbStatus->addItem ( QIcon ( ":/images/status-busy.png" ), QString ( "Do not disturb" ) );
-
-        setStatusDialog->setWindowTitle ( QString ( "F-chat - Set Status" ) );
-        setStatusDialog->setLayout ( ss_vblOverview );
-        ss_vblOverview->addWidget ( ss_gbOverview );
-        ss_vblOverview->addLayout ( ss_hblButtons );
-        ss_hblButtons->addStretch();
-        ss_hblButtons->addWidget ( ss_btnSubmit );
-        ss_hblButtons->addWidget ( ss_btnCancel );
-        ss_gbOverview->setLayout ( ss_vblContents );
-        ss_vblContents->addWidget ( ss_lblStatusRequest );
-        ss_vblContents->addWidget ( ss_cbStatus );
-        ss_vblContents->addWidget ( ss_lblMessageRequest );
-        ss_vblContents->addWidget ( ss_leMessage );
-        ss_vblContents->addWidget ( ss_lblInstructions );
-        connect ( ss_btnSubmit, SIGNAL ( clicked() ), this, SLOT ( ss_btnSubmitClicked() ) );
-        connect ( ss_btnCancel, SIGNAL ( clicked() ), this, SLOT ( ss_btnCancelClicked() ) );
-}
 void flist_messenger::destroyMenu()
 {
         if ( recentCharMenu )
@@ -1274,12 +1226,14 @@ void flist_messenger::makeRoomDialogRequested()
 
 void flist_messenger::setStatusDialogRequested()
 {
-        if ( setStatusDialog == 0 || setStatusDialog->parent() != this )
-                setupSetStatusUI();
+	if ( setStatusDialog == 0 || setStatusDialog->parent() != this )
+	{
+		setStatusDialog = new StatusDialog(this);
+		connect(setStatusDialog, SIGNAL(statusSelected(QString,QString)), this, SLOT(changeStatus(QString,QString)));
+	}
 
-        ss_leMessage->setText ( selfStatusMessage );
-
-        setStatusDialog->show();
+	setStatusDialog->setShownStatus(selfStatus, selfStatusMessage);
+	setStatusDialog->show();
 }
 void flist_messenger::characterInfoDialogRequested()
 {
@@ -1461,30 +1415,30 @@ void flist_messenger::sendIgnoreDelete ( QString& character )
         std::string msg = "IGN " + ignorenode.write();
         sendWS ( msg );
 }
-void flist_messenger::changeStatus ( std::string& status, std::string& statusmsg )
+void flist_messenger::changeStatus (QString status, QString statusmsg )
 {
-        selfStatus = QString ( status.c_str() );
-        selfStatusMessage = QString ( statusmsg.c_str() );
-        JSONNode stanode;
-        JSONNode statusnode ( "status", status );
-        JSONNode stamsgnode ( "statusmsg", statusmsg );
-        stanode.push_back ( statusnode );
-        stanode.push_back ( stamsgnode );
-        std::string msg = "STA " + stanode.write();
-        sendWS ( msg );
+	selfStatus = status;
+	selfStatusMessage = statusmsg;
+	JSONNode stanode;
+	JSONNode statusnode ( "status", status.toStdString() );
+	JSONNode stamsgnode ( "statusmsg", statusmsg.toStdString() );
+	stanode.push_back ( statusnode );
+	stanode.push_back ( stamsgnode );
+	std::string msg = "STA " + stanode.write();
+	sendWS ( msg );
 
-        if ( selfStatus == "online" )
-                btnSetStatus->setIcon ( QIcon ( ":/images/status-default.png" ) );
-        else if ( selfStatus == "busy" )
-                btnSetStatus->setIcon ( QIcon ( ":/images/status-away.png" ) );
-        else if ( selfStatus == "dnd" )
-                btnSetStatus->setIcon ( QIcon ( ":/images/status-busy.png" ) );
-        else if ( selfStatus == "looking" )
-                btnSetStatus->setIcon ( QIcon ( ":/images/status.png" ) );
-        else if ( selfStatus == "away" )
-                btnSetStatus->setIcon ( QIcon ( ":/images/status-blue.png" ) );
+	if ( status == "online" )
+		btnSetStatus->setIcon ( QIcon ( ":/images/status-default.png" ) );
+	else if ( status == "busy" )
+		btnSetStatus->setIcon ( QIcon ( ":/images/status-away.png" ) );
+	else if ( status == "dnd" )
+		btnSetStatus->setIcon ( QIcon ( ":/images/status-busy.png" ) );
+	else if ( status == "looking" )
+		btnSetStatus->setIcon ( QIcon ( ":/images/status.png" ) );
+	else if ( status == "away" )
+		btnSetStatus->setIcon ( QIcon ( ":/images/status-blue.png" ) );
 
-        QString output = QString ( "Status changed successfully." );
+	QString output = QString ( "Status changed successfully." );
 
 	messageSystem(0, output, MESSAGE_TYPE_FEEDBACK);
 }
@@ -2082,15 +2036,13 @@ void flist_messenger::parseInput()
 				success = true;
 			}
                 }
-                else if ( slashcommand == "/status" )
-                {
-                        QString status = parts[1];
-                        QString statusMsg = inputText.mid ( 9 + status.length(), -1 ).simplified();
-                        std::string stdstat = status.toStdString();
-                        std::string stdmsg = statusMsg.toStdString();
-                        changeStatus ( stdstat, stdmsg );
-                        success = true;
-                }
+		else if ( slashcommand == "/status" )
+		{
+			QString status = parts[1];
+			QString statusMsg = inputText.mid ( 9 + status.length(), -1 ).simplified();
+			changeStatus ( status, statusMsg );
+			success = true;
+		}
                 else if ( slashcommand == "/users" )
                 {
                         usersCommand();
@@ -2558,31 +2510,6 @@ void flist_messenger::addToIgnoreList ( QListWidgetItem *lwi )
                 fr_lwIgnore->addItem ( lwi );
 }
 
-void flist_messenger::ss_btnCancelClicked()
-{
-        setStatusDialog->hide();
-}
-void flist_messenger::ss_btnSubmitClicked()
-{
-        QString message = ss_leMessage->text();
-        QString status = ss_cbStatus->currentText();
-
-        if ( status == "Looking for play!" )
-                status = "looking";
-        else if ( status == "Online" )
-                status = "online";
-        else if ( status == "Do not disturb" )
-                status = "dnd";
-        else if ( status == "Away" )
-                status = "away";
-        else
-                status = "busy";
-
-        std::string stdstat = status.toStdString();
-        std::string stdmsg = message.toStdString();
-        changeStatus ( stdstat, stdmsg );
-        setStatusDialog->hide();
-}
 void flist_messenger::saveSettings()
 {
 	FChannelPanel* c;

@@ -13,7 +13,7 @@ QT += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
 
-QMAKE_CXXFLAGS_DEBUG += -Werror
+#QMAKE_CXXFLAGS_DEBUG += -Werror
 
 TEMPLATE = app
 TARGET = flist-messenger
@@ -71,7 +71,8 @@ HEADERS += \
     ui/channellistdialog.h \
     ui/aboutdialog.h \
     ui/makeroomdialog.h \
-    api/querystringbuilder.h
+    api/querystringbuilder.h \
+    ui/statusdialog.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -110,10 +111,12 @@ SOURCES += \
     ui/channellistdialog.cpp \
     ui/aboutdialog.cpp \
     ui/makeroomdialog.cpp \
-    api/querystringbuilder.cpp
+    api/querystringbuilder.cpp \
+    ui/statusdialog.cpp
 RESOURCES += resources.qrc
 FORMS += \
     flist_loginwindow.ui \
     ui/channellistdialog.ui \
     ui/aboutdialog.ui \
-    ui/makeroomdialog.ui
+    ui/makeroomdialog.ui \
+    ui/statusdialog.ui

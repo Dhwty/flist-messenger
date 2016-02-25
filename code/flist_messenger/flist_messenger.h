@@ -93,6 +93,7 @@
 #include "ui/helpdialog.h"
 #include "ui/aboutdialog.h"
 #include "ui/makeroomdialog.h"
+#include "ui/statusdialog.h"
 
 class QSplitter;
 
@@ -216,7 +217,6 @@ private slots:
 	void setupSettingsDialog();
 	void setupTimeoutDialog();
 	void timeoutDialogRequested();
-	void setupSetStatusUI();
 	void setupFriendsDialog();
 	void setupAddIgnoreDialog();
 	void setupReportDialog();
@@ -251,8 +251,6 @@ private slots:
 	void btnSendChatClicked();
 	void createPublicChannel(QString name);
 	void createPrivateChannel(QString name);
-	void ss_btnSubmitClicked();
-	void ss_btnCancelClicked();
 	void ul_pmRequested();
 	void ul_infoRequested();
 	void ul_ignoreAdd();
@@ -294,6 +292,7 @@ private slots:
 	void displayChannelContextMenu ( FChannelPanel* ch );
 
 	void cl_joinRequested(QStringList channels);
+	void changeStatus (QString status, QString statusmsg );
 
 
 public:
@@ -317,7 +316,6 @@ private:
 	FChannelTab* addToActivePanels ( QString& channel, QString &channelname, QString& tooltip );	// Adds the newly joined channel to the displayed list of channels
 	void sendIgnoreAdd ( QString& character );			// Sends an ignore request to the server
 	void sendIgnoreDelete ( QString& character );		// Sends an ignore request to the server
-	void changeStatus ( std::string& status, std::string& statusmsg );
 	void refreshUserlist();								// Refreshes the GUI's userlist, based on what the current panel is
 	void refreshChatLines();							// Refreshes the GUI's chat lines, based on what the current panel is
 	void usersCommand();								// Does the /users thing.
@@ -360,9 +358,7 @@ private:
 
 	FMakeRoomDialog* makeRoomDialog; // mr stands for makeroom
 
-	QDialog* setStatusDialog; // ss stands for setstatus
-	QLineEdit* ss_leMessage;
-	QComboBox* ss_cbStatus;
+	StatusDialog *setStatusDialog;
 
 	QDialog* settingsDialog; // se stands for settings
 	QCheckBox* se_chbLeaveJoin;

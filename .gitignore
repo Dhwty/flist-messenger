@@ -225,6 +225,9 @@ code/flist_messenger/qrc_resources.cpp
 code/flist_messenger/moc_*
 *.o
 
+# Qt Creator's per-machine settings
+code/flist_messenger/flist_messenger.pro.user.*
+
 # Files created by running in-place
 code/flist_messenger/logs
 code/flist_messenger/settings.ini
