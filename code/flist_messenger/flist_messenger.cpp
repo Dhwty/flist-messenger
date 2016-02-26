@@ -426,26 +426,20 @@ void flist_messenger::cs_btnCancelClicked()
 }
 void flist_messenger::cs_btnSaveClicked()
 {
-        if (cs_qsPlainDescription != cs_chanCurrent->description())
-        {
-                std::cout << "Editing description." << std::endl;
-                // Update description
-                JSONNode node;
-                JSONNode channode ( "channel", cs_chanCurrent->getChannelName().toStdString() );
-                node.push_back ( channode );
-                JSONNode descnode ( "description", cs_qsPlainDescription.toStdString() );
-                node.push_back ( descnode );
-                std::string out = "CDS " + node.write();
-                sendWS ( out );
-        }
+	if (cs_qsPlainDescription != cs_chanCurrent->description())
+	{
+		std::cout << "Editing description." << std::endl;
+		// Update description
+		account->getSessionByCharacter(charName)->sendChannelDescription(cs_chanCurrent->getChannelName(), cs_qsPlainDescription);
+	}
 	//Save settings to the ini file.
 	cs_attentionsettings->saveSettings();
 	//And reload those settings into the channel panel.
 	cs_chanCurrent->loadSettings();
 
-        cs_qsPlainDescription = "";
-        cs_chanCurrent = 0;
-        channelSettingsDialog->deleteLater();
+	cs_qsPlainDescription = "";
+	cs_chanCurrent = 0;
+	channelSettingsDialog->deleteLater();
 }
 
 void flist_messenger::setupAddIgnoreDialog()
@@ -1398,13 +1392,7 @@ void flist_messenger::changeStatus (QString status, QString statusmsg )
 {
 	selfStatus = status;
 	selfStatusMessage = statusmsg;
-	JSONNode stanode;
-	JSONNode statusnode ( "status", status.toStdString() );
-	JSONNode stamsgnode ( "statusmsg", statusmsg.toStdString() );
-	stanode.push_back ( statusnode );
-	stanode.push_back ( stamsgnode );
-	std::string msg = "STA " + stanode.write();
-	sendWS ( msg );
+	account->getSessionByCharacter(charName)->sendStatus(status, statusmsg);
 
 	if ( status == "online" )
 		btnSetStatus->setIcon ( QIcon ( ":/images/status-default.png" ) );
@@ -1584,39 +1572,19 @@ void flist_messenger::ul_ignoreRemove()
 }
 void flist_messenger::ul_channelBan()
 {
-        JSONNode kicknode;
-        JSONNode charnode ( "character", ul_recent_name.toStdString() );
-        kicknode.push_back ( charnode );
-        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-        kicknode.push_back ( channode );
-        std::string out = "CBU " + kicknode.write();
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->banFromChannel(currentPanel->getChannelName(), ul_recent_name);
 }
 void flist_messenger::ul_channelKick()
 {
-        JSONNode kicknode;
-        JSONNode charnode ( "character", ul_recent_name.toStdString() );
-        kicknode.push_back ( charnode );
-        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-        kicknode.push_back ( channode );
-        std::string out = "CKU " + kicknode.write();
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->kickFromChannel(currentPanel->getChannelName(), ul_recent_name);
 }
 void flist_messenger::ul_chatBan()
 {
-        JSONNode node;
-        JSONNode charnode ( "character", ul_recent_name.toStdString() );
-        node.push_back ( charnode );
-        std::string out = "ACB " + node.write();
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->banFromChat(ul_recent_name);
 }
 void flist_messenger::ul_chatKick()
 {
-        JSONNode kicknode;
-        JSONNode charnode ( "character", ul_recent_name.toStdString() );
-        kicknode.push_back ( charnode );
-        std::string out = "KIK " + kicknode.write();
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->kickFromChat(ul_recent_name);
 }
 void flist_messenger::ul_chatTimeout()
 {
@@ -1718,35 +1686,24 @@ void flist_messenger::timeoutDialogRequested()
 }
 void flist_messenger::to_btnSubmitClicked()
 {
-        QString who = to_leWho->text();
-        QString length = to_leLength->text();
-        QString why = to_leReason->text();
-        bool *ok = new bool(true);
-        int minutes = length.toInt(ok);
+	QString who = to_leWho->text();
+	QString length = to_leLength->text();
+	QString why = to_leReason->text();
+	bool ok = true;
+	int minutes = length.toInt(&ok);
 
-        if (! *ok || minutes <= 0 || 90 < minutes) {
-                QString error("Wrong length.");
+	if (! ok || minutes <= 0 || 90 < minutes) {
+		QString error("Wrong length.");
 		messageSystem(0, error, MESSAGE_TYPE_FEEDBACK);
-        }
-        else if (who.simplified() == "" || why.simplified() == "")
-        {
-                QString error("Didn't fill out all fields.");
+	}
+	else if (who.simplified() == "" || why.simplified() == "")
+	{
+		QString error("Didn't fill out all fields.");
 		messageSystem(0, error, MESSAGE_TYPE_FEEDBACK);
-        } else {
-                std::string character = who.simplified().toStdString();
-                std::string reason = why.simplified().toStdString();
-                JSONNode node;
-                JSONNode charnode ( "character", character );
-                node.push_back ( charnode );
-                JSONNode timenode ( "time", length.toStdString() );
-                node.push_back ( timenode );
-                JSONNode renode ( "reason", reason );
-                node.push_back ( renode );
-                std::string out = "TMO " + node.write();
-                sendWS ( out );
-        }
-        delete ok;
-        timeoutDialog->hide();
+	} else {
+		account->getSessionByCharacter(charName)->sendCharacterTimeout(who.simplified(), minutes, why.simplified());
+	}
+	timeoutDialog->hide();
 }
 void flist_messenger::to_btnCancelClicked()
 {
@@ -2071,78 +2028,40 @@ void flist_messenger::parseInput()
                         channelsDialogRequested();
                         success = true;
                 }
-                else if ( slashcommand == "/kick" )
-                {
-                        //[16:29 PM]>>CKU {"channel":"ADH-STAFFROOMFORSTAFFPPL","character":"Viona"}
-                        JSONNode kicknode;
-                        JSONNode charnode ( "character", inputText.mid ( 6 ).simplified().toStdString() );
-                        kicknode.push_back ( charnode );
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        kicknode.push_back ( channode );
-                        std::string out = "CKU " + kicknode.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/gkick" )
-                {
-                        // [16:22 PM]>>KIK {"character":"Tamu"}
-                        JSONNode kicknode;
-                        JSONNode charnode ( "character", inputText.mid ( 7 ).simplified().toStdString() );
-                        kicknode.push_back ( charnode );
-                        std::string out = "KIK " + kicknode.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/ban" )
-                {
-                        //[17:23 PM]>>CBU {"channel":"ADH-89ff2273b20cfc422ca1","character":"Viona"}
-                        JSONNode kicknode;
-                        JSONNode charnode ( "character", inputText.mid ( 5 ).simplified().toStdString() );
-                        kicknode.push_back ( charnode );
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        kicknode.push_back ( channode );
-                        std::string out = "CBU " + kicknode.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/accountban" )
-                {
-                        //[22:42 PM]>>ACB {"character":"Mack"}
-                        JSONNode node;
-                        JSONNode charnode ( "character", inputText.mid ( 12 ).simplified().toStdString() );
-                        node.push_back ( charnode );
-                        std::string out = "ACB " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
+		else if ( slashcommand == "/kick" )
+		{
+			session->kickFromChannel(currentPanel->getChannelName(), inputText.mid(6).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/gkick" )
+		{
+			session->kickFromChat(inputText.mid ( 7 ).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/ban" )
+		{
+			session->banFromChannel(currentPanel->getChannelName(), inputText.mid(5).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/accountban" )
+		{
+			session->banFromChat(inputText.mid(12).simplified());
+			success = true;
+		}
 		else if ( slashcommand == "/makeroom" )
 		{
 			createPrivateChannel(inputText.mid(10));
 		}
-                else if ( slashcommand == "/closeroom")
-                {
-                        // [13:12 PM]>>RST {"channel":"ADH-68c2 7 1 4e731ccfbe0","status":"public"}
-                        JSONNode statusnode;
-                        JSONNode channelnode("channel", currentPanel->getChannelName().toStdString());
-                        JSONNode statnode("status", "private");
-                        statusnode.push_back(channelnode);
-                        statusnode.push_back(statnode);
-                        std::string out = "RST " + statusnode.write();
-                        sendWS( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/openroom")
-                {
-                        // [13:12 PM]>>RST {"channel":"ADH-68c2 7 1 4e731ccfbe0","status":"private"}
-                        JSONNode statusnode;
-                        JSONNode channelnode("channel", currentPanel->getChannelName().toStdString());
-                        JSONNode statnode("status", "public");
-                        statusnode.push_back(channelnode);
-                        statusnode.push_back(statnode);
-                        std::string out = "RST " + statusnode.write();
-                        sendWS( out );
-                        success = true;
-                }
+		else if ( slashcommand == "/closeroom")
+		{
+			session->setRoomIsPublic(currentPanel->getChannelName(), false);
+			success = true;
+		}
+		else if ( slashcommand == "/openroom")
+		{
+			session->setRoomIsPublic(currentPanel->getChannelName(), true);
+			success = true;
+		}
                 else if ( slashcommand == "/invite" )
                 {
                         //[16:37 PM]>>CIU {"channel":"ADH-STAFFROOMFORSTAFFPPL","character":"Viona"}
@@ -2254,17 +2173,13 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( slashcommand == "/setdescription" )
-                {
-                        // [17:31 PM]>>CDS {"channel":"ADH-cbae3bdf02cd39e8949e","description":":3!"}
-                        JSONNode node;
-			node.push_back(JSONNode("channel", currentPanel->getChannelName().toStdString()));
+		else if ( slashcommand == "/setdescription" )
+		{
+			// [17:31 PM]>>CDS {"channel":"ADH-cbae3bdf02cd39e8949e","description":":3!"}
 			//todo: Does this require more intelligent filtering on excess whitespace?
-                        node.push_back(JSONNode("description", inputText.mid(16).trimmed().toStdString()));
-                        std::string out = "CDS " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
+			session->sendChannelDescription(currentPanel->getChannelName(), inputText.mid(16).trimmed());
+			success = true;
+		}
                 else if ( slashcommand == "/coplist" )
                 {
                         // [17:31 PM]>>COL {"channel":"ADH-cbae3bdf02cd39e8949e"}
@@ -2275,34 +2190,26 @@ void flist_messenger::parseInput()
                         sendWS ( out );
                         success = true;
                 }
-                else if ( slashcommand == "/timeout" )
-                {
-                        // [17:16 PM]>>TMO {"time":1,"character":"Arisato Hamuko","reason":"Test."}
-                        QStringList tparts = inputText.mid ( 9 ).split ( ',' );
-                        bool isInt;
-                        int time = tparts[1].simplified().toInt ( &isInt );
+		else if ( slashcommand == "/timeout" )
+		{
+			// [17:16 PM]>>TMO {"time":1,"character":"Arisato Hamuko","reason":"Test."}
+			QStringList tparts = inputText.mid ( 9 ).split ( ',' );
+			bool isInt;
+			int time = tparts[1].simplified().toInt ( &isInt );
 
-                        if ( isInt == false )
-                        {
-                                QString err = "Time is not a number.";
+			if ( isInt == false )
+			{
+				QString err = "Time is not a number.";
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
-                        }
-                        else
-                        {
-                                std::string character = tparts[0].simplified().toStdString();
-                                std::string reason = tparts[2].simplified().toStdString();
-                                JSONNode node;
-                                JSONNode charnode ( "character", character );
-                                node.push_back ( charnode );
-                                JSONNode timenode ( "time", time );
-                                node.push_back ( timenode );
-                                JSONNode renode ( "reason", reason );
-                                node.push_back ( renode );
-                                std::string out = "TMO " + node.write();
-                                sendWS ( out );
-                                success = true;
-                        }
-                }
+			}
+			else
+			{
+				QString who(tparts[0].simplified());
+				QString why(tparts[2].simplified());
+				session->sendCharacterTimeout(who, time, why);
+				success = true;
+			}
+		}
                 else if ( slashcommand == "/gunban" )
                 {
                         // [22:43 PM]>>UNB {"character":"Mack"}

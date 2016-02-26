@@ -1547,7 +1547,7 @@ void FSession::sendConfirmStaffReport(QString callid)
 	wsSend("SFC", nodes);
 }
 
-void FSession::sendIgnoreAdd(QString &character)
+void FSession::sendIgnoreAdd(QString character)
 {
 	character = character.toLower();
 	JSONNode ignorenode;
@@ -1558,7 +1558,7 @@ void FSession::sendIgnoreAdd(QString &character)
 	wsSend("IGN", ignorenode);
 }
 
-void FSession::sendIgnoreDelete(QString &character)
+void FSession::sendIgnoreDelete(QString character)
 {
 	character = character.toLower();
 	JSONNode ignorenode;
@@ -1567,4 +1567,82 @@ void FSession::sendIgnoreDelete(QString &character)
 	ignorenode.push_back ( targetnode );
 	ignorenode.push_back ( actionnode );
 	wsSend("IGN", ignorenode);
+}
+
+void FSession::sendChannelDescription(QString channelname, QString description)
+{
+	JSONNode node;
+	JSONNode channode("channel", channelname.toStdString());
+	JSONNode descnode("description", description.toStdString());
+	node.push_back(channode);
+	node.push_back(descnode);
+	wsSend("CDS", node);
+}
+
+void FSession::sendStatus(QString status, QString statusmsg)
+{
+	JSONNode stanode;
+	JSONNode statusnode ( "status", status.toStdString() );
+	JSONNode stamsgnode ( "statusmsg", statusmsg.toStdString() );
+	stanode.push_back ( statusnode );
+	stanode.push_back ( stamsgnode );
+	wsSend("STA", stanode);
+}
+
+void FSession::sendCharacterTimeout(QString character, int minutes, QString reason)
+{
+	JSONNode node;
+	JSONNode charnode("character", character.toStdString());
+	JSONNode timenode("time", QString::number(minutes).toStdString());
+	JSONNode renode("reason", reason.toStdString());
+	node.push_back ( charnode );
+	node.push_back ( timenode );
+	node.push_back ( renode );
+	wsSend("TMO", node);
+}
+
+void FSession::kickFromChannel(QString channel, QString character)
+{
+	JSONNode kicknode;
+	JSONNode charnode ( "character", character.toStdString() );
+	JSONNode channode ( "channel", channel.toStdString() );
+	kicknode.push_back ( charnode );
+	kicknode.push_back ( channode );
+	wsSend("CKU", kicknode);
+}
+
+void FSession::kickFromChat(QString character)
+{
+	JSONNode kicknode;
+	JSONNode charnode ( "character", character.toStdString() );
+	kicknode.push_back ( charnode );
+	wsSend("KIK", kicknode);
+}
+
+void FSession::banFromChannel(QString channel, QString character)
+{
+	JSONNode bannode;
+	JSONNode charnode ( "character", character.toStdString() );
+	JSONNode channode ( "channel", channel.toStdString() );
+	bannode.push_back ( charnode );
+	bannode.push_back ( channode );
+	wsSend("CBU", bannode);
+}
+
+void FSession::banFromChat(QString character)
+{
+	JSONNode node;
+	JSONNode charnode ( "character", character.toStdString() );
+	node.push_back ( charnode );
+	wsSend("ACB", node);
+}
+
+void FSession::setRoomIsPublic(QString channel, bool isPublic)
+{
+	JSONNode statusnode;
+	JSONNode channelNode("channel", channel.toStdString());
+	JSONNode statNode("status", isPublic ? "public" : "private");
+	statusnode.push_back(channelNode);
+	statusnode.push_back(statNode);
+	wsSend("RST", statusNode);
 }

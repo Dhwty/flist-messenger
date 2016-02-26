@@ -56,8 +56,17 @@ public:
 	void sendCharacterMessage(QString charactername, QString message);
 	void sendChannelLeave(QString channelname);
 	void sendConfirmStaffReport(QString callid);
-	void sendIgnoreAdd(QString& character);
-	void sendIgnoreDelete(QString& character);
+	void sendIgnoreAdd(QString character);
+	void sendIgnoreDelete(QString character);
+	void sendChannelDescription(QString channelname, QString description);
+	void sendStatus(QString status, QString statusmsg);
+	void sendCharacterTimeout(QString character, int minutes, QString reason);
+
+	void kickFromChannel(QString channel, QString character);
+	void kickFromChat(QString character);
+	void banFromChannel(QString channel, QString character);
+	void banFromChat(QString character);
+	void setRoomIsPublic(QString channel, bool isPublic);
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);
