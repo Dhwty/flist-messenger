@@ -1558,36 +1558,19 @@ void flist_messenger::ul_chatKick()
 }
 void flist_messenger::ul_chatTimeout()
 {
-        timeoutDialogRequested();
+	timeoutDialogRequested();
 }
 void flist_messenger::ul_channelOpAdd()
 {
-        JSONNode opnode;
-        JSONNode charnode ( "character", ul_recent_name.toStdString() );
-        opnode.push_back ( charnode );
-        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-        opnode.push_back ( channode );
-        std::string out = "COA " + opnode.write();
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->giveChanop(currentPanel->getChannelName(), ul_recent_name);
 }
 void flist_messenger::ul_channelOpRemove()
 {
-        JSONNode opnode;
-        JSONNode charnode ( "character", ul_recent_name.toStdString() );
-        opnode.push_back ( charnode );
-        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-        opnode.push_back ( channode );
-        std::string out = "COR " + opnode.write();
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->takeChanop(currentPanel->getChannelName(), ul_recent_name);
 }
 void flist_messenger::ul_chatOpAdd()
 {
-        std::string character = ul_recent_name.toStdString();
-        JSONNode opnode;
-        JSONNode charnode ( "character", character );
-        opnode.push_back ( charnode );
-        std::string out = "AOP " + opnode.write();
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->giveGlobalop(ul_recent_name);
 }
 void flist_messenger::ul_chatOpRemove()
 {
@@ -2032,57 +2015,31 @@ void flist_messenger::parseInput()
 			session->setRoomIsPublic(currentPanel->getChannelName(), true);
 			success = true;
 		}
-                else if ( slashcommand == "/invite" )
-                {
-                        //[16:37 PM]>>CIU {"channel":"ADH-STAFFROOMFORSTAFFPPL","character":"Viona"}
-                        JSONNode invitenode;
-                        JSONNode charnode ( "character", inputText.mid ( 8 ).simplified().toStdString() );
-                        invitenode.push_back ( charnode );
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        invitenode.push_back ( channode );
-                        std::string out = "CIU " + invitenode.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/warn" )
-                {
+		else if ( slashcommand == "/invite" )
+		{
+			session->inviteToChannel(currentPanel->getChannelName(), inputText.mid(8).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/warn" )
+		{
 			plainmessage = true;
-                        success = true;
-                }
-                else if ( slashcommand == "/cop" )
-                {
-                        //COA {"channel":"","character":""}
-                        JSONNode opnode;
-                        JSONNode charnode ( "character", inputText.mid ( 5 ).simplified().toStdString() );
-                        opnode.push_back ( charnode );
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        opnode.push_back ( channode );
-                        std::string out = "COA " + opnode.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/cdeop" )
-                {
-                        //[16:27 PM]>>COR {"channel":"ADH-STAFFROOMFORSTAFFPPL","character":"Viona"}
-                        JSONNode opnode;
-                        JSONNode charnode ( "character", inputText.mid ( 7 ).simplified().toStdString() );
-                        opnode.push_back ( charnode );
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        opnode.push_back ( channode );
-                        std::string out = "COR " + opnode.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/op" )
-                {
-                        std::string character = inputText.mid ( 4 ).simplified().toStdString();
-                        JSONNode opnode;
-                        JSONNode charnode ( "character", character );
-                        opnode.push_back ( charnode );
-                        std::string out = "AOP " + opnode.write();
-                        sendWS ( out );
-                        success = true;
-                }
+			success = true;
+		}
+		else if ( slashcommand == "/cop" )
+		{
+			session->giveChanop(currentPanel->getChannelName(), inputText.mid(5).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/cdeop" )
+		{
+			session->takeChanop(currentPanel->getChannelName(), inputText.mid(7).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/op" )
+		{
+			session->giveGlobalop(inputText.mid(4).simplified());
+			success = true;
+		}
                 else if ( slashcommand == "/reward" )
                 {
                         // [17:19 PM]>>RWD {"character":"Arisato Hamuko"}

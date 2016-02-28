@@ -69,6 +69,10 @@ public:
 	void banFromChannel(QString channel, QString character);
 	void banFromChat(QString character);
 	void setRoomIsPublic(QString channel, bool isPublic);
+	void inviteToChannel(QString channel, QString character);
+	void giveChanop(QString channel, QString character);
+	void takeChanop(QString channel, QString character);
+	void giveGlobalop(QString character);
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);

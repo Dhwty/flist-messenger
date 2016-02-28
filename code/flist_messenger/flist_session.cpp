@@ -1664,3 +1664,41 @@ void FSession::setRoomIsPublic(QString channel, bool isPublic)
 	statusnode.push_back(statNode);
 	wsSend("RST", statusnode);
 }
+
+void FSession::inviteToChannel(QString channel, QString character)
+{
+	JSONNode invitenode;
+	JSONNode charnode("character", character.toStdString());
+	JSONNode channode("channel", channel.toStdString());
+	invitenode.push_back(channode);
+	invitenode.push_back(charnode);
+	wsSend("CIU", invitenode);
+}
+
+void FSession::giveChanop(QString channel, QString character)
+{
+	JSONNode opnode;
+	JSONNode charnode("character", character.toStdString());
+	JSONNode channode("channel", channel.toStdString());
+	opnode.push_back(charnode);
+	opnode.push_back(channode);
+	wsSend("COA", opnode);
+}
+
+void FSession::takeChanop(QString channel, QString character)
+{
+	JSONNode opnode;
+	JSONNode charnode("character", character.toStdString());
+	JSONNode channode("channel", channel.toStdString());
+	opnode.push_back(charnode);
+	opnode.push_back(channode);
+	wsSend("COR", opnode);
+}
+
+void FSession::giveGlobalop(QString character)
+{
+	JSONNode opnode;
+	JSONNode charnode("character", character.toStdString());
+	opnode.push_back(charnode);
+	wsSend("AOP", opnode);
+}
