@@ -1504,45 +1504,15 @@ void flist_messenger::inputChanged()
 }
 void flist_messenger::typingCleared ( FChannelPanel* channel )
 {
-        // TPN {"character":"Leon Priest","status":"clear"}
-        std::string character = channel->recipient().toStdString().c_str();
-        std::string status = "clear";
-
-        JSONNode node;
-        JSONNode statusnode ( "status", status );
-        JSONNode charnode ( "character", character );
-        node.push_back ( statusnode );
-        node.push_back ( charnode );
-        std::string msg = "TPN " + node.write();
-        sendWS ( msg );
+	account->getSessionByCharacter(charName)->sendTypingNotification(channel->recipient(), TYPING_STATUS_CLEAR);
 }
 void flist_messenger::typingContinued ( FChannelPanel* channel )
 {
-        // TPN {"character":"Leon Priest","status":"typing"}
-        std::string character = channel->recipient().toStdString().c_str();
-        std::string status = "typing";
-
-        JSONNode node;
-        JSONNode statusnode ( "status", status );
-        JSONNode charnode ( "character", character );
-        node.push_back ( statusnode );
-        node.push_back ( charnode );
-        std::string msg = "TPN " + node.write();
-        sendWS ( msg );
+	account->getSessionByCharacter(charName)->sendTypingNotification(channel->recipient(), TYPING_STATUS_TYPING);
 }
 void flist_messenger::typingPaused ( FChannelPanel* channel )
 {
-        // TPN {"character":"Leon Priest","status":"paused"}
-        std::string character = channel->recipient().toStdString().c_str();
-        std::string status = "paused";
-
-        JSONNode node;
-        JSONNode statusnode ( "status", status );
-        JSONNode charnode ( "character", character );
-        node.push_back ( statusnode );
-        node.push_back ( charnode );
-        std::string msg = "TPN " + node.write();
-        sendWS ( msg );
+	account->getSessionByCharacter(charName)->sendTypingNotification(channel->recipient(), TYPING_STATUS_PAUSED);
 }
 void flist_messenger::ul_pmRequested()
 {

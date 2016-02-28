@@ -8,6 +8,7 @@
 #include <QSslError>
 
 #include "flist_channelsummary.h"
+#include "flist_enums.h"
 
 class FAccount;
 class FChannel;
@@ -61,6 +62,7 @@ public:
 	void sendChannelDescription(QString channelname, QString description);
 	void sendStatus(QString status, QString statusmsg);
 	void sendCharacterTimeout(QString character, int minutes, QString reason);
+	void sendTypingNotification(QString character, TypingStatus status);
 
 	void kickFromChannel(QString channel, QString character);
 	void kickFromChat(QString character);

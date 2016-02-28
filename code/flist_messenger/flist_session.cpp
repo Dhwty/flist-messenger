@@ -1601,6 +1601,24 @@ void FSession::sendCharacterTimeout(QString character, int minutes, QString reas
 	wsSend("TMO", node);
 }
 
+void FSession::sendTypingNotification(QString character, TypingStatus status)
+{
+	std::string statusText = "clear";
+	switch(status)
+	{
+	case TYPING_STATUS_CLEAR: statusText = "clear"; break;
+	case TYPING_STATUS_PAUSED: statusText = "paused"; break;
+	case TYPING_STATUS_TYPING: statusText = "typing"; break;
+	}
+
+	JSONNode node;
+	JSONNode statusnode("status", statusText);
+	JSONNode charnode("character", character.toStdString());
+	node.push_back(statusnode);
+	node.push_back(charnode);
+	wsSend("TPN", node);
+}
+
 void FSession::kickFromChannel(QString channel, QString character)
 {
 	JSONNode kicknode;
@@ -1644,5 +1662,5 @@ void FSession::setRoomIsPublic(QString channel, bool isPublic)
 	JSONNode statNode("status", isPublic ? "public" : "private");
 	statusnode.push_back(channelNode);
 	statusnode.push_back(statNode);
-	wsSend("RST", statusNode);
+	wsSend("RST", statusnode);
 }
