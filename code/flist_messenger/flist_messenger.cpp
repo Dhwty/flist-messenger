@@ -1574,12 +1574,7 @@ void flist_messenger::ul_chatOpAdd()
 }
 void flist_messenger::ul_chatOpRemove()
 {
-        std::string character = ul_recent_name.toStdString();
-        JSONNode opnode;
-        JSONNode charnode ( "character", character );
-        opnode.push_back ( charnode );
-        std::string out = "DOP " + opnode.write();
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->takeGlobalop(ul_recent_name);
 }
 void flist_messenger::ul_profileRequested()
 {
@@ -2040,26 +2035,16 @@ void flist_messenger::parseInput()
 			session->giveGlobalop(inputText.mid(4).simplified());
 			success = true;
 		}
-                else if ( slashcommand == "/reward" )
-                {
-                        // [17:19 PM]>>RWD {"character":"Arisato Hamuko"}
-                        JSONNode node;
-                        JSONNode charnode ( "character", inputText.mid ( 8 ).simplified().toStdString() );
-                        node.push_back ( charnode );
-                        std::string out = "RWD " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/deop" )
-                {
-                        // [17:27 PM]>>DOP {"character":"Viona"}
-                        JSONNode node;
-                        JSONNode charnode ( "character", inputText.mid ( 6 ).simplified().toStdString() );
-                        node.push_back ( charnode );
-                        std::string out = "DOP " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
+		else if ( slashcommand == "/reward" )
+		{
+			session->giveReward(inputText.mid(8).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/deop" )
+		{
+			session->takeGlobalop(inputText.mid(6).simplified());
+			success = true;
+		}
                 else if ( slashcommand == "/code")
                 {
                         QString out = "";
@@ -2078,28 +2063,16 @@ void flist_messenger::parseInput()
 			messageSystem(session, out, MESSAGE_TYPE_FEEDBACK);
                         success = true;
                 }
-                else if ( slashcommand == "/unban" )
-                {
-                        // [17:30 PM]>>CUB {"channel":"ADH-cbae3bdf02cd39e8949e","character":"Viona"}
-                        JSONNode node;
-                        JSONNode charnode ( "character", inputText.mid ( 7 ).simplified().toStdString() );
-                        node.push_back ( charnode );
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        node.push_back ( channode );
-                        std::string out = "CUB " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/banlist" )
-                {
-                        // [17:30 PM]>>CBL {"channel":"ADH-cbae3bdf02cd39e8949e"}
-                        JSONNode node;
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        node.push_back ( channode );
-                        std::string out = "CBL " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
+		else if ( slashcommand == "/unban" )
+		{
+			session->unbanFromChannel(currentPanel->getChannelName(), inputText.mid(7).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/banlist" )
+		{
+			session->requestChannelBanList(currentPanel->getChannelName());
+			success = true;
+		}
 		else if ( slashcommand == "/setdescription" )
 		{
 			// [17:31 PM]>>CDS {"channel":"ADH-cbae3bdf02cd39e8949e","description":":3!"}
@@ -2107,16 +2080,11 @@ void flist_messenger::parseInput()
 			session->sendChannelDescription(currentPanel->getChannelName(), inputText.mid(16).trimmed());
 			success = true;
 		}
-                else if ( slashcommand == "/coplist" )
-                {
-                        // [17:31 PM]>>COL {"channel":"ADH-cbae3bdf02cd39e8949e"}
-                        JSONNode node;
-                        JSONNode channode ( "channel", currentPanel->getChannelName().toStdString() );
-                        node.push_back ( channode );
-                        std::string out = "COL " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
+		else if ( slashcommand == "/coplist" )
+		{
+			session->requestChanopList(currentPanel->getChannelName());
+			success = true;
+		}
 		else if ( slashcommand == "/timeout" )
 		{
 			// [17:16 PM]>>TMO {"time":1,"character":"Arisato Hamuko","reason":"Test."}
@@ -2137,16 +2105,11 @@ void flist_messenger::parseInput()
 				success = true;
 			}
 		}
-                else if ( slashcommand == "/gunban" )
-                {
-                        // [22:43 PM]>>UNB {"character":"Mack"}
-                        JSONNode node;
-                        JSONNode charnode ( "character", inputText.mid ( 8 ).simplified().toStdString() );
-                        node.push_back ( charnode );
-                        std::string out = "UNB " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
+		else if ( slashcommand == "/gunban" )
+		{
+			session->unbanFromChat(inputText.mid(8).simplified());
+			success = true;
+		}
 		else if ( slashcommand == "/createchannel" )
 		{
 			createPublicChannel(inputText.mid(15));

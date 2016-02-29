@@ -1655,6 +1655,24 @@ void FSession::banFromChat(QString character)
 	wsSend("ACB", node);
 }
 
+void FSession::unbanFromChannel(QString channel, QString character)
+{
+	JSONNode bannode;
+	JSONNode charnode ( "character", character.toStdString() );
+	JSONNode channode ( "channel", channel.toStdString() );
+	bannode.push_back ( charnode );
+	bannode.push_back ( channode );
+	wsSend("CUB", bannode);
+}
+
+void FSession::unbanFromChat(QString character)
+{
+	JSONNode node;
+	JSONNode charnode ( "character", character.toStdString() );
+	node.push_back ( charnode );
+	wsSend("UNB", node);
+}
+
 void FSession::setRoomIsPublic(QString channel, bool isPublic)
 {
 	JSONNode statusnode;
@@ -1701,4 +1719,36 @@ void FSession::giveGlobalop(QString character)
 	JSONNode charnode("character", character.toStdString());
 	opnode.push_back(charnode);
 	wsSend("AOP", opnode);
+}
+
+void FSession::takeGlobalop(QString character)
+{
+	JSONNode opnode;
+	JSONNode charnode("character", character.toStdString());
+	opnode.push_back(charnode);
+	wsSend("DOP", opnode);
+}
+
+void FSession::giveReward(QString character)
+{
+	JSONNode node;
+	JSONNode charnode("character", character.toStdString());
+	node.push_back(charnode);
+	wsSend("RWD", node);
+}
+
+void FSession::requestChannelBanList(QString channel)
+{
+	JSONNode node;
+	JSONNode channode("channel", channel.toStdString());
+	node.push_back(channode);
+	wsSend("CBL", node);
+}
+
+void FSession::requestChanopList(QString channel)
+{
+	JSONNode node;
+	JSONNode channode("channel", channel.toStdString());
+	node.push_back(channode);
+	wsSend("COL", node);
 }
