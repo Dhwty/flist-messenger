@@ -63,6 +63,7 @@ public:
 	void sendStatus(QString status, QString statusmsg);
 	void sendCharacterTimeout(QString character, int minutes, QString reason);
 	void sendTypingNotification(QString character, TypingStatus status);
+	void sendDebugCommand(QString payload);
 
 	void kickFromChannel(QString channel, QString character);
 	void kickFromChat(QString character);

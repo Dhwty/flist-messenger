@@ -1853,33 +1853,26 @@ void flist_messenger::parseInput()
 	//todo: Should the maximum length only apply to stuff tagged 'plainmessage'?
 	if(inputText.length() > buffermaxlength) {
 		messageSystem(session, QString("<B>Error:</B> Message exceeds the maximum number of characters."), MESSAGE_TYPE_FEEDBACK);
-                return;
-        }
+		return;
+	}
 
-        if ( isCommand )
-        {
-                QStringList parts = inputText.split ( ' ' );
+	if ( isCommand )
+		{
+		QStringList parts = inputText.split ( ' ' );
 		QString slashcommand = parts[0].toLower();
-                if ( slashcommand == "/clear" )
-                {
-                        chatview->clear();
+		if ( slashcommand == "/clear" )
+		{
+			chatview->clear();
 			if(currentPanel) {
 				currentPanel->clearLines();
 			}
-                        success = true;
-                }
-                else if ( slashcommand == "/debug" )
-                {
-                        JSONNode root;
-                        JSONNode temp;
-                        temp.set_name("command");
-                        temp = parts[1].toStdString().c_str();
-                        root.push_back(temp);
-                        std::string debug = "ZZZ ";
-                        debug += root.write().c_str();
-                        sendWS( debug );
-                        success = true;
-                } else if(slashcommand == "/debugrecv") {
+			success = true;
+		}
+		else if ( slashcommand == "/debug" )
+		{
+			session->sendDebugCommand(parts[1]);
+			success = true;
+		} else if(slashcommand == "/debugrecv") {
 			//Artificially receive a packet from the server. The packet is not validated.
 			if(session) {
 				session->wsRecv(ownText.mid(11).toStdString());

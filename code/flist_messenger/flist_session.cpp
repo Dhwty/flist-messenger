@@ -1619,6 +1619,14 @@ void FSession::sendTypingNotification(QString character, TypingStatus status)
 	wsSend("TPN", node);
 }
 
+void FSession::sendDebugCommand(QString payload)
+{
+	JSONNode node;
+	JSONNode cmd("command", payload.toStdString());
+	node.push_back(cmd);
+	wsSend("ZZZ", node);
+}
+
 void FSession::kickFromChannel(QString channel, QString character)
 {
 	JSONNode kicknode;
