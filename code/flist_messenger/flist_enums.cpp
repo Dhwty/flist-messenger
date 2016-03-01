@@ -5,6 +5,7 @@
 
 EnumLookup AttentionModeEnum(QString(ATTENTION_MODE_ENUM));
 EnumLookup BoolTristate(QString(BOOL_TRISTATE_ENUM), QString(BOOL_TRISTATE_DEFAULT));
+EnumLookup ChannelModeEnum(QString(CHANNEL_MODE_ENUM), QString(CHANNEL_MODE_DEFAULT));
 
 
 EnumLookup::EnumLookup(QString enumlist, QString dflt)

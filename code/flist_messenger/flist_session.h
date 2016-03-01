@@ -80,6 +80,14 @@ public:
 	void giveReward(QString character);
 	void requestChannelBanList(QString channel);
 	void requestChanopList(QString channel);
+	void killChannel(QString channel);
+	void broadcastMessage(QString message);
+	void setChannelMode(QString channel, ChannelMode mode);
+	void spinBottle(QString channel);
+	void rollDiceChannel(QString channel, QString dice);
+	void rollDicePM(QString recipient, QString dice);
+	void requestChannels();
+	void requestProfileKinks(QString character);
 
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);

@@ -50,12 +50,15 @@ enum TypingStatus {
 };
 
 enum ChannelMode {
-	//todo: add an unknown
+	//TODO: Use the unknown value for stuff
+	CHANNEL_MODE_UNKNOWN,
 	CHANNEL_MODE_CHAT,
 	CHANNEL_MODE_ADS,
-	CHANNEL_MODE_BOTH,
-	CHANNEL_MODE_MAX
+	CHANNEL_MODE_BOTH
 };
+#define CHANNEL_MODE_ENUM "unknown, chat, ads, both"
+#define CHANNEL_MODE_DEFAULT "unknown"
+extern EnumLookup ChannelModeEnum;
 
 enum AttentionMode {
 	ATTENTION_DEFAULT,

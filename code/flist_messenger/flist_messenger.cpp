@@ -1231,25 +1231,19 @@ void flist_messenger::setStatusDialogRequested()
 }
 void flist_messenger::characterInfoDialogRequested()
 {
-        //[19:48 PM]>>PRO {"character":"Hexxy"}
-        //[19:41 PM]>>KIN {"character":"Cinnamon Flufftail"}
+	//[19:48 PM]>>PRO {"character":"Hexxy"}
+	//[19:41 PM]>>KIN {"character":"Cinnamon Flufftail"}
 	FSession *session = account->getSession(currentPanel->getSessionID());
 	FCharacter* ch = session->getCharacter(ul_recent_name);
 	if(!ch) {
 		debugMessage(QString("Tried to request character info on the character '%1' but they went offline already!").arg(ul_recent_name));
 		return;
 	}
-        JSONNode outNode;
-        JSONNode cn ( "character", ch->name().toStdString() );
-        outNode.push_back ( cn );
-        std::string out = "PRO " + outNode.write();
-        sendWS ( out );
-        out = "KIN " + outNode.write();
-				sendWS ( out );
+	session->requestProfileKinks(ch->name());
 
-				if (!ci_dialog) { ci_dialog = new FCharacterInfoDialog(this); }
-				ci_dialog->setDisplayedCharacter(ch);
-				ci_dialog->show();
+	if (!ci_dialog) { ci_dialog = new FCharacterInfoDialog(this); }
+	ci_dialog->setDisplayedCharacter(ch);
+	ci_dialog->show();
 }
 void flist_messenger::reportDialogRequested()
 {
@@ -1263,11 +1257,7 @@ void flist_messenger::reportDialogRequested()
 }
 void flist_messenger::channelsDialogRequested()
 {
-        // >>CHA
-        std::string out = "CHA";
-        sendWS ( out );
-        out = "ORS";
-        sendWS ( out );
+	account->getSessionByCharacter(charName)->requestChannels();
 
 	if (cl_dialog == 0)
 	{
@@ -2107,105 +2097,77 @@ void flist_messenger::parseInput()
 		{
 			createPublicChannel(inputText.mid(15));
 		}
-                else if ( slashcommand == "/killchannel" )
-                {
-                        // [0:59 AM]>>KIC {"channel":"test"}
-                        JSONNode node;
-                        JSONNode channode ( "channel", inputText.mid ( 13 ).simplified().toStdString() );
-                        node.push_back ( channode );
-                        std::string out = "KIC " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/broadcast" )
-                {
-                        //[1:14 AM]>>BRO {"message":"test"}
-                        JSONNode node;
-                        JSONNode msgnode ( "message", inputText.mid ( 11 ).simplified().toStdString() );
-                        node.push_back ( msgnode );
-                        std::string out = "BRO " + node.write();
-                        sendWS ( out );
-                        success = true;
-                }
-                else if ( slashcommand == "/setmode" )
-                {
-                        //[23:59 PM]>>RMO {"channel":"ADH-9bbe33158b12f525f422","mode":"chat"}
-                        if (inputText.length() < 10 || (parts[1].toLower() != "chat" && parts[1].toLower() != "ads" && parts[1].toLower() != "both") )
-                        {
-                                QString err("Correct usage: /setmode &lt;chat|ads|both&gt;");
+		else if ( slashcommand == "/killchannel" )
+		{
+			session->killChannel(inputText.mid(13).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/broadcast" )
+		{
+			session->broadcastMessage(inputText.mid(11).simplified());
+			success = true;
+		}
+		else if ( slashcommand == "/setmode" )
+		{
+			ChannelMode mode = CHANNEL_MODE_UNKNOWN;
+			if(parts.length() == 2)
+			{
+				mode = (ChannelMode)ChannelModeEnum.keyToValue(parts[1]);
+			}
+			if (mode == CHANNEL_MODE_UNKNOWN)
+			{
+				QString err("Correct usage: /setmode &lt;chat|ads|both&gt;");
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
-                        }
-
-			if (currentPanel->isOp(session->getCharacter(session->character)) || session->isCharacterOperator(session->character)) {
-                                QString mode = inputText.mid(9);
-                                JSONNode node;
-                                JSONNode channode("channel", currentPanel->getChannelName().toStdString());
-                                JSONNode modenode("mode", mode.toStdString());
-                                node.push_back(channode);
-                                node.push_back(modenode);
-                                std::string out = "RMO " + node.write();
-                                sendWS(out);
-                        }
-                        else
-                        {
-                                QString err("You can only do that in channels you moderate.");
+			}
+			else if (currentPanel->isOp(session->getCharacter(session->character)) || session->isCharacterOperator(session->character))
+			{
+				session->setChannelMode(currentPanel->getChannelName(), mode);
+				success = true;
+			}
+			else
+			{
+				QString err("You can only do that in channels you moderate.");
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
-                        }
-                        success = true;
-                }
-                else if ( slashcommand == "/bottle" )
-                {
+				success = true;
+			}
+		}
+		else if ( slashcommand == "/bottle" )
+		{
 			if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE || currentPanel->type() == FChannel::CHANTYPE_PM)
-                        {
-                                QString err("You can't use that in this panel.");
+			{
+				QString err("You can't use that in this panel.");
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
-                        }
-                        else
-                        {
-                                std::string out = "RLL ";
-                                JSONNode node;
-                                JSONNode channode("channel", currentPanel->getChannelName().toStdString());
-                                JSONNode dicenode("dice", "bottle");
-                                node.push_back(channode);
-                                node.push_back(dicenode);
-                                out += node.write();
-                                sendWS(out);
-                        }
-                        success = true;
-
-                }
-                else if ( slashcommand == "/roll" )
-                {
+			}
+			else
+			{
+				session->spinBottle(currentPanel->getChannelName());
+			}
+			success = true;
+		}
+		else if ( slashcommand == "/roll" )
+		{
 			if (currentPanel == 0 || currentPanel->type() == FChannel::CHANTYPE_CONSOLE)
-                        {
-                                QString err("You can't use that in this panel.");
+			{
+				QString err("You can't use that in this panel.");
 				messageSystem(session, err, MESSAGE_TYPE_FEEDBACK);
-                        }
-                        else
-                        {
-                                QString roll;
-                                if (parts.count() < 2)
-                                {
-                                        roll = "1d10";
-                                } else {
-                                        roll = parts[1].toLower();
-                                }
-                                std::string out = "RLL ";
-                                JSONNode node;
-				if(currentPanel->type() == FChannel::CHANTYPE_PM) {
-					JSONNode charnode("recipient", currentPanel->recipient().toStdString());
-					node.push_back(charnode);
+			}
+			else
+			{
+				QString roll;
+				if (parts.count() < 2)
+				{
+					roll = "1d10";
 				} else {
-					JSONNode channode("channel", currentPanel->getChannelName().toStdString());
-					node.push_back(channode);
+					roll = parts[1].toLower();
 				}
-				JSONNode dicenode("dice", roll.toStdString());
-                                node.push_back(dicenode);
-                                out += node.write();
-                                sendWS(out);
-                        }
-                        success = true;
-                }
+				if(currentPanel->type() == FChannel::CHANTYPE_PM) {
+					session->rollDicePM(currentPanel->recipient(), roll);
+				} else {
+					session->rollDiceChannel(currentPanel->getChannelName(), roll);
+				}
+			}
+			success = true;
+		}
                 else if (debugging && slashcommand == "/channeltojson")
                 {
                         QString output("[noparse]");

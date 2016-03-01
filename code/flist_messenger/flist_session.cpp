@@ -607,6 +607,7 @@ COMMAND(ICH)
 	} else if(channelmode == "chat") {
 		channel->mode = CHANNEL_MODE_CHAT;
 	} else {
+		channel->mode = CHANNEL_MODE_UNKNOWN;
 		debugMessage("[SERVER BUG]: Received unknown channel mode '" + channelmode + "' for channel '" + channelname + "'. <<" + QString::fromStdString(rawpacket));
 	}
 	account->ui->setChannelMode(this, channelname, channel->mode);
@@ -1759,4 +1760,75 @@ void FSession::requestChanopList(QString channel)
 	JSONNode channode("channel", channel.toStdString());
 	node.push_back(channode);
 	wsSend("COL", node);
+}
+
+void FSession::killChannel(QString channel)
+{
+	JSONNode node;
+	JSONNode channode("channel", channel.toStdString());
+	node.push_back(channode);
+	wsSend("KIC", node);
+}
+
+void FSession::broadcastMessage(QString message)
+{
+	JSONNode node;
+	JSONNode msgnode("message", message.toStdString());
+	node.push_back(msgnode);
+	wsSend("BRO", node);
+}
+
+void FSession::setChannelMode(QString channel, ChannelMode mode)
+{
+	JSONNode node;
+	JSONNode channode("channel", channel.toStdString());
+	JSONNode modenode("mode", ChannelModeEnum.valueToKey(mode).toStdString());
+	node.push_back(channode);
+	node.push_back(modenode);
+	wsSend("RMO", node);
+}
+
+void FSession::spinBottle(QString channel)
+{
+	JSONNode node;
+	JSONNode channode("channel",channel.toStdString());
+	JSONNode dicenode("dice", "bottle");
+	node.push_back(channode);
+	node.push_back(dicenode);
+	wsSend("RLL", node);
+}
+
+void FSession::rollDiceChannel(QString channel, QString dice)
+{
+	JSONNode node;
+	JSONNode channode("channel",channel.toStdString());
+	JSONNode dicenode("dice", dice.toStdString());
+	node.push_back(channode);
+	node.push_back(dicenode);
+	wsSend("RLL", node);
+}
+
+void FSession::rollDicePM(QString recipient, QString dice)
+{
+	JSONNode node;
+	JSONNode channode("recipient",recipient.toStdString());
+	JSONNode dicenode("dice", dice.toStdString());
+	node.push_back(channode);
+	node.push_back(dicenode);
+	wsSend("RLL", node);
+}
+
+void FSession::requestChannels()
+{
+	wsSend("CHA");
+	wsSend("ORS");
+}
+
+void FSession::requestProfileKinks(QString character)
+{
+	JSONNode node;
+	JSONNode cn("character", character.toStdString());
+	node.push_back(cn);
+	wsSend("PRO", node);
+	wsSend("KIN", node);
 }
