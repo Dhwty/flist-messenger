@@ -1570,16 +1570,6 @@ void FSession::sendIgnoreDelete(QString character)
 	wsSend("IGN", ignorenode);
 }
 
-void FSession::sendChannelDescription(QString channelname, QString description)
-{
-	JSONNode node;
-	JSONNode channode("channel", channelname.toStdString());
-	JSONNode descnode("description", description.toStdString());
-	node.push_back(channode);
-	node.push_back(descnode);
-	wsSend("CDS", node);
-}
-
 void FSession::sendStatus(QString status, QString statusmsg)
 {
 	JSONNode stanode;
@@ -1778,6 +1768,16 @@ void FSession::broadcastMessage(QString message)
 	wsSend("BRO", node);
 }
 
+void FSession::setChannelDescription(QString channelname, QString description)
+{
+	JSONNode node;
+	JSONNode channode("channel", channelname.toStdString());
+	JSONNode descnode("description", description.toStdString());
+	node.push_back(channode);
+	node.push_back(descnode);
+	wsSend("CDS", node);
+}
+
 void FSession::setChannelMode(QString channel, ChannelMode mode)
 {
 	JSONNode node;
@@ -1786,6 +1786,16 @@ void FSession::setChannelMode(QString channel, ChannelMode mode)
 	node.push_back(channode);
 	node.push_back(modenode);
 	wsSend("RMO", node);
+}
+
+void FSession::setChannelOwner(QString channel, QString newOwner)
+{
+	JSONNode node;
+	JSONNode channode("channel", channel.toStdString());
+	JSONNode ownernode("character", newOwner.toStdString());
+	node.push_back(channode);
+	node.push_back(ownernode);
+	wsSend("CSO", node);
 }
 
 void FSession::spinBottle(QString channel)

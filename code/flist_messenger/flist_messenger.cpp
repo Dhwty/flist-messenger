@@ -429,7 +429,7 @@ void flist_messenger::cs_btnSaveClicked()
 	{
 		std::cout << "Editing description." << std::endl;
 		// Update description
-		account->getSessionByCharacter(charName)->sendChannelDescription(cs_chanCurrent->getChannelName(), cs_qsPlainDescription);
+		account->getSessionByCharacter(charName)->setChannelDescription(cs_chanCurrent->getChannelName(), cs_qsPlainDescription);
 	}
 	//Save settings to the ini file.
 	cs_attentionsettings->saveSettings();
@@ -2055,12 +2055,41 @@ void flist_messenger::parseInput()
 			session->requestChannelBanList(currentPanel->getChannelName());
 			success = true;
 		}
+		else if (slashcommand == "/getdescription")
+		{
+			QString desc = currentPanel->description();
+			messageSystem(session, desc, MESSAGE_TYPE_FEEDBACK);
+			success = true;
+		}
 		else if ( slashcommand == "/setdescription" )
 		{
 			// [17:31 PM]>>CDS {"channel":"ADH-cbae3bdf02cd39e8949e","description":":3!"}
 			//todo: Does this require more intelligent filtering on excess whitespace?
-			session->sendChannelDescription(currentPanel->getChannelName(), inputText.mid(16).trimmed());
+			session->setChannelDescription(currentPanel->getChannelName(), inputText.mid(16).trimmed());
 			success = true;
+		}
+		else if (slashcommand == "/setowner")
+		{
+			QString errmsg;
+			FChannel *channel = session->getChannel(currentPanel->getChannelName());
+
+			success = true;
+			if(parts.count() < 2)
+			{
+				errmsg = "Must supply a character name";
+				messageSystem(session, errmsg, MESSAGE_TYPE_FEEDBACK);
+				success = false;
+			}
+			else if(!channel)
+			{
+				errmsg = "You must be in a channel to set the owner";
+				messageSystem(session, errmsg, MESSAGE_TYPE_FEEDBACK);
+			}
+			else
+			{
+				QString newOwner = inputText.mid(10);
+				session->setChannelOwner(currentPanel->getChannelName(), newOwner);
+			}
 		}
 		else if ( slashcommand == "/coplist" )
 		{

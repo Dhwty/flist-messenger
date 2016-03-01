@@ -59,7 +59,6 @@ public:
 	void sendConfirmStaffReport(QString callid);
 	void sendIgnoreAdd(QString character);
 	void sendIgnoreDelete(QString character);
-	void sendChannelDescription(QString channelname, QString description);
 	void sendStatus(QString status, QString statusmsg);
 	void sendCharacterTimeout(QString character, int minutes, QString reason);
 	void sendTypingNotification(QString character, TypingStatus status);
@@ -82,7 +81,9 @@ public:
 	void requestChanopList(QString channel);
 	void killChannel(QString channel);
 	void broadcastMessage(QString message);
+	void setChannelDescription(QString channelname, QString description);
 	void setChannelMode(QString channel, ChannelMode mode);
+	void setChannelOwner(QString channel, QString newOwner);
 	void spinBottle(QString channel);
 	void rollDiceChannel(QString channel, QString dice);
 	void rollDicePM(QString recipient, QString dice);
