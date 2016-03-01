@@ -21,6 +21,7 @@ StatusDialog::StatusDialog(QWidget *parent) :
 	ui->statusSelect->addItem(QIcon(":/images/status-blue.png"),   "Away",             "away");
 	ui->statusSelect->addItem(QIcon(":/images/status-away.png"),   "Busy",             "busy");
 	ui->statusSelect->addItem(QIcon(":/images/status-busy.png"),   "Do not disturb",   "dnd");
+	ui->statusSelect->setCurrentIndex(ui->statusSelect->findData("online"));
 	
 	connect(ui->buttonBox, SIGNAL(rejected()), this, SLOT(close()));
 	connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(onAccepted()));

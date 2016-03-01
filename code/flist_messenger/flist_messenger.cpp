@@ -79,8 +79,7 @@ flist_messenger::flist_messenger(bool d)
 	setupLoginBox();
 	cl_data = new FChannelListModel();
 	cl_dialog = 0;
-	cl_data = new FChannelListModel();
-	cl_dialog = 0;
+	selfStatus = "online";
 
 	FCharacter::initClass();
 	FChannelPanel::initClass();
