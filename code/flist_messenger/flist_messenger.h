@@ -94,6 +94,7 @@
 #include "ui/aboutdialog.h"
 #include "ui/makeroomdialog.h"
 #include "ui/statusdialog.h"
+#include "ui/friendsdialog.h"
 
 class QSplitter;
 

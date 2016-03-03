@@ -9,7 +9,7 @@ A multi-platform desktop client for the F-Chat protocol. If you have any questio
 * '/close' has been added.
 * Right clicking URLs in chat view will now bring up a smarter context menu based upon the URL.
 * The user list can be resized to see more of character names, or to show more of the chat view.
-* The channel list dialog has been improved to allow sorting and filtering. (Thanks to Kithyria.)
+* The channel list dialog has been improved to allow sorting and filtering. (Thanks to Kythyria.)
 * bugfix: Regular URLs in the chat view and logs will no longer have wacky prefixes.
 * bugfix: Switching between tabs should no longer put double time stamps on every line.
 * bugfix: The current character selection in channels should no longer deselect when characters join or leave the channel.

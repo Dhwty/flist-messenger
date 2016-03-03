@@ -1,0 +1,230 @@
+#include "friendsdialog.h"
+#include "ui_friendsdialog.h"
+
+#include <QListWidgetItem>
+
+FriendsDialog::FriendsDialog(FSession *session, QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::FriendsDialog),
+    session(session)
+{
+	ui->setupUi(this);
+	ui->buttonBox->button(QDialogButtonBox::Close)->setIcon(QIcon(":/icons/cross.png"));
+	
+	connect(ui->btnAddIgnore, SIGNAL(clicked(bool)), this, SLOT(addIgnoreClicked()));
+	connect(ui->btnRemIgnore, SIGNAL(clicked(bool)), this, SLOT(removeIgnoreClicked()));
+	connect(ui->lwIgnoreList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(ignoreListSelectionChanged(QListWidgetItem*,QListWidgetItem*)));
+	connect(ui->leIgnoreTarget, SIGNAL(textEdited(QString)), this, SLOT(ignoreTargetTextEdited(QString)));
+	connect(ui->lwFriendsList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(friendListContextMenu(QPoint)));
+}
+
+FriendsDialog::~FriendsDialog()
+{
+	delete ui;
+}
+
+void FriendsDialog::notifyCharacterOnline(FSession *s, QString character, bool online)
+{
+	FCharacter* f = 0;
+	QListWidgetItem* lwi = 0;
+	
+	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchExactly);
+	if(online && items.count() == 0 && s->isCharacterFriend(character))
+	{
+		f = s->getCharacter(character);
+		lwi = new QListWidgetItem(*(f->statusIcon()),f->name());
+		ui->lwFriendsList->addItem(lwi);
+	}
+	else if(!online && items.count() > 0)
+	{
+		foreach(QListWidgetItem *i, items)
+		{
+			ui->lwFriendsList->removeItemWidget(i);
+		}
+	}
+}
+
+void FriendsDialog::notifyCharacterStatus(FSession *s, FCharacter *character)
+{
+	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character->name(), Qt::MatchExactly);
+	if(s->isCharacterOnline(character->name()))
+	{
+		items.first()->setIcon(*(character->statusIcon()));
+	}
+	else
+	{
+		ui->lwFriendsList->removeItemWidget(items.first());
+	}
+}
+
+void FriendsDialog::notifyFriendsList(FSession *s)
+{
+	QList<QListWidgetItem*> selected = ui->lwFriendsList->selectedItems();
+	QString selectedName;
+	if(!selected.empty())
+	{
+		selectedName = selected.first()->text();
+	}
+	
+	ui->lwFriendsList->clear();
+	foreach(QString i, s->getFriendsList())
+	{
+		if(session->isCharacterOnline(i))
+		{
+			FCharacter *f = session->getCharacter(i);
+			QListWidgetItem *lwi = new QListWidgetItem(*(f->statusIcon()), f->name());
+			ui->lwFriendsList->addItem(lwi);
+		}
+	}
+	
+	if(selectedName.length() > 0)
+	{
+		QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(selectedName, Qt::MatchExactly);
+		if(items.count() > 0)
+		{
+			ui->lwFriendsList->setCurrentItem(items.first());
+		}
+	}
+}
+
+void FriendsDialog::notifyFriendAdd(FSession *s, QString character)
+{
+	if(!s->isCharacterOnline(character)) { return; }
+	
+	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character, Qt::MatchExactly);
+	if(items.count() > 0) { return; }
+	
+	FCharacter *f = s->getCharacter(character);
+	QListWidgetItem *lwi = new QListWidgetItem(*(f->statusIcon()), f->name());
+	ui->lwFriendsList->addItem(lwi);
+}
+
+void FriendsDialog::notifyFriendRemove(FSession *s, QString character)
+{
+	if(!s->isCharacterFriend(character)) { return; }
+	
+	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character, Qt::MatchExactly);
+	if(items.count() == 0) { return; }
+	
+	foreach(QListWidgetItem *i, items)
+	{
+		ui->lwFriendsList->removeItemWidget(i);
+	}
+}
+
+void FriendsDialog::notifyIgnoreList(FSession *s)
+{
+	QList<QListWidgetItem*> selected = ui->lwIgnoreList->selectedItems();
+	QString selectedName;
+	if(!selected.empty())
+	{
+		selectedName = selected.first()->text();
+	}
+	
+	ui->lwIgnoreList->clear();
+	foreach(QString i, s->getIgnoreList())
+	{
+		ui->lwIgnoreList->addItem(i);
+	}
+	
+	if(selectedName.length() > 0)
+	{
+		QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(selectedName, Qt::MatchExactly);
+		if(items.count() > 0)
+		{
+			ui->lwFriendsList->setCurrentItem(items.first());
+		}
+	}
+}
+
+void FriendsDialog::notifyIgnoreAdd(FSession *s, QString character)
+{
+	if(s != session) { return; }
+	
+	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchExactly);
+	if(items.count() > 0) { return; }
+	
+	ui->lwIgnoreList->addItem(character);
+}
+
+void FriendsDialog::notifyIgnoreRemove(FSession *s, QString character)
+{
+	if(s != session) { return; }
+	
+	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchExactly);
+	if(items.count() == 0) { return; }
+	
+	ui->lwIgnoreList->removeItemWidget(items.first());
+}
+
+void FriendsDialog::openPmClicked()
+{
+	QList<QListWidgetItem*> selected = ui->lwFriendsList->selectedItems();
+	if(!selected.empty())
+	{
+		QString name = selected.first()->text();
+		emit privateMessageRequested(name);
+	}
+}
+
+void FriendsDialog::addIgnoreClicked()
+{
+	QString character = ui->leIgnoreTarget->text().simplified();
+	if(character != "" && !session->isCharacterIgnored(character))
+	{
+		session->sendIgnoreAdd(character);
+		ui->leIgnoreTarget->clear();
+	}
+}
+
+void FriendsDialog::removeIgnoreClicked()
+{
+	QString character = ui->lwIgnoreList->currentItem()->text();
+	
+	if(character != "" &&!session->isCharacterIgnored(character))
+	{
+		session->sendIgnoreDelete(character);
+		ui->leIgnoreTarget->clear();
+		ui->btnAddIgnore->setEnabled(false);
+	}
+}
+
+void FriendsDialog::ignoreListSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous)
+{
+	if(current == previous) { return; }
+	
+	if(!current)
+	{
+		ui->btnRemIgnore->setEnabled(false);
+		return;
+	}
+	
+	ui->btnRemIgnore->setEnabled(true);
+	ui->leIgnoreTarget->setText(current->text());
+}
+
+void FriendsDialog::ignoreTargetTextEdited(QString newText)
+{
+	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(newText, Qt::MatchFixedString);
+	if(items.count() > 0)
+	{
+		ui->btnRemIgnore->setEnabled(true);
+		ui->btnAddIgnore->setEnabled(false);
+		ui->lwIgnoreList->setCurrentItem(items.first());
+	}
+	else
+	{
+		ui->btnRemIgnore->setEnabled(false);
+		ui->btnAddIgnore->setEnabled(newText.simplified() != "");
+		ui->lwIgnoreList->selectionModel()->clear();
+	}
+}
+
+void FriendsDialog::friendListContextMenu(const QPoint &point)
+{
+	 QListWidgetItem* lwi = ui->lwFriendsList->itemAt(point);
+	 if(lwi)
+	 {
+		 emit friendContextMenuRequested(lwi->text(), point);
+	 }
+}

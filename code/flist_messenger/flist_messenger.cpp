@@ -1181,6 +1181,8 @@ void flist_messenger::friendsDialogRequested()
         // Fill lists
         refreshFriendLists();
         friendsDialog->show();
+		FriendsDialog *fd = new FriendsDialog(account->getSessionByCharacter(charName), this);
+		fd->show();
 }
 void flist_messenger::refreshFriendLists()
 {
