@@ -26,7 +26,7 @@ signals:
 
 public slots:
 	void notifyCharacterOnline(FSession *s, QString character, bool online);
-	void notifyCharacterStatus(FSession *s, FCharacter *character);
+	void notifyCharacterStatus(FSession *s, QString character);
 	
 	void notifyFriendsList(FSession *s);
 	void notifyFriendAdd(FSession *s, QString character);

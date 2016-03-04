@@ -714,7 +714,7 @@ COMMAND(NLN)
 	if(operatorlist.contains(charactername.toLower())) {
 		character->setIsChatOp(true);
 	}
-	account->ui->notifyCharacterOnline(this, charactername, true);
+	emit notifyCharacterOnline(this, charactername, true);
 }
 COMMAND(LIS)
 {
@@ -746,7 +746,7 @@ COMMAND(LIS)
 		if(operatorlist.contains(charactername.toLower())) {
 			character->setIsChatOp(true);
 		}
-		account->ui->notifyCharacterOnline(this, charactername, true);
+		emit notifyCharacterOnline(this, charactername, true);
 	}
 }
 COMMAND(FLN)
@@ -765,7 +765,7 @@ COMMAND(FLN)
 			(*iter)->removeCharacter(charactername);
 		}
 	}
-	account->ui->notifyCharacterOnline(this, charactername, false);
+	emit notifyCharacterOnline(this, charactername, false);
 	removeCharacter(charactername);
 }
 COMMAND(STA)
@@ -788,7 +788,7 @@ COMMAND(STA)
 		// Crown messages can cause there to be no statusmsg.
 		/*do nothing*/
 	}
-	account->ui->notifyCharacterStatusUpdate(this, charactername);
+	emit notifyCharacterStatusUpdate(this, charactername);
 }
 
 COMMAND(CBUCKU)

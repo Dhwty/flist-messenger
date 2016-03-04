@@ -134,8 +134,11 @@ public:
 	virtual void setChannelMode(FSession *session, QString channelname, ChannelMode mode);
 	virtual void notifyChannelReady(FSession *session, QString channelname);
 
+public slots:
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
+	
+public:
 	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus);
 	virtual void notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername);
 	virtual void notifyCharacterProfileDataUpdated(FSession *session, QString charactername);

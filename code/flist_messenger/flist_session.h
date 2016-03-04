@@ -93,6 +93,9 @@ public:
 signals:
 	void socketErrorSignal(QAbstractSocket::SocketError);
 	void recvMessage(QString type, QString session, QString chan, QString sender, QString message);
+	
+	void notifyCharacterOnline(FSession *session, QString charactername, bool online);
+	void notifyCharacterStatusUpdate(FSession *session, QString charactername);
 
 public slots:
 	void socketConnected();

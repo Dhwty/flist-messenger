@@ -187,6 +187,10 @@ void flist_messenger::startConnect(QString charName)
 
 	setupRealUI();
 	connect ( session, SIGNAL ( socketErrorSignal ( QAbstractSocket::SocketError ) ), this, SLOT ( socketError ( QAbstractSocket::SocketError ) ) );
+	
+	connect(session, SIGNAL(notifyCharacterOnline(FSession*,QString,bool)), this, SLOT(notifyCharacterOnline(FSession*,QString,bool)));
+	connect(session, SIGNAL(notifyCharacterStatusUpdate(FSession*,QString)), this, SLOT(notifyCharacterStatusUpdate(FSession*,QString)));
+	
 	session->connectSession();
 }
 

@@ -1,5 +1,6 @@
 #include "friendsdialog.h"
 #include "ui_friendsdialog.h"
+#include "flist_global.h"
 
 #include <QListWidgetItem>
 
@@ -16,6 +17,12 @@ FriendsDialog::FriendsDialog(FSession *session, QWidget *parent) :
 	connect(ui->lwIgnoreList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(ignoreListSelectionChanged(QListWidgetItem*,QListWidgetItem*)));
 	connect(ui->leIgnoreTarget, SIGNAL(textEdited(QString)), this, SLOT(ignoreTargetTextEdited(QString)));
 	connect(ui->lwFriendsList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(friendListContextMenu(QPoint)));
+	
+	connect(session, SIGNAL(notifyCharacterOnline(FSession*,QString,bool)), this, SLOT(notifyCharacterOnline(FSession*,QString,bool)));
+	connect(session, SIGNAL(notifyCharacterStatusUpdate(FSession*,QString)), this, SLOT(notifyCharacterStatus(FSession*,QString)));
+	
+	this->notifyFriendsList(session);
+	this->notifyIgnoreList(session);
 }
 
 FriendsDialog::~FriendsDialog()
@@ -25,35 +32,35 @@ FriendsDialog::~FriendsDialog()
 
 void FriendsDialog::notifyCharacterOnline(FSession *s, QString character, bool online)
 {
+	if(!s->isCharacterFriend(character)) { return; }
+	
 	FCharacter* f = 0;
 	QListWidgetItem* lwi = 0;
 	
-	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchExactly);
-	if(online && items.count() == 0 && s->isCharacterFriend(character))
+	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character, Qt::MatchFixedString);
+	if(online && items.count() == 0)
 	{
 		f = s->getCharacter(character);
 		lwi = new QListWidgetItem(*(f->statusIcon()),f->name());
 		ui->lwFriendsList->addItem(lwi);
 	}
-	else if(!online && items.count() > 0)
+	else if(!online /*&& items.count() > 0*/)
 	{
 		foreach(QListWidgetItem *i, items)
 		{
-			ui->lwFriendsList->removeItemWidget(i);
+			int row = ui->lwFriendsList->row(i);
+			delete (ui->lwFriendsList->takeItem(row));
 		}
 	}
 }
 
-void FriendsDialog::notifyCharacterStatus(FSession *s, FCharacter *character)
+void FriendsDialog::notifyCharacterStatus(FSession *s, QString character)
 {
-	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character->name(), Qt::MatchExactly);
-	if(s->isCharacterOnline(character->name()))
+	FCharacter *c = s->getCharacter(character);
+	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(c->name(), Qt::MatchFixedString);
+	if(items.count() > 0)
 	{
-		items.first()->setIcon(*(character->statusIcon()));
-	}
-	else
-	{
-		ui->lwFriendsList->removeItemWidget(items.first());
+		items.first()->setIcon(*(c->statusIcon()));
 	}
 }
 
@@ -79,7 +86,7 @@ void FriendsDialog::notifyFriendsList(FSession *s)
 	
 	if(selectedName.length() > 0)
 	{
-		QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(selectedName, Qt::MatchExactly);
+		QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(selectedName, Qt::MatchFixedString);
 		if(items.count() > 0)
 		{
 			ui->lwFriendsList->setCurrentItem(items.first());
@@ -91,7 +98,7 @@ void FriendsDialog::notifyFriendAdd(FSession *s, QString character)
 {
 	if(!s->isCharacterOnline(character)) { return; }
 	
-	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character, Qt::MatchExactly);
+	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character, Qt::MatchFixedString);
 	if(items.count() > 0) { return; }
 	
 	FCharacter *f = s->getCharacter(character);
@@ -103,7 +110,7 @@ void FriendsDialog::notifyFriendRemove(FSession *s, QString character)
 {
 	if(!s->isCharacterFriend(character)) { return; }
 	
-	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character, Qt::MatchExactly);
+	QList<QListWidgetItem*> items = ui->lwFriendsList->findItems(character, Qt::MatchFixedString);
 	if(items.count() == 0) { return; }
 	
 	foreach(QListWidgetItem *i, items)
@@ -129,7 +136,7 @@ void FriendsDialog::notifyIgnoreList(FSession *s)
 	
 	if(selectedName.length() > 0)
 	{
-		QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(selectedName, Qt::MatchExactly);
+		QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(selectedName, Qt::MatchFixedString);
 		if(items.count() > 0)
 		{
 			ui->lwFriendsList->setCurrentItem(items.first());
@@ -141,7 +148,7 @@ void FriendsDialog::notifyIgnoreAdd(FSession *s, QString character)
 {
 	if(s != session) { return; }
 	
-	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchExactly);
+	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchFixedString);
 	if(items.count() > 0) { return; }
 	
 	ui->lwIgnoreList->addItem(character);
@@ -151,7 +158,7 @@ void FriendsDialog::notifyIgnoreRemove(FSession *s, QString character)
 {
 	if(s != session) { return; }
 	
-	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchExactly);
+	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchFixedString);
 	if(items.count() == 0) { return; }
 	
 	ui->lwIgnoreList->removeItemWidget(items.first());
@@ -181,7 +188,7 @@ void FriendsDialog::removeIgnoreClicked()
 {
 	QString character = ui->lwIgnoreList->currentItem()->text();
 	
-	if(character != "" &&!session->isCharacterIgnored(character))
+	if(character != "" && session->isCharacterIgnored(character))
 	{
 		session->sendIgnoreDelete(character);
 		ui->leIgnoreTarget->clear();
