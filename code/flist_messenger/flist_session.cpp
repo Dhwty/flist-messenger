@@ -980,7 +980,7 @@ COMMAND(IGN)
 				ignorelist.append(charactername.toLower());
 			}
 		}
-		account->ui->notifyIgnoreUpdate(this);
+		emit notifyIgnoreList(this);
 	} else if(action == "add") {
 		QString charactername = nodes.at("character").as_string().c_str();
 		if(ignorelist.contains(charactername, Qt::CaseInsensitive)) {
@@ -988,8 +988,7 @@ COMMAND(IGN)
 		} else {
 			ignorelist.append(charactername.toLower());
 		}
-		account->ui->messageSystem(this, QString("%1 has been added to your ignore list.").arg(charactername), MESSAGE_TYPE_IGNORE_UPDATE);
-		account->ui->setIgnoreCharacter(this, charactername, true);
+		emit notifyIgnoreAdd(this, charactername);
 	} else if(action =="delete") {
 		QString charactername = nodes.at("character").as_string().c_str();
 		if(!ignorelist.contains(charactername, Qt::CaseInsensitive)) {
@@ -997,8 +996,7 @@ COMMAND(IGN)
 		} else {
 			ignorelist.removeAll(charactername.toLower());
 		}
-		account->ui->messageSystem(this, QString("%1 has been removed from your ignore list.").arg(charactername), MESSAGE_TYPE_IGNORE_UPDATE);
-		account->ui->setIgnoreCharacter(this, charactername, false);
+		emit notifyIgnoreRemove(this, charactername);
 	} else {
 		debugMessage(QString("[SERVER BUG] Received ignore command(IGN) but the action '%1' is unknown. %2").arg(action).arg(QString::fromStdString(rawpacket)));
 		return;

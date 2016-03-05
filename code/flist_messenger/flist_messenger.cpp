@@ -190,6 +190,8 @@ void flist_messenger::startConnect(QString charName)
 	
 	connect(session, SIGNAL(notifyCharacterOnline(FSession*,QString,bool)), this, SLOT(notifyCharacterOnline(FSession*,QString,bool)));
 	connect(session, SIGNAL(notifyCharacterStatusUpdate(FSession*,QString)), this, SLOT(notifyCharacterStatusUpdate(FSession*,QString)));
+	connect(session, SIGNAL(notifyIgnoreAdd(FSession*,QString)), this, SLOT(notifyIgnoreAdd(FSession*,QString)));
+	connect(session, SIGNAL(notifyIgnoreRemove(FSession*,QString)), this, SLOT(notifyIgnoreRemove(FSession*,QString)));
 	
 	session->connectSession();
 }
@@ -2617,19 +2619,14 @@ void flist_messenger::notifyCharacterProfileDataUpdated(FSession *session, QStri
 	ci_dialog->updateProfile(character);
 }
 
-void flist_messenger::notifyIgnoreUpdate(FSession *session)
+void flist_messenger::notifyIgnoreAdd(FSession *s, QString character)
 {
-	(void) session;
-	if(friendsDialog) {
-		refreshFriendLists();
-	}
+	messageSystem(s, QString("%1 has been added to your ignore list.").arg(character), MESSAGE_TYPE_IGNORE_UPDATE);
 }
-void flist_messenger::setIgnoreCharacter(FSession *session, QString charactername, bool ignore)
+
+void flist_messenger::notifyIgnoreRemove(FSession *s, QString character)
 {
-	(void) session; (void) charactername; (void) ignore;
-	if(friendsDialog) {
-		refreshFriendLists();
-	}
+	messageSystem(s, QString("%1 has been removed from your ignore list.").arg(character), MESSAGE_TYPE_IGNORE_UPDATE);
 }
 
 //todo: Making channelkey should be moved out to messageMessage().

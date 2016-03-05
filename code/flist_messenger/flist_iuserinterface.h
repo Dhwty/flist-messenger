@@ -28,8 +28,6 @@ public:
 	virtual void notifyChannelReady(FSession *session, QString channelname) = 0;
 
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online) = 0;
-	virtual void notifyIgnoreUpdate(FSession *session) = 0;
-	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore) = 0;
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername) = 0;
 	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus) = 0;
 	virtual void notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername) = 0;

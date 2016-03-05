@@ -138,12 +138,13 @@ public slots:
 	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
 	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
 	
+	void notifyIgnoreAdd(FSession *s, QString character);
+	void notifyIgnoreRemove(FSession *s, QString character);
+	
 public:
 	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus);
 	virtual void notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername);
 	virtual void notifyCharacterProfileDataUpdated(FSession *session, QString charactername);
-	virtual void notifyIgnoreUpdate(FSession *session);
-	virtual void setIgnoreCharacter(FSession *session, QString charactername, bool ignore);
 
 	virtual void messageMessage(FMessage message);
 	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype);

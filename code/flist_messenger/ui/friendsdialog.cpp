@@ -20,6 +20,9 @@ FriendsDialog::FriendsDialog(FSession *session, QWidget *parent) :
 	
 	connect(session, SIGNAL(notifyCharacterOnline(FSession*,QString,bool)), this, SLOT(notifyCharacterOnline(FSession*,QString,bool)));
 	connect(session, SIGNAL(notifyCharacterStatusUpdate(FSession*,QString)), this, SLOT(notifyCharacterStatus(FSession*,QString)));
+	connect(session, SIGNAL(notifyIgnoreList(FSession*)), this, SLOT(notifyIgnoreList(FSession*)));
+	connect(session, SIGNAL(notifyIgnoreAdd(FSession*,QString)), this, SLOT(notifyIgnoreAdd(FSession*,QString)));
+	connect(session, SIGNAL(notifyIgnoreRemove(FSession*,QString)), this, SLOT(notifyIgnoreRemove(FSession*,QString)));
 	
 	this->notifyFriendsList(session);
 	this->notifyIgnoreList(session);
@@ -161,7 +164,8 @@ void FriendsDialog::notifyIgnoreRemove(FSession *s, QString character)
 	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchFixedString);
 	if(items.count() == 0) { return; }
 	
-	ui->lwIgnoreList->removeItemWidget(items.first());
+	int row = ui->lwIgnoreList->row(items.first());
+	delete (ui->lwIgnoreList->takeItem(row));
 }
 
 void FriendsDialog::openPmClicked()
@@ -181,6 +185,7 @@ void FriendsDialog::addIgnoreClicked()
 	{
 		session->sendIgnoreAdd(character);
 		ui->leIgnoreTarget->clear();
+		ui->btnAddIgnore->setEnabled(false);
 	}
 }
 
@@ -206,6 +211,7 @@ void FriendsDialog::ignoreListSelectionChanged(QListWidgetItem *current, QListWi
 		return;
 	}
 	
+	ui->btnAddIgnore->setEnabled(false);
 	ui->btnRemIgnore->setEnabled(true);
 	ui->leIgnoreTarget->setText(current->text());
 }

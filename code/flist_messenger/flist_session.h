@@ -96,6 +96,9 @@ signals:
 	
 	void notifyCharacterOnline(FSession *session, QString charactername, bool online);
 	void notifyCharacterStatusUpdate(FSession *session, QString charactername);
+	void notifyIgnoreList(FSession *s);
+	void notifyIgnoreAdd(FSession *s, QString character);
+	void notifyIgnoreRemove(FSession *s, QString character);
 
 public slots:
 	void socketConnected();
