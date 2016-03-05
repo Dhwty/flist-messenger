@@ -22,7 +22,7 @@ public:
 signals:
 	privateMessageRequested(QString character);
 	//TODO: Better context menu implementation (FContextMenu?)
-	friendContextMenuRequested(QString character, const QPoint& point);
+	friendContextMenuRequested(QString character);
 
 public slots:
 	void notifyCharacterOnline(FSession *s, QString character, bool online);
@@ -44,9 +44,11 @@ private slots:
 	void openPmClicked();
 	void addIgnoreClicked();
 	void removeIgnoreClicked();
-	void ignoreListSelectionChanged(QListWidgetItem * current, QListWidgetItem * previous);
+	void ignoreListSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous);
 	void ignoreTargetTextEdited(QString newText);
 	void friendListContextMenu(const QPoint &point);
+	void friendListSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous);
+	void friendListDoubleClicked(QListWidgetItem *target);
 };
 
 #endif // FRIENDSDIALOG_H

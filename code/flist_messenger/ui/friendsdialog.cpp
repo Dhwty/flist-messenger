@@ -12,11 +12,14 @@ FriendsDialog::FriendsDialog(FSession *session, QWidget *parent) :
 	ui->setupUi(this);
 	ui->buttonBox->button(QDialogButtonBox::Close)->setIcon(QIcon(":/icons/cross.png"));
 	
+	connect(ui->btnOpenPM, SIGNAL(clicked(bool)), this, SLOT(openPmClicked()));
 	connect(ui->btnAddIgnore, SIGNAL(clicked(bool)), this, SLOT(addIgnoreClicked()));
 	connect(ui->btnRemIgnore, SIGNAL(clicked(bool)), this, SLOT(removeIgnoreClicked()));
 	connect(ui->lwIgnoreList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(ignoreListSelectionChanged(QListWidgetItem*,QListWidgetItem*)));
 	connect(ui->leIgnoreTarget, SIGNAL(textEdited(QString)), this, SLOT(ignoreTargetTextEdited(QString)));
 	connect(ui->lwFriendsList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(friendListContextMenu(QPoint)));
+	connect(ui->lwFriendsList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(friendListSelectionChanged(QListWidgetItem*,QListWidgetItem*)));
+	connect(ui->lwFriendsList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(friendListDoubleClicked(QListWidgetItem*)));
 	
 	connect(session, SIGNAL(notifyCharacterOnline(FSession*,QString,bool)), this, SLOT(notifyCharacterOnline(FSession*,QString,bool)));
 	connect(session, SIGNAL(notifyCharacterStatusUpdate(FSession*,QString)), this, SLOT(notifyCharacterStatus(FSession*,QString)));
@@ -238,6 +241,18 @@ void FriendsDialog::friendListContextMenu(const QPoint &point)
 	 QListWidgetItem* lwi = ui->lwFriendsList->itemAt(point);
 	 if(lwi)
 	 {
-		 emit friendContextMenuRequested(lwi->text(), point);
+		 emit friendContextMenuRequested(lwi->text());
 	 }
+}
+
+void FriendsDialog::friendListSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous)
+{
+	if(current == previous) { return; }
+	
+	ui->btnOpenPM->setEnabled(current != 0);
+}
+
+void FriendsDialog::friendListDoubleClicked(QListWidgetItem *target)
+{
+	emit privateMessageRequested(target->text());
 }

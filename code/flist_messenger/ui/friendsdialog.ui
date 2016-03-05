@@ -42,6 +42,9 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QListWidget" name="lwFriendsList">
+         <property name="contextMenuPolicy">
+          <enum>Qt::CustomContextMenu</enum>
+         </property>
          <property name="sortingEnabled">
           <bool>true</bool>
          </property>

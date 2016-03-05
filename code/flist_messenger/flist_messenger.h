@@ -245,6 +245,7 @@ private slots:
 	void switchTab ( QString& tabname );
 	void inputChanged();
 	void userListContextMenuRequested ( const QPoint& point );
+	void friendListContextMenuRequested(QString character);
 	void submitReport();
 	void handleReportFinished();
 	void reportTicketFinished();
@@ -281,7 +282,7 @@ private slots:
 	void cs_btnSaveClicked();
 	void scrollChatViewEnd();
 	void openPMTab();
-	void openPMTab ( QString& character );
+	void openPMTab ( QString character );
 	void displayCharacterContextMenu ( FCharacter* ch );
 	void displayChannelContextMenu ( FChannelPanel* ch );
 

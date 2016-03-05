@@ -828,6 +828,18 @@ void flist_messenger::userListContextMenuRequested ( const QPoint& point )
                 displayCharacterContextMenu ( ch );
         }
 }
+
+void flist_messenger::friendListContextMenuRequested(QString character)
+{
+	FSession *session = account->getSessionByCharacter(charName); //todo: fix this
+	if(session->isCharacterOnline(character))
+	{
+		ul_recent_name = character;
+		FCharacter* ch = session->getCharacter(ul_recent_name);
+		displayCharacterContextMenu ( ch );
+	}
+}
+
 void flist_messenger::displayChannelContextMenu(FChannelPanel *ch)
 {
         if (!ch)
@@ -1084,7 +1096,8 @@ void flist_messenger::friendsDialogRequested()
 	if ( friendsDialog == 0 || friendsDialog->parent() != this )
 	{
 		friendsDialog = new FriendsDialog(account->getSessionByCharacter(charName), this);
-		connect(friendsDialog, SIGNAL(privateMessageRequested(QString)), this, SLOT(openPMTab(QString&)));
+		connect(friendsDialog, SIGNAL(privateMessageRequested(QString)), this, SLOT(openPMTab(QString)));
+		connect(friendsDialog, SIGNAL(friendContextMenuRequested(QString)), this, SLOT(friendListContextMenuRequested(QString)));
 	}
 	friendsDialog->show();
 }
@@ -1563,7 +1576,7 @@ void flist_messenger::openPMTab()
 {
 	openPMTab(ul_recent_name);
 }
-void flist_messenger::openPMTab ( QString &character )
+void flist_messenger::openPMTab ( QString character )
 {
 	FSession *session = account->getSession(currentPanel->getSessionID());
 	if(character.toLower() == session->character.toLower()) {
