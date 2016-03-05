@@ -222,14 +222,10 @@ private slots:
 	void setupSettingsDialog();
 	void setupTimeoutDialog();
 	void timeoutDialogRequested();
-	void setupFriendsDialog();
-	void setupAddIgnoreDialog();
 	void setupReportDialog();
 	bool setupChannelSettingsDialog();
 	void settingsDialogRequested();
 	void friendsDialogRequested();
-	void refreshFriendLists();
-	void addIgnoreDialogRequested();
 	void channelsDialogRequested();
 	void makeRoomDialogRequested();
 	void setStatusDialogRequested();
@@ -273,13 +269,6 @@ private slots:
 	void ul_chatOpRemove();
 	void to_btnSubmitClicked();
 	void to_btnCancelClicked();
-	void fr_btnFriendsPMClicked();
-	void fr_btnIgnoreRemoveClicked();
-	void fr_btnCloseClicked();
-	void fr_btnIgnoreAddClicked();
-	void fr_friendsContextMenuRequested ( const QPoint& point );
-	void ai_btnSubmitClicked();
-	void ai_btnCancelClicked();
 	void re_btnSubmitClicked();
 	void re_btnCancelClicked();
 	void se_btnSubmitClicked();
@@ -325,8 +314,6 @@ private:
 	void typingPaused ( FChannelPanel* channel );
 	void typingContinued ( FChannelPanel* channel );
 	void typingCleared ( FChannelPanel* channel );
-	void addToFriendsList ( QListWidgetItem* lwi );
-	void addToIgnoreList ( QListWidgetItem* lwi );
 	void saveSettings();
 	void loadSettings();
 	void loadDefaultSettings();
@@ -373,32 +360,7 @@ private:
 
 	FCharacterInfoDialog *ci_dialog; // ci stands for character info
 
-	QDialog* friendsDialog; // fr stands for friends
-	QVBoxLayout* fr_vblOverview;
-	QTabWidget* fr_twOverview;
-	QHBoxLayout* fr_hblSouthButtons;
-	QListWidget* fr_lwFriends;
-	QListWidget* fr_lwIgnore;
-	QHBoxLayout* fr_hblIgnoreButtons;
-	QHBoxLayout* fr_hblFriendsButtons;
-	QPushButton* fr_btnFriendsPM;
-	QPushButton* fr_btnIgnoreRemove;
-	QPushButton* fr_btnIgnoreAdd;
-	QPushButton* fr_btnClose;
-	QVBoxLayout* fr_vblFriends;
-	QVBoxLayout* fr_vblIgnore;
-	QGroupBox* fr_gbIgnore;
-	QGroupBox* fr_gbFriends;
-	QLabel* fr_lblFriendsInstructions;
-	QLabel* fr_lblIgnoreInstructions;
-
-	QDialog* addIgnoreDialog; //ai stands for add ignore
-	QVBoxLayout* ai_vblOverview;
-	QHBoxLayout* ai_hblSouthButtons;
-	QPushButton* ai_btnSubmit;
-	QPushButton* ai_btnCancel;
-	QLineEdit* ai_leName;
-	QLabel* ai_lblInstructions;
+	FriendsDialog* friendsDialog; // fr stands for friends
 
 	QDialog* reportDialog; // re stands for report
 	QVBoxLayout* re_vblOverview;

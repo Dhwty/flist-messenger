@@ -59,7 +59,6 @@ flist_messenger::flist_messenger(bool d)
 	debugging = d;
 	disconnected = true;
 	friendsDialog = 0;
-	addIgnoreDialog = 0;
 	makeRoomDialog = 0;
 	setStatusDialog = 0;
 	ci_dialog = 0;
@@ -206,62 +205,7 @@ void flist_messenger::destroyChanMenu()
         if (recentChannelMenu)
                 recentChannelMenu->deleteLater();
 }
-void flist_messenger::setupFriendsDialog()
-{
-        friendsDialog = new QDialog ( this );
-        fr_vblOverview = new QVBoxLayout;
-        fr_twOverview = new QTabWidget;
-        fr_hblSouthButtons = new QHBoxLayout;
-        fr_lwFriends = new QListWidget;
-        fr_lwIgnore = new QListWidget;
-        fr_hblIgnoreButtons = new QHBoxLayout;
-        fr_hblFriendsButtons = new QHBoxLayout;
-        fr_btnIgnoreRemove = new QPushButton ( QIcon ( ":/images/cross-circle-frame.png" ), QString ( "Remove" ) );
-        fr_btnIgnoreAdd = new QPushButton ( QString ( "Add user..." ) );
-        fr_btnClose = new QPushButton ( QIcon ( ":/images/cross.png" ), QString ( "Close" ) );
-        fr_vblFriends = new QVBoxLayout;
-        fr_vblIgnore = new QVBoxLayout;
-        fr_btnFriendsPM = new QPushButton ( QIcon ( ":/images/users.png" ), QString ( "Open PM" ) );
-        fr_lblFriendsInstructions = new QLabel ( QString ( "(Adding friends only goes via the website.)" ) );
-        fr_lblIgnoreInstructions = new QLabel ( QString ( "(You can ignore users by right-clicking them.)" ) );
 
-        friendsDialog->setLayout ( fr_vblOverview );
-        fr_vblOverview->addWidget ( fr_twOverview );
-        fr_vblOverview->addLayout ( fr_hblSouthButtons );
-        fr_hblSouthButtons->addStretch();
-        fr_hblSouthButtons->addWidget ( fr_btnClose );
-
-        // Friends tab
-        fr_gbFriends = new QGroupBox;
-        fr_gbFriends->setLayout ( fr_vblFriends );
-        fr_vblFriends->addWidget ( fr_lwFriends );
-        fr_vblFriends->addLayout ( fr_hblFriendsButtons );
-        fr_vblFriends->addWidget ( fr_lblFriendsInstructions );
-        fr_hblFriendsButtons->addStretch();
-        fr_hblFriendsButtons->addWidget ( fr_btnFriendsPM );
-
-        // Ignore tab
-        fr_gbIgnore = new QGroupBox;
-        fr_gbIgnore->setLayout ( fr_vblIgnore );
-        fr_vblIgnore->addWidget ( fr_lwIgnore );
-        fr_vblIgnore->addLayout ( fr_hblIgnoreButtons );
-        fr_vblIgnore->addWidget ( fr_lblIgnoreInstructions );
-        fr_hblIgnoreButtons->addStretch();
-        fr_hblIgnoreButtons->addWidget ( fr_btnIgnoreAdd );
-        fr_hblIgnoreButtons->addWidget ( fr_btnIgnoreRemove );
-
-        fr_twOverview->addTab ( fr_gbFriends, QIcon ( ":/images/users.png" ), QString ( "Friends" ) );
-        fr_twOverview->addTab ( fr_gbIgnore, QString ( "Ignore list" ) );
-
-        fr_lwFriends->setContextMenuPolicy ( Qt::CustomContextMenu );
-        connect ( fr_lwFriends, SIGNAL ( customContextMenuRequested ( const QPoint& ) ),
-                         this, SLOT ( fr_friendsContextMenuRequested ( const QPoint& ) ) );
-        connect ( fr_btnFriendsPM, SIGNAL ( clicked() ), this, SLOT ( fr_btnFriendsPMClicked() ) );
-        connect ( fr_btnIgnoreRemove, SIGNAL ( clicked() ), this, SLOT ( fr_btnIgnoreRemoveClicked() ) );
-        connect ( fr_btnIgnoreAdd, SIGNAL ( clicked() ), this, SLOT ( fr_btnIgnoreAddClicked() ) );
-        connect ( fr_btnClose, SIGNAL ( clicked() ), this, SLOT ( fr_btnCloseClicked() ) );
-        friendsDialog->setLayout ( fr_vblOverview );
-}
 void flist_messenger::setupReportDialog()
 {
         reportDialog = new QDialog(this);
@@ -447,51 +391,6 @@ void flist_messenger::cs_btnSaveClicked()
 	channelSettingsDialog->deleteLater();
 }
 
-void flist_messenger::setupAddIgnoreDialog()
-{
-        addIgnoreDialog = new QDialog ( this );
-        ai_btnSubmit = new QPushButton ( QIcon ( QString ( ":/images/tick.png" ) ), QString ( "Submit" ) );
-        ai_btnCancel = new QPushButton ( QIcon ( QString ( ":/images/cross.png" ) ), QString ( "Cancel" ) );
-        ai_vblOverview = new QVBoxLayout;
-        ai_hblSouthButtons = new QHBoxLayout;
-        ai_leName = new QLineEdit;
-        ai_lblInstructions = new QLabel ( QString ( "Characters on this list are not allowed to message you. If people switch characters to get around this, please contact an F-chat operator about it!<br /><b>Name:</b>" ) );
-        ai_lblInstructions->setWordWrap ( true );
-
-        addIgnoreDialog->setLayout ( ai_vblOverview );
-        ai_vblOverview->addWidget ( ai_lblInstructions );
-        ai_vblOverview->addWidget ( ai_leName );
-        ai_vblOverview->addLayout ( ai_hblSouthButtons );
-        ai_hblSouthButtons->addStretch();
-        ai_hblSouthButtons->addWidget ( ai_btnSubmit );
-        ai_hblSouthButtons->addWidget ( ai_btnCancel );
-
-        connect ( ai_btnSubmit, SIGNAL ( clicked() ), this, SLOT ( ai_btnSubmitClicked() ) );
-        connect ( ai_btnCancel, SIGNAL ( clicked() ), this, SLOT ( ai_btnCancelClicked() ) );
-}
-void flist_messenger::addIgnoreDialogRequested()
-{
-        if ( addIgnoreDialog == 0 || addIgnoreDialog->parent() != this )
-                setupAddIgnoreDialog();
-
-        ai_leName->setText ( QString ( "" ) );
-        addIgnoreDialog->show();
-}
-void flist_messenger::ai_btnCancelClicked()
-{
-        addIgnoreDialog->hide();
-}
-void flist_messenger::ai_btnSubmitClicked()
-{
-	FSession *session = account->getSession(charName); //todo: fix this
-	QString character = ai_leName->text().simplified();
-
-	if(character != "" && !session->isCharacterIgnored(character))
-	{
-		session->sendIgnoreAdd(character);
-		addIgnoreDialog->hide();
-	}
-}
 void flist_messenger::re_btnSubmitClicked()
 {
         submitReport();
@@ -1181,38 +1080,13 @@ void flist_messenger::setupSettingsDialog()
 }
 void flist_messenger::friendsDialogRequested()
 {
-        if ( friendsDialog == 0 || friendsDialog->parent() != this )
-                setupFriendsDialog();
-
-        // Fill lists
-        refreshFriendLists();
-        friendsDialog->show();
-		FriendsDialog *fd = new FriendsDialog(account->getSessionByCharacter(charName), this);
-		fd->show();
-}
-void flist_messenger::refreshFriendLists()
-{
-        FCharacter* f = 0;
-        QListWidgetItem* lwi = 0;
-        fr_lwFriends->clear();
-
-	FSession *session = account->getSession(charName); //todo: fix this
-
-	foreach(QString s, session->getFriendsList()) {
-		if(session->isCharacterOnline(s)) {
-			f = session->getCharacter(s);
-                        lwi = new QListWidgetItem ( * ( f->statusIcon() ), f->name() );
-                        addToFriendsList ( lwi );
-                }
-        }
-
-        fr_lwIgnore->clear();
-
-	foreach(QString s, session->getIgnoreList()) {
-                lwi = new QListWidgetItem ( s );
-                addToIgnoreList ( lwi );
-        }
-
+	
+	if ( friendsDialog == 0 || friendsDialog->parent() != this )
+	{
+		friendsDialog = new FriendsDialog(account->getSessionByCharacter(charName), this);
+		connect(friendsDialog, SIGNAL(privateMessageRequested(QString)), this, SLOT(openPMTab(QString&)));
+	}
+	friendsDialog->show();
 }
 
 void flist_messenger::makeRoomDialogRequested()
@@ -1406,48 +1280,7 @@ void flist_messenger::changeStatus (QString status, QString statusmsg )
 
 	messageSystem(0, output, MESSAGE_TYPE_FEEDBACK);
 }
-void flist_messenger::fr_btnCloseClicked()
-{
-        friendsDialog->close();
-}
-void flist_messenger::fr_btnFriendsPMClicked()
-{
-	if(fr_lwFriends->selectedItems().size() <= 0) {
-		return;
-	}
-        QListWidgetItem* lwi = fr_lwFriends->selectedItems().at ( 0 );
 
-        if (lwi)
-        {
-                QString name = lwi->text();
-                openPMTab ( name );
-        }
-}
-void flist_messenger::fr_btnIgnoreRemoveClicked()
-{
-	QListWidgetItem* lwi = fr_lwIgnore->selectedItems().at ( 0 );
-
-	if ( lwi )
-	{
-		QString name = lwi->text();
-		account->getSessionByCharacter(charName)->sendIgnoreDelete(name);
-	}
-}
-void flist_messenger::fr_btnIgnoreAddClicked()
-{
-        addIgnoreDialogRequested();
-}
-void flist_messenger::fr_friendsContextMenuRequested ( const QPoint& point )
-{
-        QListWidgetItem* lwi = fr_lwFriends->itemAt ( point );
-
-	FSession *session = account->getSession(charName); //todo: fix this
-	if(lwi && session->isCharacterOnline(lwi->text())) {
-		ul_recent_name = lwi->text();
-		FCharacter* ch = session->getCharacter(ul_recent_name);
-                displayCharacterContextMenu ( ch );
-        }
-}
 void flist_messenger::tb_channelRightClicked ( const QPoint & point )
 {
         (void) point;
@@ -2250,41 +2083,6 @@ void flist_messenger::parseInput()
 			session->sendChannelMessage(currentPanel->getChannelName(), inputText);
 		}
         }
-}
-
-void flist_messenger::addToFriendsList ( QListWidgetItem *lwi )
-{
-        QString name = lwi->text();
-        bool c = true;
-
-        for ( int i = 0;i < fr_lwFriends->count() && c;i++ )
-        {
-                if ( name.toLower() < fr_lwFriends->item ( i )->text().toLower() )
-                {
-                        fr_lwFriends->insertItem ( i, lwi );
-                        c = false;
-                }
-        }
-
-        if ( c )
-                fr_lwFriends->addItem ( lwi );
-}
-void flist_messenger::addToIgnoreList ( QListWidgetItem *lwi )
-{
-        QString name = lwi->text();
-        bool c = true;
-
-        for ( int i = 0;i < fr_lwIgnore->count() && c;i++ )
-        {
-                if ( name.toLower() < fr_lwIgnore->item ( i )->text().toLower() )
-                {
-                        fr_lwIgnore->insertItem ( i, lwi );
-                        c = false;
-                }
-        }
-
-        if ( c )
-                fr_lwIgnore->addItem ( lwi );
 }
 
 void flist_messenger::saveSettings()
