@@ -20,7 +20,7 @@ FAboutDialog::FAboutDialog(QWidget *parent) :
 	hdr = "<span style=\" font-size:12pt; font-weight:600;\">"
 	      FLIST_NAME
 	      "</span><br/><span style=\"font-weight:600;\">"
-	      FLIST_VERSIONNUM
+	      FLIST_PRETTYVERSION
 	      "</span><br/>Using Qt "
 	      QT_VERSION_STR;
 

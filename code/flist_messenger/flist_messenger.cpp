@@ -608,7 +608,7 @@ void flist_messenger::setupRealUI()
                 setObjectName ( "MainWindow" );
 
         resize ( 836, 454 );
-        setWindowTitle ( FLIST_VERSION );
+	setWindowTitle ( FLIST_VERSION );
 		setWindowIcon ( QIcon ( ":/images/icon.ico" ) );
         actionDisconnect = new QAction ( this );
         actionDisconnect->setObjectName ( "actionDisconnect" );
