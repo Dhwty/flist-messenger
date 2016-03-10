@@ -20,9 +20,9 @@ public:
 	~FriendsDialog();
 
 signals:
-	privateMessageRequested(QString character);
+	void privateMessageRequested(QString character);
 	//TODO: Better context menu implementation (FContextMenu?)
-	friendContextMenuRequested(QString character);
+	void friendContextMenuRequested(QString character);
 
 public slots:
 	void notifyCharacterOnline(FSession *s, QString character, bool online);

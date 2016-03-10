@@ -76,7 +76,8 @@ HEADERS += \
     ui/makeroomdialog.h \
     api/querystringbuilder.h \
     ui/statusdialog.h \
-    ui/friendsdialog.h
+    ui/friendsdialog.h \
+    ui/addremovelistview.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -117,7 +118,8 @@ SOURCES += \
     ui/makeroomdialog.cpp \
     api/querystringbuilder.cpp \
     ui/statusdialog.cpp \
-    ui/friendsdialog.cpp
+    ui/friendsdialog.cpp \
+    ui/addremovelistview.cpp
 RESOURCES += resources.qrc
 FORMS += \
     flist_loginwindow.ui \
@@ -125,4 +127,7 @@ FORMS += \
     ui/aboutdialog.ui \
     ui/makeroomdialog.ui \
     ui/statusdialog.ui \
-    ui/friendsdialog.ui
+    ui/friendsdialog.ui \
+    ui/addremovelistview.ui
+
+DISTFILES +=
