@@ -77,7 +77,9 @@ HEADERS += \
     api/querystringbuilder.h \
     ui/statusdialog.h \
     ui/friendsdialog.h \
-    ui/addremovelistview.h
+    ui/addremovelistview.h \
+    notifylist.h \
+    ui/stringcharacterlistmodel.h
 SOURCES += \
            flist_account.cpp \
            flist_avatar.cpp \
@@ -119,7 +121,9 @@ SOURCES += \
     api/querystringbuilder.cpp \
     ui/statusdialog.cpp \
     ui/friendsdialog.cpp \
-    ui/addremovelistview.cpp
+    ui/addremovelistview.cpp \
+    notifylist.cpp \
+    ui/stringcharacterlistmodel.cpp
 RESOURCES += resources.qrc
 FORMS += \
     flist_loginwindow.ui \

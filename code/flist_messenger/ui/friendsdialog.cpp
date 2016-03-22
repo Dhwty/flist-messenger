@@ -1,8 +1,58 @@
 #include "friendsdialog.h"
 #include "ui_friendsdialog.h"
 #include "flist_global.h"
+#include "ui/addremovelistview.h"
+#include "ui/stringcharacterlistmodel.h"
 
 #include <QListWidgetItem>
+
+class IgnoreDataProvider : public AddRemoveListData
+{
+	FSession *session;
+
+public:
+	IgnoreDataProvider(FSession *s) : AddRemoveListData(), session(s)
+	{
+
+	}
+
+	virtual bool isStringValidForAdd(QString text)
+	{
+		return text != "" && !session->isCharacterIgnored(text);
+	}
+
+	virtual bool isStringValidForRemove(QString text)
+	{
+		return session->isCharacterIgnored(text);
+	}
+
+	virtual void addByString(QString text)
+	{
+		if(!session->isCharacterIgnored(text))
+		{
+			session->sendIgnoreAdd(text);
+		}
+	}
+
+	virtual void removeByString(QString text)
+	{
+		if(session->isCharacterIgnored(text))
+		{
+			session->sendIgnoreDelete(text);
+		}
+	}
+
+	virtual QAbstractItemModel *getListSource()
+	{
+		return new StringCharacterListModel(&(session->getIgnoreList()));
+	}
+
+	virtual void doneWithListSource(QAbstractItemModel *source)
+	{
+		delete source;
+	}
+};
+
 
 FriendsDialog::FriendsDialog(FSession *session, QWidget *parent) :
     QDialog(parent),
@@ -10,25 +60,19 @@ FriendsDialog::FriendsDialog(FSession *session, QWidget *parent) :
     session(session)
 {
 	ui->setupUi(this);
-	ui->buttonBox->button(QDialogButtonBox::Close)->setIcon(QIcon(":/icons/cross.png"));
+	ui->buttonBox->button(QDialogButtonBox::Close)->setIcon(QIcon(":/images/cross.png"));
 	
 	connect(ui->btnOpenPM, SIGNAL(clicked(bool)), this, SLOT(openPmClicked()));
-	connect(ui->btnAddIgnore, SIGNAL(clicked(bool)), this, SLOT(addIgnoreClicked()));
-	connect(ui->btnRemIgnore, SIGNAL(clicked(bool)), this, SLOT(removeIgnoreClicked()));
-	connect(ui->lwIgnoreList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(ignoreListSelectionChanged(QListWidgetItem*,QListWidgetItem*)));
-	connect(ui->leIgnoreTarget, SIGNAL(textEdited(QString)), this, SLOT(ignoreTargetTextEdited(QString)));
 	connect(ui->lwFriendsList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(friendListContextMenu(QPoint)));
 	connect(ui->lwFriendsList, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(friendListSelectionChanged(QListWidgetItem*,QListWidgetItem*)));
 	connect(ui->lwFriendsList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(friendListDoubleClicked(QListWidgetItem*)));
 	
 	connect(session, SIGNAL(notifyCharacterOnline(FSession*,QString,bool)), this, SLOT(notifyCharacterOnline(FSession*,QString,bool)));
-	connect(session, SIGNAL(notifyCharacterStatusUpdate(FSession*,QString)), this, SLOT(notifyCharacterStatus(FSession*,QString)));
-	connect(session, SIGNAL(notifyIgnoreList(FSession*)), this, SLOT(notifyIgnoreList(FSession*)));
-	connect(session, SIGNAL(notifyIgnoreAdd(FSession*,QString)), this, SLOT(notifyIgnoreAdd(FSession*,QString)));
-	connect(session, SIGNAL(notifyIgnoreRemove(FSession*,QString)), this, SLOT(notifyIgnoreRemove(FSession*,QString)));
-	
+	connect(session, SIGNAL(notifyCharacterStatusUpdate(FSession*,QString)), this, SLOT(notifyCharacterStatus(FSession*,QString)));	
 	this->notifyFriendsList(session);
-	this->notifyIgnoreList(session);
+
+	ignoreData = new IgnoreDataProvider(session);
+	ui->arIgnoreList->setDataSource(ignoreData);
 }
 
 FriendsDialog::~FriendsDialog()
@@ -125,52 +169,6 @@ void FriendsDialog::notifyFriendRemove(FSession *s, QString character)
 	}
 }
 
-void FriendsDialog::notifyIgnoreList(FSession *s)
-{
-	QList<QListWidgetItem*> selected = ui->lwIgnoreList->selectedItems();
-	QString selectedName;
-	if(!selected.empty())
-	{
-		selectedName = selected.first()->text();
-	}
-	
-	ui->lwIgnoreList->clear();
-	foreach(QString i, s->getIgnoreList())
-	{
-		ui->lwIgnoreList->addItem(i);
-	}
-	
-	if(selectedName.length() > 0)
-	{
-		QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(selectedName, Qt::MatchFixedString);
-		if(items.count() > 0)
-		{
-			ui->lwFriendsList->setCurrentItem(items.first());
-		}
-	}
-}
-
-void FriendsDialog::notifyIgnoreAdd(FSession *s, QString character)
-{
-	if(s != session) { return; }
-	
-	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchFixedString);
-	if(items.count() > 0) { return; }
-	
-	ui->lwIgnoreList->addItem(character);
-}
-
-void FriendsDialog::notifyIgnoreRemove(FSession *s, QString character)
-{
-	if(s != session) { return; }
-	
-	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(character, Qt::MatchFixedString);
-	if(items.count() == 0) { return; }
-	
-	int row = ui->lwIgnoreList->row(items.first());
-	delete (ui->lwIgnoreList->takeItem(row));
-}
-
 void FriendsDialog::openPmClicked()
 {
 	QList<QListWidgetItem*> selected = ui->lwFriendsList->selectedItems();
@@ -178,61 +176,6 @@ void FriendsDialog::openPmClicked()
 	{
 		QString name = selected.first()->text();
 		emit privateMessageRequested(name);
-	}
-}
-
-void FriendsDialog::addIgnoreClicked()
-{
-	QString character = ui->leIgnoreTarget->text().simplified();
-	if(character != "" && !session->isCharacterIgnored(character))
-	{
-		session->sendIgnoreAdd(character);
-		ui->leIgnoreTarget->clear();
-		ui->btnAddIgnore->setEnabled(false);
-	}
-}
-
-void FriendsDialog::removeIgnoreClicked()
-{
-	QString character = ui->lwIgnoreList->currentItem()->text();
-	
-	if(character != "" && session->isCharacterIgnored(character))
-	{
-		session->sendIgnoreDelete(character);
-		ui->leIgnoreTarget->clear();
-		ui->btnAddIgnore->setEnabled(false);
-	}
-}
-
-void FriendsDialog::ignoreListSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous)
-{
-	if(current == previous) { return; }
-	
-	if(!current)
-	{
-		ui->btnRemIgnore->setEnabled(false);
-		return;
-	}
-	
-	ui->btnAddIgnore->setEnabled(false);
-	ui->btnRemIgnore->setEnabled(true);
-	ui->leIgnoreTarget->setText(current->text());
-}
-
-void FriendsDialog::ignoreTargetTextEdited(QString newText)
-{
-	QList<QListWidgetItem*> items = ui->lwIgnoreList->findItems(newText, Qt::MatchFixedString);
-	if(items.count() > 0)
-	{
-		ui->btnRemIgnore->setEnabled(true);
-		ui->btnAddIgnore->setEnabled(false);
-		ui->lwIgnoreList->setCurrentItem(items.first());
-	}
-	else
-	{
-		ui->btnRemIgnore->setEnabled(false);
-		ui->btnAddIgnore->setEnabled(newText.simplified() != "");
-		ui->lwIgnoreList->selectionModel()->clear();
 	}
 }
 

@@ -4,6 +4,7 @@
 
 #include <QCompleter>
 #include <QSortFilterProxyModel>
+#include <QItemSelectionModel>
 
 AddRemoveListView::AddRemoveListView(QWidget *parent) :
     QWidget(parent),
@@ -13,7 +14,6 @@ AddRemoveListView::AddRemoveListView(QWidget *parent) :
 
 	connect(ui->btnAdd, SIGNAL(clicked(bool)), this, SLOT(addClicked()));
 	connect(ui->btnRemove, SIGNAL(clicked(bool)), this, SLOT(removeClicked()));
-	connect(ui->ivItemList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(listSelectionChanged(QModelIndex,QModelIndex)));
 	connect(ui->leItemEdit, SIGNAL(textChanged(QString)), this, SLOT(textChanged(QString)));
 	
 	completer = new QCompleter(this);
@@ -21,11 +21,32 @@ AddRemoveListView::AddRemoveListView(QWidget *parent) :
 	completer->setCaseSensitivity(Qt::CaseInsensitive);
 	completer->setCompletionRole(Qt::EditRole);
 	ui->leItemEdit->setCompleter(completer);
+
+	completionData = 0;
+	completionSorter = 0;
+	listData = 0;
+	listSorter = 0;
 }
 
 AddRemoveListView::~AddRemoveListView()
 {
 	delete ui;
+}
+
+void AddRemoveListView::setDataSource(AddRemoveListData *data)
+{
+	if(dataProvider)
+	{
+		detachData();
+	}
+
+	dataProvider = data;
+	attachData();
+}
+
+AddRemoveListData *AddRemoveListView::dataSource() const
+{
+	return dataProvider;
 }
 
 void AddRemoveListView::hideEvent(QHideEvent *)
@@ -51,6 +72,8 @@ void AddRemoveListView::detachData()
 	
 	if(listData)
 	{
+		disconnect(ui->ivItemList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(listSelectionChanged(QModelIndex,QModelIndex)));
+
 		ui->ivItemList->setModel(0);
 		dataProvider->doneWithListSource(listData);
 		listData = 0;
@@ -62,20 +85,25 @@ void AddRemoveListView::detachData()
 void AddRemoveListView::attachData()
 {
 	completionData = dataProvider->getCompletionSource();
-	completionSorter = new QSortFilterProxyModel();
-	completionSorter->setSourceModel(completionData);
-	completionSorter->setSortRole(Qt::EditRole);
-	completionSorter->sort(dataProvider->completionColumn());
-	completer->setModel(completionSorter);
-	completer->setCompletionColumn(dataProvider->completionColumn());
+	if(completionData)
+	{
+		completionSorter = new QSortFilterProxyModel();
+		completionSorter->setSourceModel(completionData);
+		completionSorter->setSortRole(Qt::EditRole);
+		completionSorter->sort(dataProvider->completionColumn());
+		completer->setModel(completionSorter);
+		completer->setCompletionColumn(dataProvider->completionColumn());
+	}
 	
 	listData = dataProvider->getListSource();
 	listSorter = new QSortFilterProxyModel();
 	listSorter->setSourceModel(listData);
 	listSorter->setSortRole(Qt::EditRole);
 	listSorter->sort(dataProvider->listColumn());
-	ui->ivItemList->setModel(listData);
+	ui->ivItemList->setModel(listSorter);
 	ui->ivItemList->setModelColumn(dataProvider->listColumn());
+
+	connect(ui->ivItemList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(listSelectionChanged(QModelIndex,QModelIndex)));
 }
 
 void AddRemoveListView::addClicked()
@@ -110,7 +138,7 @@ void AddRemoveListView::listSelectionChanged(QModelIndex current, QModelIndex pr
 
 	if(current.isValid())
 	{
-		ui->leItemEdit->setText(listSorter->data(current.row(),,Qt::EditRole));
+		ui->leItemEdit->setText(listSorter->data(current, Qt::EditRole).toString());
 		ui->btnAdd->setEnabled(false);
 		ui->btnRemove->setEnabled(true);
 	}
@@ -128,18 +156,22 @@ void AddRemoveListView::textChanged(QString newText)
 	ui->btnAdd->setEnabled(addable);
 	ui->btnRemove->setEnabled(removable);
 
-	if(addable)
+	if(!removable)
+	{
+		ui->ivItemList->clearSelection();
+	}
+
+	if(addable && completionSorter)
 	{
 		for(int i = 0; i < completionSorter->rowCount(); i++)
 		{
-			QModelIndex mi(i, dataProvider->completionColumn(), listSorter);
+			QModelIndex mi = completionSorter->index(i, dataProvider->completionColumn());
 
-			QString text = completionSorter->data(mi, Qt::EditRole);
-			int compresult = text.compare(data, Qt::CaseInsensitive);
+			QString text = completionSorter->data(mi, Qt::EditRole).toString();
+			int compresult = text.compare(newText, Qt::CaseInsensitive);
 			if(compresult == 0)
 			{
 				ui->leItemEdit->setText(text);
-				done = true;
 				break;
 			}
 			if(compresult > 0) { break; }
@@ -150,17 +182,24 @@ void AddRemoveListView::textChanged(QString newText)
 	{
 		for(int i = 0; i < listSorter->rowCount(); i++)
 		{
-			QModelIndex mi(i, dataProvider->listColumn(), listSorter);
+			QModelIndex mi = listSorter->index(i, dataProvider->listColumn());
 
-			QString text = listSorter->data(mi, Qt::EditRole);
-			int compresult = text.compare(data, Qt::CaseInsensitive);
+			QString text = listSorter->data(mi, Qt::EditRole).toString();
+			int compresult = text.compare(newText, Qt::CaseInsensitive);
 			if(compresult == 0)
 			{
 				ui->leItemEdit->setText(text);
 				ui->ivItemList->setCurrentIndex(mi);
+				QItemSelectionModel *model = ui->ivItemList->selectionModel();
+				model->select(mi, QItemSelectionModel::ClearAndSelect);
 				break;
 			}
 			if(compresult > 0) { break; }
 		}
 	}
 }
+
+QAbstractItemModel *AddRemoveListData::getCompletionSource() { return 0; }
+void AddRemoveListData::doneWithCompletionSource(QAbstractItemModel *source) { }
+int AddRemoveListData::completionColumn() { return 0; }
+int AddRemoveListData::listColumn() { return 0; }

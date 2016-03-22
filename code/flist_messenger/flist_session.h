@@ -9,6 +9,7 @@
 
 #include "flist_channelsummary.h"
 #include "flist_enums.h"
+#include "notifylist.h"
 
 class FAccount;
 class FChannel;
@@ -44,7 +45,7 @@ public:
 	QString getCharacterHtml(QString name);
 
 	QStringList &getFriendsList() {return friendslist;}
-	QStringList &getIgnoreList() {return ignorelist;}
+	NotifyStringList &getIgnoreList() {return ignorelist;}
 
 	void joinChannel(QString name);
 	void createPublicChannel(QString name);
@@ -120,7 +121,7 @@ private:
 	QStringList friendslist; //<List of friends for this session's character.
 	QStringList bookmarklist; //<List of friends for this session's character.
 	QMap<QString, QString> operatorlist; //<List of all known characters that are chat operators (indexed by lower case).
-	QStringList ignorelist; //<List of all characters that are being ignored.
+	NotifyStringList ignorelist; //<List of all characters that are being ignored.
 	QHash<QString, FChannel *> channellist; //<List of channels that this session has joined (or was previously joined to).
 public:
 	QStringList autojoinchannels; //<List of channels the client should join upon connecting.

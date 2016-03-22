@@ -2,6 +2,7 @@
 #define ADDREMOVELISTVIEW_H
 
 #include <QWidget>
+#include <QModelIndex>
 
 namespace Ui {
 class AddRemoveListView;
@@ -20,7 +21,7 @@ public:
 	~AddRemoveListView();
 	
 	void setDataSource(AddRemoveListData *data);
-	AddRemoveListData *dataSource();
+	AddRemoveListData *dataSource() const;
 	
 protected:
 	virtual void hideEvent(QHideEvent *);
@@ -59,9 +60,9 @@ public:
 	virtual void removeByString(QString text) = 0;
 	
 	// Retrieve a model suggesting potential additions to the list (don't worry about if they've already been added).
-	virtual QAbstractItemModel *getCompletionSource() = 0;
+	virtual QAbstractItemModel *getCompletionSource();
 	// Return the completion source for disposal.
-	virtual void doneWithCompletionSource(QAbstractItemModel *source) = 0;
+	virtual void doneWithCompletionSource(QAbstractItemModel *source);
 	virtual int completionColumn();
 	
 	// Retrieve a model listing items currently in the list.

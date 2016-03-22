@@ -11,6 +11,8 @@ namespace Ui {
 class FriendsDialog;
 }
 
+class IgnoreDataProvider;
+
 class FriendsDialog : public QDialog
 {
 	Q_OBJECT
@@ -32,20 +34,13 @@ public slots:
 	void notifyFriendAdd(FSession *s, QString character);
 	void notifyFriendRemove(FSession *s, QString character);
 
-	void notifyIgnoreList(FSession *s);
-	void notifyIgnoreAdd(FSession *s, QString character);
-	void notifyIgnoreRemove(FSession *s, QString character);
-
 private:
 	Ui::FriendsDialog *ui;
 	FSession *session;
+	IgnoreDataProvider *ignoreData;
 
 private slots:
 	void openPmClicked();
-	void addIgnoreClicked();
-	void removeIgnoreClicked();
-	void ignoreListSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous);
-	void ignoreTargetTextEdited(QString newText);
 	void friendListContextMenu(const QPoint &point);
 	void friendListSelectionChanged(QListWidgetItem *current, QListWidgetItem *previous);
 	void friendListDoubleClicked(QListWidgetItem *target);
