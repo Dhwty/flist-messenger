@@ -21,6 +21,9 @@ public:
 	explicit FriendsDialog(FSession *session, QWidget *parent = 0);
 	~FriendsDialog();
 
+	void showFriends();
+	void showIgnore();
+
 signals:
 	void privateMessageRequested(QString character);
 	//TODO: Better context menu implementation (FContextMenu?)

@@ -1090,16 +1090,27 @@ void flist_messenger::setupSettingsDialog()
         connect(btnSubmit, SIGNAL(clicked()), this, SLOT(se_btnSubmitClicked()));
         connect(btnCancel, SIGNAL(clicked()), this, SLOT(se_btnCancelClicked()));
 }
-void flist_messenger::friendsDialogRequested()
+
+void flist_messenger::setupFriendsDialog()
 {
-	
 	if ( friendsDialog == 0 || friendsDialog->parent() != this )
 	{
 		friendsDialog = new FriendsDialog(account->getSessionByCharacter(charName), this);
 		connect(friendsDialog, SIGNAL(privateMessageRequested(QString)), this, SLOT(openPMTab(QString)));
 		connect(friendsDialog, SIGNAL(friendContextMenuRequested(QString)), this, SLOT(friendListContextMenuRequested(QString)));
 	}
-	friendsDialog->show();
+}
+
+void flist_messenger::friendsDialogRequested()
+{
+	setupFriendsDialog();
+	friendsDialog->showFriends();
+}
+
+void flist_messenger::ignoreDialogRequested()
+{
+	setupFriendsDialog();
+	friendsDialog->showIgnore();
 }
 
 void flist_messenger::makeRoomDialogRequested()
@@ -1807,11 +1818,16 @@ void flist_messenger::parseInput()
 				}
 			}
 		}
-                else if ( slashcommand == "/channels" || slashcommand == "/prooms" )
-                {
-                        channelsDialogRequested();
-                        success = true;
-                }
+		else if ( slashcommand == "/ignorelist" )
+		{
+			ignoreDialogRequested();
+			success = true;
+		}
+		else if ( slashcommand == "/channels" || slashcommand == "/prooms" )
+		{
+			channelsDialogRequested();
+			success = true;
+		}
 		else if ( slashcommand == "/kick" )
 		{
 			session->kickFromChannel(currentPanel->getChannelName(), inputText.mid(6).simplified());

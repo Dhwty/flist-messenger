@@ -80,6 +80,18 @@ FriendsDialog::~FriendsDialog()
 	delete ui;
 }
 
+void FriendsDialog::showFriends()
+{
+	ui->tabWidget->setCurrentWidget(ui->friendsTab);
+	show();
+}
+
+void FriendsDialog::showIgnore()
+{
+	ui->tabWidget->setCornerWidget(ui->ignoreTab);
+	show();
+}
+
 void FriendsDialog::notifyCharacterOnline(FSession *s, QString character, bool online)
 {
 	if(!s->isCharacterFriend(character)) { return; }

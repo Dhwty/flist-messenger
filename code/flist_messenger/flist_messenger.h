@@ -225,7 +225,9 @@ private slots:
 	void setupReportDialog();
 	bool setupChannelSettingsDialog();
 	void settingsDialogRequested();
+	void setupFriendsDialog();
 	void friendsDialogRequested();
+	void ignoreDialogRequested();
 	void channelsDialogRequested();
 	void makeRoomDialogRequested();
 	void setStatusDialogRequested();
