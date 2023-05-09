@@ -1,0 +1,60 @@
+# Clang-Format Style
+BasedOnStyle: Google
+Standard: c++11
+
+AccessModifierOffset: 0
+AlignAfterOpenBracket: true
+AlignEscapedNewlines: Left
+AlignTrailingComments:
+    Kind: Always
+    OverEmptyLines: 2
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: true
+
+BraceWrapping:
+    AfterCaseLabel: false
+    AfterClass: false
+    AfterControlStatement: false
+    AfterEnum: false
+    AfterFunction: false
+    AfterNamespace: false
+    AfterObjCDeclaration: false
+    AfterStruct: false
+    AfterUnion: false
+    BeforeCatch: false
+    BeforeElse: false
+    IndentBraces: false
+BreakBeforeBinaryOperators: NonAssignment
+BreakBeforeBraces: Custom
+BreakConstructorInitializers: BeforeColon
+
+ColumnLimit: 180
+CommentPragmas: "^!|^:|^ SPDX-License-Identifier:"
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 8
+
+FixNamespaceComments: true
+ForEachMacros: [foreach, Q_FOREACH, BOOST_FOREACH, forever, Q_FOREVER, QBENCHMARK, QBENCHMARK_ONCE]
+
+IndentAccessModifiers: true
+IndentCaseBlocks: true
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+
+NamespaceIndentation: All
+
+PointerBindsToType: true
+PPIndentWidth: 4
+
+SeparateDefinitionBlocks: Always
+ShortNamespaceLines: 1
+SortIncludes: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeCpp11BracedList: false
+SpacesBeforeTrailingComments: 1
+SpacesInLineCommentPrefix:
+    Minimum: 1
+    Maximum: 1
