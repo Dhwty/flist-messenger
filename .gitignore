@@ -237,3 +237,6 @@ code/flist_messenger/settings.ini
 
 # Autosaves
 *.autosave
+
+# IntelliJ IDEA files
+.idea
