@@ -37,21 +37,11 @@ HEADERS += \
            flist_character.h \
            flist_common.h \
            flist_global.h \
+    flist_jsonhelper.h \
            flist_messenger.h \
            flist_parser.h \
            flist_session.h \
            flist_sound.h \
-           ../libjson/libJSON.h \
-           ../libjson/Source/JSONDefs.h \
-           ../libjson/JSONOptions.h \
-           ../libjson/Source/JSONNode.h \
-           ../libjson/Source/internalJSONNode.h \
-           ../libjson/Source/JSONDebug.h \
-           ../libjson/Source/JSONChildren.h \
-           ../libjson/Source/JSONMemory.h \
-           ../libjson/Source/JSON_Base64.h \
-           ../libjson/Source/JSONWorker.h \
-           ../libjson/Source/NumberToString.h \
     flist_server.h \
     flist_characterprofile.h \
     flist_iuserinterface.h \
@@ -74,7 +64,6 @@ HEADERS += \
     ui/channellistdialog.h \
     ui/aboutdialog.h \
     ui/makeroomdialog.h \
-    api/querystringbuilder.h \
     ui/statusdialog.h \
     ui/friendsdialog.h \
     ui/addremovelistview.h \
@@ -86,19 +75,12 @@ SOURCES += \
            flist_channeltab.cpp \
            flist_character.cpp \
            flist_global.cpp \
+    flist_jsonhelper.cpp \
            flist_messenger.cpp \
            flist_parser.cpp \
            flist_session.cpp \
            flist_sound.cpp \
            main.cpp \
-           ../libjson/Source/JSONNode.cpp \
-           ../libjson/Source/internalJSONNode.cpp \
-           ../libjson/Source/JSONDebug.cpp \
-           ../libjson/Source/JSONChildren.cpp \
-           ../libjson/Source/JSONMemory.cpp \
-           ../libjson/Source/JSON_Base64.cpp \
-           ../libjson/Source/JSONWorker.cpp \
-           ../libjson/Source/JSONWriter.cpp \
     flist_characterprofile.cpp \
     flist_server.cpp \
     flist_channelpanel.cpp \
@@ -118,7 +100,6 @@ SOURCES += \
     ui/channellistdialog.cpp \
     ui/aboutdialog.cpp \
     ui/makeroomdialog.cpp \
-    api/querystringbuilder.cpp \
     ui/statusdialog.cpp \
     ui/friendsdialog.cpp \
     ui/addremovelistview.cpp \

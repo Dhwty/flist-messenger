@@ -344,22 +344,22 @@ void FChannelPanel::printChannel(QTextBrowser* textEdit) {
     }
 }
 
-JSONNode* FChannelPanel::toJSON() {
-    JSONNode* rv = new JSONNode(JSON_ARRAY);
-    JSONNode node;
-    JSONNode typeNode("type", "chat");
-    JSONNode byNode("by", "");
-    JSONNode htmlNode;
+QJsonDocument* FChannelPanel::toJSON() {
+    QJsonDocument* result = new QJsonDocument();
+    QJsonArray rv;
+
     QString chanLine;
     foreach (chanLine, chanLines) {
-        node = JSONNode(JSON_NODE);
-        node.push_back(typeNode);
-        node.push_back(byNode);
-        htmlNode = JSONNode("html", chanLine.toStdString());
-        node.push_back(htmlNode);
-        rv->push_back(node);
+        QJsonObject _node;
+        _node.insert("type", "chat");
+        _node.insert("by", "");
+        _node.insert("html", chanLine);
+        rv.append(_node);
     }
-    return rv;
+
+    result->setArray(rv);
+
+    return result;
 }
 
 QString* FChannelPanel::toString() {

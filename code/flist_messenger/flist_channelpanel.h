@@ -29,8 +29,6 @@
 #include "flist_messenger.h"
 #include "flist_character.h"
 #include "flist_parser.h"
-#include "../libjson/libJSON.h"
-#include "../libjson/Source/NumberToString.h"
 #include "flist_enums.h"
 
 #include <iostream>
@@ -58,6 +56,7 @@
 #include <QPlainTextEdit>
 #include <QTextBrowser>
 #include <QStringList>
+#include <QJsonArray>
 
 #include <time.h>
 
@@ -147,7 +146,7 @@ class FChannelPanel {
 
         bool getAlwaysPing() { return alwaysPing; }
 
-        JSONNode* toJSON();
+        QJsonDocument* toJSON();
         QString* toString();
 
         QStringList& getKeywordList() { return keywordlist; }

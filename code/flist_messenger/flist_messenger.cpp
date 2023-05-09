@@ -381,7 +381,7 @@ void flist_messenger::re_btnSubmitClicked() {
 
 void flist_messenger::submitReport() {
     // todo: fix this
-    lurl = QString("https://www.f-list.net/json/getApiTicket.json?secure=no&account=" + account->getUserName() + "&password=" + account->getPassword());
+    lurl = QString(FLIST_BASEURL_TICKET) + QString("?secure=no&account=" + account->getUserName() + "&password=" + account->getPassword());
     lreply = qnam.get(QNetworkRequest(lurl));
     // todo: fix this!
     lreply->ignoreSslErrors();
@@ -393,22 +393,26 @@ void flist_messenger::handleReportFinished() {
     if (lreply->error() != QNetworkReply::NoError) {
         QString message = "Response error during sending of report ";
         message.append("of type ");
-        message.append(NumberToString::_uitoa<unsigned int>((unsigned int)lreply->error()).c_str());
+        message.append(QString::number(lreply->error()));
         QMessageBox::critical(this, "FATAL ERROR DURING TICKET RETRIEVAL!", message);
         return;
     } else {
         QByteArray respbytes = lreply->readAll();
         lreply->deleteLater();
-        std::string response(respbytes.begin(), respbytes.end());
-        JSONNode respnode = libJSON::parse(response);
-        JSONNode childnode = respnode.at("error");
-        if (childnode.as_string() != "") {
-            std::string message = "Error from server: " + childnode.as_string();
-            QMessageBox::critical(this, "Error", message.c_str());
+
+        QJsonDocument responseDoc = QJsonDocument::fromJson(respbytes);
+        QVariantMap responseMap = responseDoc.toVariant().toMap();
+
+        QString childnode = responseMap.value("error").toString();
+
+        if (!childnode.isEmpty()) {
+            QString message = "Error from server: " + childnode;
+            QMessageBox::critical(this, "Error", message);
             return;
         } else {
-            childnode = respnode.at("log_id");
-            std::string logid = childnode.as_string();
+            childnode = responseMap.value("log_id").toString();
+
+            QString logid = childnode;
             QString gt = "&gt;";
             QString lt = "&lt;";
             QString amp = "&amp;";
@@ -416,17 +420,20 @@ void flist_messenger::handleReportFinished() {
             QString who = re_leWho->text().replace('&', amp).replace('<', lt).replace('>', gt);
             if (who.trimmed() == "") who = "None";
             QString report = "Current Tab/Channel: " + currentPanel->title() + " | Reporting User: " + who + " | " + problem;
-            JSONNode node;
-            JSONNode actionnode("action", "report");
-            std::cout << logid << std::endl;
-            JSONNode logidnode("logid", logid);
-            JSONNode charnode("character", charName.toStdString());
-            JSONNode reportnode("report", report.toStdString());
-            node.push_back(actionnode);
-            node.push_back(charnode);
-            node.push_back(reportnode);
-            node.push_back(logidnode);
-            std::string output = "SFC " + node.write();
+
+            QVariantMap reportMap;
+
+            reportMap.insert("action", "report");
+            reportMap.insert("logid", logid);
+            reportMap.insert("character", charName);
+            reportMap.insert("report", report);
+
+            QJsonDocument reportDoc;
+            reportDoc.fromVariant(reportMap);
+
+            qDebug() << logid;
+
+            std::string output = "SFC " + reportDoc.toJson(QJsonDocument::Compact).toStdString();
             sendWS(output);
             reportDialog->hide();
             re_leWho->clear();
@@ -441,35 +448,41 @@ void flist_messenger::reportTicketFinished() {
     if (lreply->error() != QNetworkReply::NoError) {
         QString message = "Response error during fetching of ticket ";
         message.append(" of type ");
-        message.append(NumberToString::_uitoa<unsigned int>((unsigned int)lreply->error()).c_str());
+        message.append(QString::number(lreply->error()));
         QMessageBox::critical(this, "FATAL ERROR DURING TICKET RETRIEVAL!", message);
         return;
     }
     QByteArray respbytes = lreply->readAll();
     lreply->deleteLater();
-    std::string response(respbytes.begin(), respbytes.end());
-    JSONNode respnode = libJSON::parse(response);
-    JSONNode childnode = respnode.at("error");
-    if (childnode.as_string() != "") {
-        std::string message = "Error from server: " + childnode.as_string();
-        QMessageBox::critical(this, "Error", message.c_str());
+
+    QJsonDocument responseDoc = QJsonDocument::fromJson(respbytes);
+    QVariantMap responseMap = responseDoc.toVariant().toMap();
+
+    QString childnode = responseMap.value("error").toString();
+
+    if (!childnode.isEmpty()) {
+        QString message = "Error from server: " + childnode;
+        QMessageBox::critical(this, "Error", message);
         return;
     }
-    JSONNode subnode = respnode.at("ticket");
-    account->ticket = subnode.as_string().c_str();
-    QString url_string = "https://www.f-list.net/json/api/report-submit.php?account=";
+
+    QString subnode = responseMap.value("ticket").toString();
+    account->ticket = subnode;
+
+    QString url_string = QString(FLIST_BASEURL_REPORT) + "?account=";
     url_string += account->getUserName();
     url_string += "&character=";
     url_string += charName;
     url_string += "&ticket=";
     url_string += account->ticket;
     lurl = url_string;
-    std::cout << url_string.toStdString() << std::endl;
+    qDebug() << url_string.toStdString();
+
     QByteArray postData;
-    JSONNode *lognodes;
+    QJsonDocument *lognodes;
     lognodes = currentPanel->toJSON();
     std::string toWrite;
-    toWrite = lognodes->write();
+    toWrite = lognodes->toJson(QJsonDocument::Compact).toStdString();
     QNetworkRequest request(lurl);
     fix_broken_escaped_apos(toWrite);
     lparam = QUrlQuery();
@@ -1858,8 +1871,8 @@ void flist_messenger::parseInput() {
             success = true;
         } else if (debugging && slashcommand == "/channeltojson") {
             QString output("[noparse]");
-            JSONNode *node = currentPanel->toJSON();
-            output += node->write().c_str();
+            QJsonDocument *node = currentPanel->toJSON();
+            output += node->toJson(QJsonDocument::Compact);
             output += "[/noparse]";
             messageSystem(session, output, MESSAGE_TYPE_FEEDBACK);
             delete node;

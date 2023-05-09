@@ -74,9 +74,6 @@
 #include <QtNetwork>
 #include <QTcpSocket>
 
-#include "../libjson/libJSON.h"
-#include "../libjson/Source/NumberToString.h"
-
 #include "flist_character.h"
 #include "flist_channelpanel.h"
 #include "flist_sound.h"
