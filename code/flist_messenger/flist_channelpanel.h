@@ -32,7 +32,7 @@
 #include "flist_enums.h"
 
 #include <iostream>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QApplication>
 #include <QLabel>
 #include <QMenu>
@@ -62,100 +62,136 @@
 #include "flist_channel.h"
 
 class iUserInterface;
-class QStringList;
 
-class FChannelPanel
-{
+class FChannelPanel {
+    public:
+        FChannelPanel(iUserInterface* ui, QString sessionid, QString panelname, QString channelname, FChannel::ChannelType type);
 
-public:
+        ~FChannelPanel() {}
 
-	FChannelPanel(iUserInterface *ui, QString sessionid, QString panelname, QString channelname, FChannel::ChannelType type);
-	~FChannelPanel() {}
-	static void initClass();
-	void setRecipient ( QString& name ){recipientName = name;}
-	QString& recipient(){return recipientName;}
-	void setName ( QString& name );
-	QString& getChannelName(){return chanName;}
-	QString &getSessionID() {return sessionid;}
-	QString& getPanelName(){return panelname;}
-	void setInput ( QString& input ){this->input = input;}
-	QString& getInput(){return input;}
-	void setType ( FChannel::ChannelType type );
-	FChannel::ChannelType type(){return chanType;}
-	void setDescription ( QString& desc );
-	QString& description(){return chanDesc;}
-	void setTitle ( QString& title );
-	QString& title(){return chanTitle;}
-	void updateButtonColor();
-	void setOps ( QStringList& oplist );
-	void addOp(QString &charactername);
-	void removeOp(QString &charactername);
-	QMap<QString,QString> opList(){return chanOps;}
-	void setTyping ( TypingStatus status );
-	TypingStatus getTyping(){return typing;}
-	void setTypingSelf ( TypingStatus status ){typingSelf = status;}
-	TypingStatus getTypingSelf(){return typingSelf;}
-	void addChar ( FCharacter* character, bool sort_list = true );
-	void remChar ( FCharacter* character );
-	bool hasCharacter(FCharacter* character) {return chanChars.contains(character);}
-	QList<FCharacter*> charList(){return chanChars;}
-	void sortChars();
-	bool isOp ( FCharacter* character );
-	bool isOwner ( FCharacter* character );
-	void setActive ( bool o ){active = o;}
-	bool getActive(){return active;}
-	void setHighlighted ( bool o ){highlighted = o;}
-	bool getHighlighted(){return highlighted;}
-	void setHasNewMessages ( bool o ){hasNewMessages = o;}
-	bool getHasNewMessages(){return hasNewMessages;}
-	void setMode ( ChannelMode o ){mode = o;}
-	ChannelMode getMode(){return mode;}
-	void setAlwaysPing ( bool b ) {alwaysPing = b;}
-	bool getAlwaysPing(){return alwaysPing;}
-	JSONNode* toJSON();
-	QString* toString();
-	QStringList &getKeywordList() {return keywordlist;}
-	void loadSettings();
+        static void initClass();
 
-	void addLine(QString chanLine, bool log);
-	void clearLines();
-	void emptyCharList();
-	void logLine ( QString& chanLine );
-	void printChannel ( QTextBrowser* textEdit );
-	QPushButton*			pushButton;
-	static BBCodeParser* 	bbparser;
-private:
-	bool					active;				// Will be no when the user leaves. This way, logs are kept.~
-	QString					recipientName;		// For PM tabs.
-	TypingStatus			typing;				// For PM tabs: Whether the other is typing.
-	TypingStatus			typingSelf;			// For PM tabs: Whether the user is typing
-	ChannelMode				mode;
-	QString					input;
-	bool					highlighted;
-	bool					hasNewMessages;
-	bool					alwaysPing;			// This channel pings on every message.
-	iUserInterface *ui;
-	QString sessionid;
-	QString					panelname;
-	QString					chanName;
-	QString					chanTitle;
-	QString					chanDesc;
-	QList<FCharacter*>  	chanChars;
-	QMap<QString,QString>      	chanOps;
-	QString chanowner;
-	FChannel::ChannelType         	chanType;
-	QVector<QString>    	chanLines;
-	quint64					chanLastActivity;
-	time_t					creationTime;
-	QStringList keywordlist;
+        void setRecipient(QString& name) { recipientName = name; }
 
-	static QColor			colorInactive;
-	static QColor			colorHighlighted;
-	static QColor			colorNewMessages;
-	static QColor			colorTyping;
-	static QColor			colorPaused;
+        QString& recipient() { return recipientName; }
 
-	static QString			cssStyle;
+        void setName(QString& name);
+
+        QString& getChannelName() { return chanName; }
+
+        QString& getSessionID() { return sessionid; }
+
+        QString& getPanelName() { return panelname; }
+
+        void setInput(QString& input) { this->input = input; }
+
+        QString& getInput() { return input; }
+
+        void setType(FChannel::ChannelType type);
+
+        FChannel::ChannelType type() { return chanType; }
+
+        void setDescription(QString& desc);
+
+        QString& description() { return chanDesc; }
+
+        void setTitle(QString& title);
+
+        QString& title() { return chanTitle; }
+
+        void updateButtonColor();
+        void setOps(QStringList& oplist);
+        void addOp(QString& charactername);
+        void removeOp(QString& charactername);
+
+        QMap<QString, QString> opList() { return chanOps; }
+
+        void setTyping(TypingStatus status);
+
+        TypingStatus getTyping() { return typing; }
+
+        void setTypingSelf(TypingStatus status) { typingSelf = status; }
+
+        TypingStatus getTypingSelf() { return typingSelf; }
+
+        void addChar(FCharacter* character, bool sort_list = true);
+        void remChar(FCharacter* character);
+
+        bool hasCharacter(FCharacter* character) { return chanChars.contains(character); }
+
+        QList<FCharacter*> charList() { return chanChars; }
+
+        void sortChars();
+        bool isOp(FCharacter* character);
+        bool isOwner(FCharacter* character);
+
+        void setActive(bool o) { active = o; }
+
+        bool getActive() { return active; }
+
+        void setHighlighted(bool o) { highlighted = o; }
+
+        bool getHighlighted() { return highlighted; }
+
+        void setHasNewMessages(bool o) { hasNewMessages = o; }
+
+        bool getHasNewMessages() { return hasNewMessages; }
+
+        void setMode(ChannelMode o) { mode = o; }
+
+        ChannelMode getMode() { return mode; }
+
+        void setAlwaysPing(bool b) { alwaysPing = b; }
+
+        bool getAlwaysPing() { return alwaysPing; }
+
+        JSONNode* toJSON();
+        QString* toString();
+
+        QStringList& getKeywordList() { return keywordlist; }
+
+        void loadSettings();
+
+        void addLine(QString chanLine, bool log);
+        void clearLines();
+        void emptyCharList();
+        void logLine(QString& chanLine);
+        void printChannel(QTextBrowser* textEdit);
+        QPushButton* pushButton;
+        static BBCodeParser* bbparser;
+
+    private:
+        bool active;             // Will be no when the user leaves. This way, logs are kept.~
+        QString recipientName;   // For PM tabs.
+        TypingStatus typing;     // For PM tabs: Whether the other is typing.
+        TypingStatus typingSelf; // For PM tabs: Whether the user is typing
+        ChannelMode mode;
+        QString input;
+        bool highlighted;
+        bool hasNewMessages;
+        bool alwaysPing; // This channel pings on every message.
+        iUserInterface* ui;
+        QString sessionid;
+        QString panelname;
+        QString chanName;
+        QString chanTitle;
+        QString chanDesc;
+        QList<FCharacter*> chanChars;
+        QMap<QString, QString> chanOps;
+        QString chanowner;
+        FChannel::ChannelType chanType;
+        QVector<QString> chanLines;
+        quint64 chanLastActivity;
+        time_t creationTime;
+        QStringList keywordlist;
+
+        static QColor colorInactive;
+        static QColor colorHighlighted;
+        static QColor colorNewMessages;
+        static QColor colorTyping;
+        static QColor colorPaused;
+
+        static QString cssStyle;
 };
 
-#endif //flist_character_H
+#endif // flist_character_H

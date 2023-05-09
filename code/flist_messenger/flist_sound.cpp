@@ -25,77 +25,75 @@
 #include "flist_global.h"
 #include "flist_settings.h"
 
-FSound::FSound()
-{
+FSound::FSound() {}
+
+void FSound::play(soundName sound) {
+    if (sound == SOUND_NONE) {
+        return;
+    }
+    QString soundFile = soundToString(sound);
+    QSoundEffect effect;
+
+    std::cout << "Playing sound " + soundFile.toStdString() + "\n";
+    effect.setSource(QUrl(soundFile));
+    effect.play();
+
+    // shouldn't be necessary, but... - GH
+    effect.deleteLater();
 }
 
-void FSound::play ( soundName sound )
-{
-	if(sound == SOUND_NONE) {
-		return;
-	}
-	QString soundFile = soundToString ( sound );
+QString FSound::soundToString(soundName sound) {
+    QString soundKey, soundFile, soundPath;
 
-	std::cout << "Playing sound " + soundFile.toStdString() + "\n";
-	QSound::play ( soundFile );
-}
+    switch (sound) {
+        case SOUND_ATTENTION:
+            soundKey = "attention";
+            soundFile = "attention.wav";
+            break;
 
-QString FSound::soundToString ( soundName sound )
-{
-	QString soundKey, soundFile, soundPath;
+        case SOUND_CHAT:
+            soundKey = "chat";
+            soundFile = "chat.wav";
+            break;
 
-	switch ( sound )
-	{
+        case SOUND_LOGIN:
+            soundKey = "login";
+            soundFile = "login.wav";
+            break;
 
-	case SOUND_ATTENTION:
-		soundKey = "attention";
-		soundFile = "attention.wav";
-		break;
+        case SOUND_MODALERT:
+            soundKey = "modalert";
+            soundFile = "modalert.wav";
+            break;
 
-	case SOUND_CHAT:
-		soundKey = "chat";
-		soundFile = "chat.wav";
-		break;
+        case SOUND_NEWNOTE:
+            soundKey = "newnote";
+            soundFile = "newnote.wav";
+            break;
 
-	case SOUND_LOGIN:
-		soundKey = "login";
-		soundFile = "login.wav";
-		break;
+        case SOUND_FRIENDUPDATE:
+            soundKey = "friendupdate";
+            soundFile = "friendupdate.wav";
+            break;
 
-	case SOUND_MODALERT:
-		soundKey = "modalert";
-		soundFile = "modalert.wav";
-		break;
+        case SOUND_SYSTEM:
+            soundFile = "system.wav";
+            break;
 
-	case SOUND_NEWNOTE:
-		soundKey = "newnote";
-		soundFile = "newnote.wav";
-		break;
+        default:
+            std::cout << "Invalid sound.\n";
+            soundKey = "INVALID";
+            soundFile = "INVALID";
+            break;
+    }
 
-	case SOUND_FRIENDUPDATE:
-		soundKey = "friendupdate";
-		soundFile = "friendupdate.wav";
-		break;
+    soundPath = settings->getString(QString("Global/Sounds/%1").arg(soundKey));
+    if (soundPath.isEmpty() || !QFile::exists(soundPath)) {
+        soundPath = "./sounds/" + soundFile;
+    }
+    if (!QFile::exists(soundPath)) {
+        soundPath = ":/sounds/" + soundFile;
+    }
 
-	case SOUND_SYSTEM:
-		soundFile = "system.wav";
-		break;
-
-	default:
-		std::cout << "Invalid sound.\n";
-		soundKey = "INVALID";
-		soundFile = "INVALID";
-		break;
-	}
-
-	soundPath = settings->getString(QString("Global/Sounds/%1").arg(soundKey));
-	if(soundPath.isEmpty() || !QFile::exists ( soundPath )) {
-		soundPath = "./sounds/" + soundFile;
-	}
-	if  (!QFile::exists ( soundPath ) )
-	{
-		soundPath = ":/sounds/" + soundFile;
-	}
-
-	return soundPath;
+    return soundPath;
 }

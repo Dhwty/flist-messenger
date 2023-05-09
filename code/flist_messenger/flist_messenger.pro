@@ -134,4 +134,5 @@ FORMS += \
     ui/friendsdialog.ui \
     ui/addremovelistview.ui
 
-DISTFILES +=
+DISTFILES += \
+    ../../_clang-format
