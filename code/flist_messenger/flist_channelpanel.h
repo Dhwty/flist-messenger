@@ -56,7 +56,7 @@
 #include <QPlainTextEdit>
 #include <QTextBrowser>
 #include <QStringList>
-#include <QJsonArray>>
+#include <QJsonArray>
 
 #include <time.h>
 

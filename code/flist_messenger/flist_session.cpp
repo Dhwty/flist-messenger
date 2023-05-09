@@ -125,9 +125,9 @@ void FSession::connectSession() {
     // tcpsocket->connectToHost (account->server->chatserver_host, account->server->chatserver_port);
     tcpsocket->connectToHostEncrypted(account->server->chatserver_host, account->server->chatserver_port);
     connect(tcpsocket, SIGNAL(connected()), this, SLOT(socketConnected()));
-    // connect ( tcpsocket, SIGNAL ( encrypted() ), this, SLOT ( socketSslConnected() ) );
+    connect(tcpsocket, SIGNAL(encrypted()), this, SLOT(socketConnected()));
     connect(tcpsocket, SIGNAL(readyRead()), this, SLOT(socketReadReady()));
-    connect(tcpsocket, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
+    connect(tcpsocket, SIGNAL(errorOccurred(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
     connect(tcpsocket, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(socketSslError(QList<QSslError>)));
 }
 
@@ -188,6 +188,8 @@ void FSession::socketSslError(QList<QSslError> sslerrors) {
 }
 
 void FSession::socketReadReady() {
+    FJsonHelper helper;
+
     if (!wsready) {
         QByteArray buffer = tcpsocket->readAll();
         std::string buf(socketreadbuffer);
@@ -204,14 +206,16 @@ void FSession::socketReadReady() {
             socketreadbuffer.clear();
         }
         // todo: verify "Sec-WebSocket-Accept" response
-        JSONNode loginnode;
-        loginnode.push_back(JSONNode("method", "ticket"));
-        loginnode.push_back(JSONNode("ticket", account->ticket.toStdString()));
-        loginnode.push_back(JSONNode("account", account->getUserName().toStdString()));
-        loginnode.push_back(JSONNode("cname", FLIST_CLIENTID));
-        loginnode.push_back(JSONNode("cversion", FLIST_VERSIONNUM));
-        loginnode.push_back(JSONNode("character", character.toStdString()));
-        std::string idenStr = "IDN " + loginnode.write();
+        QMap<QString, QString> valueMap;
+        valueMap.insert("method", "ticket");
+        valueMap.insert("ticket", account->ticket);
+        valueMap.insert("account", account->getUserName());
+        valueMap.insert("cname", FLIST_CLIENTID);
+        valueMap.insert("cversion", FLIST_VERSIONNUM);
+        valueMap.insert("character", character);
+        QJsonDocument loginNode = helper.generateJsonNodesFromMap(valueMap);
+
+        std::string idenStr = "IDN " + loginNode.toJson(QJsonDocument::Compact).toStdString();
         // debugMessage("Indentify...");
         wsSend(idenStr);
     } else {
@@ -1581,61 +1585,73 @@ void FSession::sendCharacterMessage(QString charactername, QString message) {
 }
 
 void FSession::sendChannelLeave(QString channelname) {
-    JSONNode nodes;
-    nodes.push_back(JSONNode("channel", channelname.toStdString()));
+    FJsonHelper helper;
+    QJsonDocument nodes = helper.generateJsonNodeWithKeyValue("channel", channelname);
     wsSend("LCH", nodes);
 }
 
 void FSession::sendConfirmStaffReport(QString callid) {
-    JSONNode nodes;
-    nodes.push_back(JSONNode("action", "confirm"));
-    nodes.push_back(JSONNode("moderator", character.toStdString()));
-    nodes.push_back(JSONNode("callid", callid.toStdString()));
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+    valueMap.insert("action", "confirm");
+    valueMap.insert("moderator", character);
+    valueMap.insert("callid", callid);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
     wsSend("SFC", nodes);
 }
 
 void FSession::sendIgnoreAdd(QString character) {
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
     character = character.toLower();
-    JSONNode ignorenode;
-    JSONNode targetnode("character", character.toStdString());
-    JSONNode actionnode("action", "add");
-    ignorenode.push_back(targetnode);
-    ignorenode.push_back(actionnode);
-    wsSend("IGN", ignorenode);
+
+    valueMap.insert("character", character);
+    valueMap.insert("action", "add");
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("IGN", nodes);
 }
 
 void FSession::sendIgnoreDelete(QString character) {
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
     character = character.toLower();
-    JSONNode ignorenode;
-    JSONNode targetnode("character", character.toStdString());
-    JSONNode actionnode("action", "delete");
-    ignorenode.push_back(targetnode);
-    ignorenode.push_back(actionnode);
-    wsSend("IGN", ignorenode);
+
+    valueMap.insert("character", character);
+    valueMap.insert("action", "delete");
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("IGN", nodes);
 }
 
 void FSession::sendStatus(QString status, QString statusmsg) {
-    JSONNode stanode;
-    JSONNode statusnode("status", status.toStdString());
-    JSONNode stamsgnode("statusmsg", statusmsg.toStdString());
-    stanode.push_back(statusnode);
-    stanode.push_back(stamsgnode);
-    wsSend("STA", stanode);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("status", status);
+    valueMap.insert("statusmsg", statusmsg);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("STA", nodes);
 }
 
 void FSession::sendCharacterTimeout(QString character, int minutes, QString reason) {
-    JSONNode node;
-    JSONNode charnode("character", character.toStdString());
-    JSONNode timenode("time", QString::number(minutes).toStdString());
-    JSONNode renode("reason", reason.toStdString());
-    node.push_back(charnode);
-    node.push_back(timenode);
-    node.push_back(renode);
-    wsSend("TMO", node);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("character", character);
+    valueMap.insert("time", QString::number(minutes));
+    valueMap.insert("reason", reason);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("TMO", nodes);
 }
 
 void FSession::sendTypingNotification(QString character, TypingStatus status) {
-    std::string statusText = "clear";
+    QString statusText = "clear";
     switch (status) {
         case TYPING_STATUS_CLEAR:
             statusText = "clear";
@@ -1648,206 +1664,234 @@ void FSession::sendTypingNotification(QString character, TypingStatus status) {
             break;
     }
 
-    JSONNode node;
-    JSONNode statusnode("status", statusText);
-    JSONNode charnode("character", character.toStdString());
-    node.push_back(statusnode);
-    node.push_back(charnode);
-    wsSend("TPN", node);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("status", statusText);
+    valueMap.insert("character", character);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("TPN", nodes);
 }
 
 void FSession::sendDebugCommand(QString payload) {
-    JSONNode node;
-    JSONNode cmd("command", payload.toStdString());
-    node.push_back(cmd);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("command", payload);
+
     wsSend("ZZZ", node);
 }
 
 void FSession::kickFromChannel(QString channel, QString character) {
-    JSONNode kicknode;
-    JSONNode charnode("character", character.toStdString());
-    JSONNode channode("channel", channel.toStdString());
-    kicknode.push_back(charnode);
-    kicknode.push_back(channode);
-    wsSend("CKU", kicknode);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("character", character);
+    valueMap.insert("channel", channel);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("CKU", nodes);
 }
 
 void FSession::kickFromChat(QString character) {
-    JSONNode kicknode;
-    JSONNode charnode("character", character.toStdString());
-    kicknode.push_back(charnode);
-    wsSend("KIK", kicknode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("character", character);
+
+    wsSend("KIK", node);
 }
 
 void FSession::banFromChannel(QString channel, QString character) {
-    JSONNode bannode;
-    JSONNode charnode("character", character.toStdString());
-    JSONNode channode("channel", channel.toStdString());
-    bannode.push_back(charnode);
-    bannode.push_back(channode);
-    wsSend("CBU", bannode);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("character", character);
+    valueMap.insert("channel", channel);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("CBU", nodes);
 }
 
 void FSession::banFromChat(QString character) {
-    JSONNode node;
-    JSONNode charnode("character", character.toStdString());
-    node.push_back(charnode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("character", character);
+
     wsSend("ACB", node);
 }
 
 void FSession::unbanFromChannel(QString channel, QString character) {
-    JSONNode bannode;
-    JSONNode charnode("character", character.toStdString());
-    JSONNode channode("channel", channel.toStdString());
-    bannode.push_back(charnode);
-    bannode.push_back(channode);
-    wsSend("CUB", bannode);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("character", character);
+    valueMap.insert("channel", channel);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("CUB", nodes);
 }
 
 void FSession::unbanFromChat(QString character) {
-    JSONNode node;
-    JSONNode charnode("character", character.toStdString());
-    node.push_back(charnode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("character", character);
+
     wsSend("UNB", node);
 }
 
 void FSession::setRoomIsPublic(QString channel, bool isPublic) {
-    JSONNode statusnode;
-    JSONNode channelNode("channel", channel.toStdString());
-    JSONNode statNode("status", isPublic ? "public" : "private");
-    statusnode.push_back(channelNode);
-    statusnode.push_back(statNode);
-    wsSend("RST", statusnode);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("channel", channel);
+    valueMap.insert("status", isPublic ? "public" : "private");
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("RST", nodes);
 }
 
 void FSession::inviteToChannel(QString channel, QString character) {
-    JSONNode invitenode;
-    JSONNode charnode("character", character.toStdString());
-    JSONNode channode("channel", channel.toStdString());
-    invitenode.push_back(channode);
-    invitenode.push_back(charnode);
-    wsSend("CIU", invitenode);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("character", character);
+    valueMap.insert("channel", channel);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("CIU", nodes);
 }
 
 void FSession::giveChanop(QString channel, QString character) {
-    JSONNode opnode;
-    JSONNode charnode("character", character.toStdString());
-    JSONNode channode("channel", channel.toStdString());
-    opnode.push_back(charnode);
-    opnode.push_back(channode);
-    wsSend("COA", opnode);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("character", character);
+    valueMap.insert("channel", channel);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("COA", nodes);
 }
 
 void FSession::takeChanop(QString channel, QString character) {
-    JSONNode opnode;
-    JSONNode charnode("character", character.toStdString());
-    JSONNode channode("channel", channel.toStdString());
-    opnode.push_back(charnode);
-    opnode.push_back(channode);
-    wsSend("COR", opnode);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("character", character);
+    valueMap.insert("channel", channel);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("COR", nodes);
 }
 
 void FSession::giveGlobalop(QString character) {
-    JSONNode opnode;
-    JSONNode charnode("character", character.toStdString());
-    opnode.push_back(charnode);
-    wsSend("AOP", opnode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("character", character);
+
+    wsSend("AOP", node);
 }
 
 void FSession::takeGlobalop(QString character) {
-    JSONNode opnode;
-    JSONNode charnode("character", character.toStdString());
-    opnode.push_back(charnode);
-    wsSend("DOP", opnode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("character", character);
+
+    wsSend("DOP", node);
 }
 
 void FSession::giveReward(QString character) {
-    JSONNode node;
-    JSONNode charnode("character", character.toStdString());
-    node.push_back(charnode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("character", character);
+
     wsSend("RWD", node);
 }
 
 void FSession::requestChannelBanList(QString channel) {
-    JSONNode node;
-    JSONNode channode("channel", channel.toStdString());
-    node.push_back(channode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("channel", channel);
+
     wsSend("CBL", node);
 }
 
 void FSession::requestChanopList(QString channel) {
-    JSONNode node;
-    JSONNode channode("channel", channel.toStdString());
-    node.push_back(channode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("channel", channel);
+
     wsSend("COL", node);
 }
 
 void FSession::killChannel(QString channel) {
-    JSONNode node;
-    JSONNode channode("channel", channel.toStdString());
-    node.push_back(channode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("channel", channel);
+
     wsSend("KIC", node);
 }
 
 void FSession::broadcastMessage(QString message) {
-    JSONNode node;
-    JSONNode msgnode("message", message.toStdString());
-    node.push_back(msgnode);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("message", message);
+
     wsSend("BRO", node);
 }
 
 void FSession::setChannelDescription(QString channelname, QString description) {
-    JSONNode node;
-    JSONNode channode("channel", channelname.toStdString());
-    JSONNode descnode("description", description.toStdString());
-    node.push_back(channode);
-    node.push_back(descnode);
-    wsSend("CDS", node);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("channel", channelname);
+    valueMap.insert("description", description);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("CDS", nodes);
 }
 
 void FSession::setChannelMode(QString channel, ChannelMode mode) {
-    JSONNode node;
-    JSONNode channode("channel", channel.toStdString());
-    JSONNode modenode("mode", ChannelModeEnum.valueToKey(mode).toStdString());
-    node.push_back(channode);
-    node.push_back(modenode);
-    wsSend("RMO", node);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("channel", channel);
+    valueMap.insert("mode", ChannelModeEnum.valueToKey(mode));
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("RMO", nodes);
 }
 
 void FSession::setChannelOwner(QString channel, QString newOwner) {
-    JSONNode node;
-    JSONNode channode("channel", channel.toStdString());
-    JSONNode ownernode("character", newOwner.toStdString());
-    node.push_back(channode);
-    node.push_back(ownernode);
-    wsSend("CSO", node);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("channel", channel);
+    valueMap.insert("character", newOwner);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("CSO", nodes);
 }
 
 void FSession::spinBottle(QString channel) {
-    JSONNode node;
-    JSONNode channode("channel", channel.toStdString());
-    JSONNode dicenode("dice", "bottle");
-    node.push_back(channode);
-    node.push_back(dicenode);
-    wsSend("RLL", node);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("channel", channel);
+    valueMap.insert("dice", "bottle");
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("RLL", nodes);
 }
 
 void FSession::rollDiceChannel(QString channel, QString dice) {
-    JSONNode node;
-    JSONNode channode("channel", channel.toStdString());
-    JSONNode dicenode("dice", dice.toStdString());
-    node.push_back(channode);
-    node.push_back(dicenode);
-    wsSend("RLL", node);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("channel", channel);
+    valueMap.insert("dice", dice);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("RLL", nodes);
 }
 
 void FSession::rollDicePM(QString recipient, QString dice) {
-    JSONNode node;
-    JSONNode channode("recipient", recipient.toStdString());
-    JSONNode dicenode("dice", dice.toStdString());
-    node.push_back(channode);
-    node.push_back(dicenode);
-    wsSend("RLL", node);
+    FJsonHelper helper;
+    QMap<QString, QString> valueMap;
+
+    valueMap.insert("recipient", recipient);
+    valueMap.insert("dice", dice);
+    QJsonDocument nodes = helper.generateJsonNodesFromMap(valueMap);
+
+    wsSend("RLL", nodes);
 }
 
 void FSession::requestChannels() {
@@ -1856,9 +1900,9 @@ void FSession::requestChannels() {
 }
 
 void FSession::requestProfileKinks(QString character) {
-    JSONNode node;
-    JSONNode cn("character", character.toStdString());
-    node.push_back(cn);
+    FJsonHelper helper;
+    QJsonDocument node = helper.generateJsonNodeWithKeyValue("character", character);
+
     wsSend("PRO", node);
     wsSend("KIN", node);
 }

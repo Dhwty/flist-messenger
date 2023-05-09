@@ -2,6 +2,7 @@
 #define FHTTPAPI_ENDPOINT_V1_H
 
 #include "flist_api.h"
+#include "flist_global.h"
 
 namespace FHttpApi {
 

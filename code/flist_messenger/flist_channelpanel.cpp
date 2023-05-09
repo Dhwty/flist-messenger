@@ -27,7 +27,6 @@
 #include <QSettings>
 #include <QDateTime>
 
-#include "JSONNode.h"
 #include "flist_global.h"
 #include "flist_session.h"
 #include "flist_iuserinterface.h"

@@ -5,6 +5,7 @@
 FAccount::FAccount(QObject *parent, FServer *server) : QObject(parent), username(), password(), valid(false), ticketvalid(false), server(server), ui(0) {}
 
 void FAccount::loginSslErrors(QList<QSslError> sslerrors) {
+    qDebug() << sslerrors;
     // todo: handle SSL error and pass on error message, or suppress if appropriate
     (void)sslerrors;
 }

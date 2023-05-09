@@ -9,7 +9,7 @@ namespace FHttpApi {
 
     Request<TicketResponse> *Endpoint_v1::getTicket(crQString username, crQString password, DataTypes additionalInfo) {
         (void)additionalInfo;
-        QString loginurl("https://www.f-list.net/json/getApiTicket.json");
+        QString loginurl = QString(FLIST_BASEURL_TICKET);
         QHash<QString, QString> params;
         params.insert("secure", "yes");
         params.insert("account", username);
