@@ -29,8 +29,6 @@
 #include "flist_messenger.h"
 #include "flist_character.h"
 #include "flist_parser.h"
-#include "../libjson/libJSON.h"
-#include "../libjson/Source/NumberToString.h"
 #include "flist_enums.h"
 
 #include <iostream>

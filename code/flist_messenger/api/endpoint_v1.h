@@ -5,28 +5,27 @@
 
 namespace FHttpApi {
 
-class Endpoint_v1 : public Endpoint
-{
-public:
-	Endpoint_v1(QNetworkAccessManager *n);
+    class Endpoint_v1 : public Endpoint {
+        public:
+            Endpoint_v1(QNetworkAccessManager *n);
 
-	virtual Request<TicketResponse> *getTicket(crQString username, crQString password,
-														 DataTypes additionalInfo = Data_GetTicketDefault);
+            virtual Request<TicketResponse> *getTicket(crQString username, crQString password, DataTypes additionalInfo = Data_GetTicketDefault);
 
-	class TicketRequest : public Request<TicketResponse>
-	{
-	public:
-		TicketRequest(QNetworkReply *qnr, QString username, QString password);
-		virtual ~TicketRequest();
+            class TicketRequest : public Request<TicketResponse> {
+                public:
+                    TicketRequest(QNetworkReply *qnr, QString username, QString password);
+                    virtual ~TicketRequest();
 
-	public slots:
-		virtual void onRequestFinished();
+                public slots:
+                    virtual void onRequestFinished();
 
-	private:
-		QString _un;
-		QString _p;
-	};
-};
+                private:
+                    void qStringListFromJsonArray(QJsonArray &from, QStringList &to);
+
+                    QString _un;
+                    QString _p;
+            };
+    };
 
 } // namespace FHttpApi
 

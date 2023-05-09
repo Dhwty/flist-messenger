@@ -6,7 +6,7 @@
 #if QT_VERSION >= 0x050000
 
 #else
-#define QUrlQuery QUrl
+#    define QUrlQuery QUrl
 
 #endif
 

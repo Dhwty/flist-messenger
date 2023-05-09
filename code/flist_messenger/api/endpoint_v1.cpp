@@ -1,80 +1,72 @@
 #include "endpoint_v1.h"
-#include "../libjson/libJSON.h"
-#include "../libjson/Source/NumberToString.h"
+#include <QJsonDocument>
+#include <QJsonArray>
 #include <string>
 
 namespace FHttpApi {
 
-Endpoint_v1::Endpoint_v1(QNetworkAccessManager *n) : Endpoint(n)
-{
-}
+    Endpoint_v1::Endpoint_v1(QNetworkAccessManager *n) : Endpoint(n) {}
 
-Request<TicketResponse> *Endpoint_v1::getTicket(
-		crQString username,
-		crQString password,
-		DataTypes additionalInfo)
-{
-	(void)additionalInfo;
-	QString loginurl( "https://www.f-list.net/json/getApiTicket.json" );
-	QHash<QString,QString> params;
-	params.insert("secure","yes");
-	params.insert("account", username);
-	params.insert("password", password);
+    Request<TicketResponse> *Endpoint_v1::getTicket(crQString username, crQString password, DataTypes additionalInfo) {
+        (void)additionalInfo;
+        QString loginurl("https://www.f-list.net/json/getApiTicket.json");
+        QHash<QString, QString> params;
+        params.insert("secure", "yes");
+        params.insert("account", username);
+        params.insert("password", password);
 
-	QNetworkReply *reply = request(loginurl, params);
-	return new TicketRequest(reply, username, password);
-}
+        QNetworkReply *reply = request(loginurl, params);
+        return new TicketRequest(reply, username, password);
+    }
 
-Endpoint_v1::TicketRequest::TicketRequest(QNetworkReply *qnr, QString username, QString password) :
-	Request<FHttpApi::TicketResponse>(qnr), _un(username), _p(password) { }
+    Endpoint_v1::TicketRequest::TicketRequest(QNetworkReply *qnr, QString username, QString password) : Request<FHttpApi::TicketResponse>(qnr), _un(username), _p(password) {}
 
-Endpoint_v1::TicketRequest::~TicketRequest() { }
+    Endpoint_v1::TicketRequest::~TicketRequest() {}
 
-namespace {
+    void Endpoint_v1::TicketRequest::qStringListFromJsonArray(QJsonArray &from, QStringList &to) {
+        for (int i = 0; i < from.count(); i++) {
+            QString val = from[i].toString();
+            to.append(val);
+        }
+    }
 
-void qslFromJsonArray(JSONNode &from, QStringList &to)
-{
-	int children = from.size();
-	for(int i = 0; i < children; i++)
-	{
-		QString val = from[i].as_string().c_str();
-		to.append(val);
-	}
-}
+    void Endpoint_v1::TicketRequest::onRequestFinished() {
+        QByteArray respbytes = reply->readAll();
+        reply->deleteLater();
 
-}
+        QJsonDocument responseDoc = QJsonDocument::fromJson(respbytes);
 
-void Endpoint_v1::TicketRequest::onRequestFinished()
-{
-	QByteArray respbytes = reply->readAll();
-	reply->deleteLater();
-	std::string response ( respbytes.begin(), respbytes.end() );
+        // TODO: Improve handling - iterate over array and search for an object?
+        if (responseDoc.isArray()) {
+            emit failed(QString("server_failure"), "Unknown server response. Expected object, got array.");
+            return;
+        }
 
-	JSONNode respnode = libJSON::parse ( response );
-	JSONNode errnode = respnode.at ( "error" );
-	if (errnode.as_string() != "") {
-		emit failed(QString("server_failure"), QString(errnode.as_string().c_str()));
-		return;
-	}
+        QVariantMap responseMap = responseDoc.toVariant().toMap();
+        QString errnode = responseMap.value("error").toString();
+        if (!errnode.isEmpty()) {
+            emit failed(QString("server_failure"), errnode);
+            return;
+        }
 
-	available = FHttpApi::Data_GetTicketDefault;
+        available = FHttpApi::Data_GetTicketDefault;
 
-	JSONNode subnode = respnode.at ("ticket");
-	ticket = new Ticket();
-	ticket->ticket = subnode.as_string().c_str();
-	ticket->name = _un;
-	ticket->password = _p;
+        QString subnode = responseMap.value("ticket").toString();
+        ticket = new Ticket();
+        ticket->ticket = subnode;
+        ticket->name = _un;
+        ticket->password = _p;
 
-	subnode = respnode.at("default_character");
-	defaultCharacter = subnode.as_string().c_str();
+        subnode = responseMap.value("default_character").toString();
+        defaultCharacter = subnode;
 
-	subnode = respnode.at("characters");
-	qslFromJsonArray(subnode, characters);
+        QJsonArray arraySubNode = responseMap.value("characters").toJsonArray();
+        qStringListFromJsonArray(arraySubNode, characters);
 
-	subnode = respnode.at("bookmarks");
-	qslFromJsonArray(subnode, bookmarks);
+        arraySubNode = responseMap.value("bookmarks").toJsonArray();
+        qStringListFromJsonArray(arraySubNode, bookmarks);
 
-	emit succeeded();
-}
+        emit succeeded();
+    }
 
 } // namespace FHttpApi
