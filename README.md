@@ -20,10 +20,10 @@ Please do not bother the original devs of this project with questions about this
 * libjson was removed in favor of Qt's built-in JSON support
 
 **Changes between 0.8.5 and 0.9.1:**
-* Internally flist-messenger has under gone a very heavy overhaul to improve code quality. While a great deal of effort has been spent trying to keep behaviour bug free and working, it's possible that unintended bugs have crept in.
+* Internally flist-messenger has undergone a very heavy overhaul to improve code quality. While a great deal of effort has been spent trying to keep behaviour bug free and working, it's possible that unintended bugs have crept in.
 * Project files have been switched from CMake to QMake. This provides better support from Qt Creator and removes the dependance on CMake.
 * '/close' has been added.
-* Right clicking URLs in chat view will now bring up a smarter context menu based upon the URL.
+* Right-clicking URLs in chat view will now bring up a smarter context menu based upon the URL.
 * The user list can be resized to see more of character names, or to show more of the chat view.
 * The channel list dialog has been improved to allow sorting and filtering. (Thanks to Kythyria.)
 * bugfix: Regular URLs in the chat view and logs will no longer have wacky prefixes.
