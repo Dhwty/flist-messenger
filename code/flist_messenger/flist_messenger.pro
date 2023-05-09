@@ -14,7 +14,7 @@ CONFIG -= console
 
 QT += core gui network
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia websockets
 
 #QMAKE_CXXFLAGS_DEBUG += -Werror
 
@@ -22,15 +22,11 @@ TEMPLATE = app
 TARGET = flist-messenger
 
 DEPENDPATH += . \
-              ../libjson/Source
-INCLUDEPATH += \
-    . \
-    ../libjson/ \
-    ../libjson/Source
-
+INCLUDEPATH += . \
 
 # Input
 HEADERS += \
+    api/flist_socket.h \
            flist_account.h \
            flist_avatar.h \
            flist_channeltab.h \
@@ -70,6 +66,7 @@ HEADERS += \
     notifylist.h \
     ui/stringcharacterlistmodel.h
 SOURCES += \
+    api/flist_socket.cpp \
            flist_account.cpp \
            flist_avatar.cpp \
            flist_channeltab.cpp \

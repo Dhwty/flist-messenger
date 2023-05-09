@@ -236,8 +236,8 @@ class flist_messenger : public QMainWindow, iUserInterface {
         void channelSettingsDialogRequested();
         void destroyMenu();
         void destroyChanMenu();
-        void socketError(QAbstractSocket::SocketError socketError);
-        void socketSslError(QList<QSslError> sslerrors);
+        void receivedSocketError(QString socketError);
+        void receivedSocketSslError(QString sslerrors);
         void quitApp();
         void aboutApp();
         void channelButtonMenuRequested();

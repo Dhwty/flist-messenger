@@ -1,6 +1,7 @@
 
 #include <QTime>
 #include <QSslSocket>
+#include <QtWebSockets/QWebSocket>
 
 #include "flist_session.h"
 #include "flist_account.h"
@@ -8,6 +9,7 @@
 #include "flist_server.h"
 #include "flist_character.h"
 #include "flist_iuserinterface.h"
+#include "flist_jsonhelper.h"
 #include "flist_channel.h"
 #include "flist_parser.h"
 #include "flist_message.h"
@@ -18,7 +20,6 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent)
       account(account),
       sessionid(character),
       character(character),
-      tcpsocket(0),
       characterlist(),
       friendslist(),
       bookmarklist(),
@@ -30,12 +31,20 @@ FSession::FSession(FAccount *account, QString &character, QObject *parent)
       knownchannellist(),
       knownopenroomlist(),
       wsready(false),
-      socketreadbuffer() {}
+      socketreadbuffer() {
+    // create socket right away
+    m_socket = new FSocket(account->server->chatserver_host + account->server->chatserver_port, this);
+
+    // connect socket signals
+    connect(m_socket, SIGNAL(socketConnected()), this, SLOT(socketConnected()));
+    connect(m_socket, SIGNAL(socketReceived(QString)), this, SLOT(socketReceived(QString)));
+    connect(m_socket, SIGNAL(socketSSLErrors(QString)), this, SLOT(socketSslError(QString)));
+    connect(m_socket, SIGNAL(socketError(QString)), this, SLOT(socketError(QString)));
+}
 
 FSession::~FSession() {
-    if (tcpsocket != 0) {
-        delete tcpsocket;
-        tcpsocket = 0;
+    if (m_socket != nullptr) {
+        delete m_socket;
     }
 }
 
@@ -110,173 +119,58 @@ FChannel *FSession::getChannel(QString name) {
 // todo: All the web socket stuff should really go into its own class.
 void FSession::connectSession() {
     debugMessage("session->connectSession()");
-    if (connected) {
+    if (connected || connectionAttempt) {
         return;
     }
 
-    connected = true;
+    connectionAttempt = true;
     wsready = false;
 
-    // tcpsocket = new QTcpSocket ( this );
-    tcpsocket = new QSslSocket(this);
-    // tcpsocket->ignoreSslErrors();
     debugMessage("Connecting...");
-    // tcpsocket->connectToHost (FLIST_CHAT_SERVER, FLIST_CHAT_SERVER_PORT);
-    // tcpsocket->connectToHost (account->server->chatserver_host, account->server->chatserver_port);
-    tcpsocket->connectToHostEncrypted(account->server->chatserver_host, account->server->chatserver_port);
-    connect(tcpsocket, SIGNAL(connected()), this, SLOT(socketConnected()));
-    connect(tcpsocket, SIGNAL(encrypted()), this, SLOT(socketConnected()));
-    connect(tcpsocket, SIGNAL(readyRead()), this, SLOT(socketReadReady()));
-    connect(tcpsocket, SIGNAL(errorOccurred(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
-    connect(tcpsocket, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(socketSslError(QList<QSslError>)));
+    m_socket->socketConnect();
 }
 
 void FSession::socketConnected() {
     debugMessage("Connected.");
 
-    tcpsocket->setSocketOption(QAbstractSocket::KeepAliveOption, true);
+    connected = true;
+    connectionAttempt = false;
 
-    // todo: this should use a better random source
-    srand(QTime::currentTime().msecsTo(QTime()));
-    unsigned char nonce[16];
-    int i;
-    for (i = 0; i < 16; i++) {
-        nonce[i] = (unsigned char)rand();
-    }
+    FJsonHelper helper;
 
-    QString header;
-    header.asprintf(
-            "GET / HTTP/1.1\r\n"
-            "Upgrade: WebSocket\r\n"
-            "Connection: Upgrade\r\n"
-            "Host: f-list.net:%d\r\n"
-            "Origin: https://%s\r\n"
-            "Sec-WebSocket-Key: %s\r\n"
-            "Sec-WebSocket-Version: 8\r\n"
-            "\r\n",
-            account->server->chatserver_port, (const char *)account->server->chatserver_host.toUtf8(), (const char *)QByteArray((const char *)nonce, 16).toBase64());
+    QMap<QString, QString> valueMap;
+    valueMap.insert("method", "ticket");
+    valueMap.insert("ticket", account->ticket);
+    valueMap.insert("account", account->getUserName());
+    valueMap.insert("cname", FLIST_CLIENTID);
+    valueMap.insert("cversion", FLIST_VERSIONNUM);
+    valueMap.insert("character", character);
+    QJsonDocument loginNode = helper.generateJsonNodesFromMap(valueMap);
 
-    tcpsocket->write(header.toUtf8());
-    tcpsocket->flush();
+    std::string idenStr = "IDN " + loginNode.toJson(QJsonDocument::Compact).toStdString();
+    debugMessage("Identify...");
+    wsSend(idenStr);
 }
 
-void FSession::socketError(QAbstractSocket::SocketError error) {
+void FSession::socketError(QString error) {
     connected = false;
     emit socketErrorSignal(error);
-    if (tcpsocket) {
-        tcpsocket->abort();
-        tcpsocket->deleteLater();
-        tcpsocket = 0;
-    }
 }
 
-void FSession::socketSslError(QList<QSslError> sslerrors) {
+void FSession::socketSslError(QString sslerrors) {
     // QMessageBox msgbox;
-    QString errorstring;
-    foreach (const QSslError &error, sslerrors) {
-        if (!errorstring.isEmpty()) {
-            errorstring += ", ";
-        }
-        errorstring += error.errorString();
-    }
     // msgbox.critical ( this, "SSL ERROR DURING LOGIN!", errorstring );
     // messageSystem(0, errorstring, MESSAGE_TYPE_ERROR);
-    QString message = QString("SSL Socket Error: %1").arg(errorstring);
+    QString message = QString("SSL Socket Error: %1").arg(sslerrors);
     // todo: This should really display message box.
     account->ui->messageSystem(this, message, MESSAGE_TYPE_ERROR);
     debugMessage(message);
+
+    emit socketSSLErrorSignal(sslerrors);
 }
 
-void FSession::socketReadReady() {
-    FJsonHelper helper;
-
-    if (!wsready) {
-        QByteArray buffer = tcpsocket->readAll();
-        std::string buf(socketreadbuffer);
-        buf.append(buffer.begin(), buffer.end());
-        if (buf.find("\r\n\r\n") == std::string::npos) {
-            // debugMessage("WebSocket waiting...");
-            // debugMessage(buf);
-            // debugMessage("...");
-            socketreadbuffer = buf;
-            return;
-        } else {
-            debugMessage("WebSocket connected.");
-            wsready = true;
-            socketreadbuffer.clear();
-        }
-        // todo: verify "Sec-WebSocket-Accept" response
-        QMap<QString, QString> valueMap;
-        valueMap.insert("method", "ticket");
-        valueMap.insert("ticket", account->ticket);
-        valueMap.insert("account", account->getUserName());
-        valueMap.insert("cname", FLIST_CLIENTID);
-        valueMap.insert("cversion", FLIST_VERSIONNUM);
-        valueMap.insert("character", character);
-        QJsonDocument loginNode = helper.generateJsonNodesFromMap(valueMap);
-
-        std::string idenStr = "IDN " + loginNode.toJson(QJsonDocument::Compact).toStdString();
-        // debugMessage("Indentify...");
-        wsSend(idenStr);
-    } else {
-        // debugMessage("receiving...");
-        QByteArray buffer = tcpsocket->readAll();
-        std::string buf(socketreadbuffer);
-        buf.append(buffer.begin(), buffer.end());
-        unsigned int lengthsize;
-        unsigned int payloadlength;
-        unsigned int headersize;
-        unsigned int i;
-        while (1) {
-            if (buf.length() < 2) {
-                break;
-            }
-            payloadlength = buf[1] & 0x7f;
-            if (payloadlength < 126) {
-                lengthsize = 0;
-            } else if (payloadlength == 126) {
-                lengthsize = 2;
-                if (buf.length() < 4) {
-                    break;
-                }
-                payloadlength = ((buf[2] & 0xff) << 8) | (buf[3] & 0xff);
-            } else {
-                lengthsize = 8;
-                if (buf.length() < 10) {
-                    break;
-                }
-                // Does not handle lengths greater than 4GB
-                payloadlength = ((buf[6] & 0xff) << 24) | ((buf[7] & 0xff) << 16) | ((buf[8] & 0xff) << 8) | (buf[9] & 0xff);
-            }
-            if (buf[1] & 0x80) {
-                headersize = lengthsize + 2 + 4;
-            } else {
-                headersize = lengthsize + 2;
-            }
-            // todo: sanity check the opcode, final fragment and reserved bits
-            // if(buf != 0x81) {
-            //         display error
-            //         disconnect?
-            // }
-            if (buf.length() < headersize + payloadlength) {
-                break;
-            }
-            std::string cmd = buf.substr(headersize, payloadlength);
-            if (buf[1] & 0x80) {
-                for (i = 0; i < payloadlength; i++) {
-                    cmd[i] ^= buf[lengthsize + 2 + (i & 0x3)];
-                }
-            }
-            wsRecv(cmd);
-            if (buf.length() <= headersize + payloadlength) {
-                buf.clear();
-                break;
-            } else {
-                buf = buf.substr(headersize + payloadlength, buf.length() - (headersize + payloadlength));
-            }
-        }
-        socketreadbuffer = buf;
-    }
+void FSession::socketReceived(QString message) {
+    wsRecv(message.toStdString());
 }
 
 QString FSession::generateJsonCommandWithKeyValue(QString command, QString key, QString value) {
@@ -302,59 +196,22 @@ void FSession::wsSend(const char *command, QJsonDocument &nodes) {
 void FSession::wsSend(std::string &input) {
     if (!connected) {
         // textEdit->append ( "Attempted to send a message, but client is disconnected." );
+        debugMessage("Attempted to send a message, but socket is not connected.");
     } else {
         fix_broken_escaped_apos(input);
-        debugMessage(">>" + input);
-        QByteArray buf;
-        QDataStream stream(&buf, QIODevice::WriteOnly);
-        input.resize(input.length());
-        // Send WS frame as a single text frame
-        stream << (quint8)0x81;
-        // Length of frame with mask bit sent
-        if (input.length() < 126) {
-            stream << (quint8)(input.length() | 0x80);
-        } else if (input.length() < 0x10000) {
-            stream << (quint8)(126 | 0x80);
-            stream << (quint8)(input.length() >> 8);
-            stream << (quint8)(input.length() >> 0);
-        } else {
-            // Does not handle the case if we're trying to send more than 4GB.
-            stream << (quint8)(127 | 0x80);
-            stream << (quint8)(0x00);
-            stream << (quint8)(0x00);
-            stream << (quint8)(0x00);
-            stream << (quint8)(0x00);
-            stream << (quint8)(input.length() >> 24);
-            stream << (quint8)(input.length() >> 16);
-            stream << (quint8)(input.length() >> 8);
-            stream << (quint8)(input.length());
-        }
-        // The mask to use for this frame.
-        // The spec says it should be cryptographically strong random number, but we're using a weak random source instead.
-        quint8 mask[4];
-        unsigned int i;
-
-        for (i = 0; i < 4; i++) {
-            mask[i] = rand() & 0xff;
-            stream << mask[i];
-        }
-
-        for (i = 0; i < input.length(); i++) {
-            stream << (quint8)(input[i] ^ mask[i & 0x3]);
-        }
-        tcpsocket->write(buf);
-        tcpsocket->flush();
+        // debugMessage(">>" + input);
+        m_socket->send(QString::fromStdString(input));
     }
 }
 
 void FSession::wsRecv(std::string packet) {
-    debugMessage("<<" + packet);
+    // debugMessage("<<" + packet);
     try {
         std::string cmd = packet.substr(0, 3);
         QJsonDocument nodes;
         QVariantMap nodeMap;
         if (packet.length() > 4) {
-            nodes.fromJson(packet.substr(4, packet.length() - 4).c_str());
+            nodes = nodes.fromJson(packet.substr(4, packet.length() - 4).c_str());
             nodeMap = nodes.toVariant().toMap();
         }
 #define CMD(name)                   \
@@ -420,9 +277,9 @@ void FSession::wsRecv(std::string packet) {
         CMD(PIN); // Ping.
 
         debugMessage(QString("The command '%1' was received, but is unknown and could not be processed. %2").arg(QString::fromStdString(cmd), QString::fromStdString(packet)));
-    } catch (std::invalid_argument) {
+    } catch (std::invalid_argument const &) {
         debugMessage("Server returned invalid json in its response: " + packet);
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range const &) {
         debugMessage("Server produced unexpected json without a field we expected: " + packet);
     }
 }
@@ -496,7 +353,7 @@ COMMAND(SFC) {
         try {
             logid = nodes.value("logid").toString();
             logstring = QString("<a href=\"https://www.f-list.net/fchat/getLog.php?log=%1\" ><b>Log~</b></a> | ").arg(logid);
-        } catch (std::out_of_range) {
+        } catch (std::out_of_range const &) {
             logstring.clear();
         }
         QString message = QString("<b>STAFF ALERT!</b> From %1<br />"
@@ -578,7 +435,7 @@ COMMAND(ICH) {
         try {
             // todo: Wiki says to expect "title" in the ICH command, but none is received
             channeltitle = nodes.value("title").toString();
-        } catch (std::out_of_range) {
+        } catch (std::out_of_range const &) {
             channeltitle = channelname;
         }
     } else {
@@ -607,7 +464,7 @@ COMMAND(ICH) {
             debugMessage("[SERVER BUG] Server gave us a character in the channel user list that we don't know about yet: " + charactername.toStdString() + ", " + rawpacket);
             continue;
         }
-        debugMessage("Add character '" + charactername + "' to channel '" + channelname + "'.");
+        // debugMessage("Add character '" + charactername + "' to channel '" + channelname + "'.");
         channel->addCharacter(charactername, false);
     }
     account->ui->notifyChannelReady(this, channelname);
@@ -711,10 +568,10 @@ COMMAND(LIS) {
     QList<QVariant> childnode = nodes.value("characters").toList();
     int count = childnode.count();
     // debugMessage("Character list count: " + QString::number(size));
-    // debugMessage(childnode.write());
+    // qDebug() << (childnode);
     for (int i = 0; i < count; i++) {
         QList<QVariant> characternode = childnode.at(i).toList();
-        // debugMessage("char #" + QString::number(i) + " : " + QString::fromStdString(characternode.write()));
+        // debugMessage("char #" + QString::number(i) + "with elem count:" + QString::number(characternode.count()));
         QString charactername = characternode.at(0).toString();
         // debugMessage("charactername: " + charactername);
         QString gender = characternode.at(1).toString();
@@ -771,7 +628,7 @@ COMMAND(STA) {
     try {
         statusmessage = nodes.value("statusmsg").toString();
         character->setStatusMsg(statusmessage);
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range const &) {
         // Crown messages can cause there to be no statusmsg.
         /*do nothing*/
     }
@@ -1164,7 +1021,7 @@ COMMAND(RLL) {
     QString channelname;
     try {
         channelname = nodes.value("channel").toString();
-    } catch (std::out_of_range) {
+    } catch (std::out_of_range const &) {
     }
     QString charactername = nodes.value("character").toString();
     if (channelname.isEmpty() && charactername == this->character) {

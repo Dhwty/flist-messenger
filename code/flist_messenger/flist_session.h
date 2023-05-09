@@ -10,7 +10,7 @@
 
 #include "flist_channelsummary.h"
 #include "flist_enums.h"
-#include "flist_jsonhelper.h"
+#include "api/flist_socket.h"
 #include "notifylist.h"
 
 class FAccount;
@@ -105,7 +105,8 @@ class FSession : public QObject {
         void requestProfileKinks(QString character);
 
     signals:
-        void socketErrorSignal(QAbstractSocket::SocketError);
+        void socketErrorSignal(QString error);
+        void socketSSLErrorSignal(QString error);
         void recvMessage(QString type, QString session, QString chan, QString sender, QString message);
 
         void notifyCharacterOnline(FSession *session, QString charactername, bool online);
@@ -116,18 +117,15 @@ class FSession : public QObject {
 
     public slots:
         void socketConnected();
-        void socketError(QAbstractSocket::SocketError);
-        void socketSslError(QList<QSslError> sslerrors);
-        void socketReadReady();
+        void socketError(QString error);
+        void socketSslError(QString sslerrors);
+        void socketReceived(QString message);
 
     public:
         bool connected;
         FAccount *account;
         QString sessionid;
         QString character;
-
-        // QTcpSocket *tcpsocket;
-        QSslSocket *tcpsocket;
 
     private:
         QHash<QString, FCharacter *> characterlist; //< List of all known characters on the server/session.
@@ -144,7 +142,9 @@ class FSession : public QObject {
         QList<FChannelSummary> knownopenroomlist;   //<List of known open rooms, as reported by the server.
 
     private:
+        FSocket *m_socket = nullptr;
         bool wsready;
+        bool connectionAttempt = false;
         std::string socketreadbuffer;
         QString generateJsonCommandWithKeyValue(QString command, QString key, QString value);
 
