@@ -1,7 +1,23 @@
 flist-messenger
 ===============
 
-A multi-platform desktop client for the F-Chat protocol. If you have any questions, feel free to contact Alicia Sprig on F-chat, or post in the [desktop client's group forums](https://www.f-list.net/group.php?group=f-chat%20desktop%20client). More about this client can be found here: http://wiki.f-list.net/index.php/F-Chat_Desktop_Client
+A fork of the original multi-platform desktop client for the F-Chat protocol.
+
+If you have any questions about *this fork specifically*, feel free to contact Greyhoof on F-List via Note.
+
+If you have questions about *the original version of this project*, please refer to the readme of the original repo: https://github.com/Dhwty/flist-messenger
+
+-----
+Please do not bother the original devs of this project with questions about this fork, as they are not involved with it.
+-----
+
+-----
+
+
+**Changes between 0.9.1 and 0.9.5:**
+* flist-messenger was migrated to Qt 6.5
+* Handling of stylesheets was improved, the app will now provide default files if none exist in the app folder
+* libjson was removed in favor of Qt's built-in JSON support
 
 **Changes between 0.8.5 and 0.9.1:**
 * Internally flist-messenger has under gone a very heavy overhaul to improve code quality. While a great deal of effort has been spent trying to keep behaviour bug free and working, it's possible that unintended bugs have crept in.
@@ -27,13 +43,13 @@ A multi-platform desktop client for the F-Chat protocol. If you have any questio
 Compiling from Source
 ==============
 
-For the latest stable source visit the Github repository here:
+* Pull the master branch for the latest "stable" version.
+* Or pull the develop branch for the latest "in development" version.
+
+For the original source, visit the Github repository here:
   https://github.com/Dhwty/flist-messenger
 
-Bleeding edge development can be found here: 
-  https://github.com/aliciasprig/flist-messenger
-
-Compiling flist-messenger requires Qt4 or Qt5. The easiest way to get this on Windows or Mac is to download Qt5 from http://qt-project.org/downloads . For GNU/Linux systems, installing Qt Creator from your distro's package manager should be easiest.
+Compiling flist-messenger requires Qt6. The easiest way to get this on Windows or Mac is to download Qt6 from http://qt-project.org/downloads . For GNU/Linux systems, installing Qt Creator from your distro's package manager should be easiest.
 
 With Qt Creator installed you should be able to run it and open 'flist_messenger.pro'. Setting up and compiling the project should be straight forward from there.
 
@@ -43,15 +59,8 @@ By default, the project will compile with the options '-Wall' and '-Werror' on. 
 
 ---------------
 
-Versions for Other Platforms
-==============
-0.8.5 for Open Pandora: http://repo.openpandora.org/?page=detail&app=fchat-001
-
----------------
-
-Whitespace
+Code Style
 ==========
-So there's no doubt:
+Please use the provided "_clang-format" file.
 
-* Indent with one tab
-* Align with spaces
+It can be applied using the "Beautifier" plugin within Qt Creator. (May need to be enabled and set up manually.)

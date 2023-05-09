@@ -8,7 +8,7 @@
 #include <QSslError>
 #include <QUrl>
 #if QT_VERSION >= 0x050000
-#include <QUrlQuery>
+#    include <QUrlQuery>
 #endif
 #include <QNetworkReply>
 #include "flist_api.h"
@@ -17,60 +17,63 @@ class FSession;
 class FServer;
 class iUserInterface;
 
-class FAccount : public QObject
-{
-	Q_OBJECT
-public:
-	FAccount(QObject *parent, FServer *server);
-	QString getUserName() {return username;}
-	void setUserName(QString name) {username = name;}
-	QString getPassword() {return password;}
-	void setPassword(QString pass) {password = pass;}
-	FSession *getSession(QString sessionid);
-	FSession *getSessionByCharacter(QString character);
-	FSession *addSession(QString character);
+class FAccount : public QObject {
+        Q_OBJECT
+    public:
+        FAccount(QObject *parent, FServer *server);
 
-public slots:
-	void loginStart();
-	void loginUserPass(QString user, QString pass);
+        QString getUserName() { return username; }
 
-private slots:
-	void loginSslErrors( QList<QSslError> sslerrors );
-	void onLoginError(QString error_id, QString error_message);
-	void loginHandle();
+        void setUserName(QString name) { username = name; }
 
-signals:
-	void loginError(FAccount *account, QString errortitle, QString errorsring);
-	void loginComplete(FAccount *account);
+        QString getPassword() { return password; }
 
-	void ticketReady(FAccount *account, QString ticket);
+        void setPassword(QString pass) { password = pass; }
 
-public:
-	//todo: make this stuff private
-	QUrl loginurl; //< URL used by the ticket login process.
-	QUrlQuery loginparam; //< Holds parameter passed to the URL ticket login.
-	//QNetworkReply *loginreply; //< The reply yo the URL ticket login.
+        FSession *getSession(QString sessionid);
+        FSession *getSessionByCharacter(QString character);
+        FSession *addSession(QString character);
 
-	QString defaultCharacter;
-	QList<QString> characterList;
+    public slots:
+        void loginStart();
+        void loginUserPass(QString user, QString pass);
 
-	QString ticket;
+    private slots:
+        void loginSslErrors(QList<QSslError> sslerrors);
+        void onLoginError(QString error_id, QString error_message);
+        void loginHandle();
 
-	QList<FSession *> charactersessions;
+    signals:
+        void loginError(FAccount *account, QString errortitle, QString errorsring);
+        void loginComplete(FAccount *account);
 
-private:
-	QString username;
-	QString password;
-	bool valid;
+        void ticketReady(FAccount *account, QString ticket);
 
-	bool ticketvalid;
+    public:
+        // todo: make this stuff private
+        QUrl loginurl;        //< URL used by the ticket login process.
+        QUrlQuery loginparam; //< Holds parameter passed to the URL ticket login.
+        // QNetworkReply *loginreply; //< The reply yo the URL ticket login.
 
-	FHttpApi::Request<FHttpApi::TicketResponse> *loginReply;
+        QString defaultCharacter;
+        QList<QString> characterList;
 
-public:
-	FServer *server;
-	iUserInterface *ui; //<The interface to the GUI part of the application.
+        QString ticket;
 
+        QList<FSession *> charactersessions;
+
+    private:
+        QString username;
+        QString password;
+        bool valid;
+
+        bool ticketvalid;
+
+        FHttpApi::Request<FHttpApi::TicketResponse> *loginReply;
+
+    public:
+        FServer *server;
+        iUserInterface *ui; //<The interface to the GUI part of the application.
 };
 
-#endif // FLIST_ACCOUNT_H
+#endif                      // FLIST_ACCOUNT_H

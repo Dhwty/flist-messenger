@@ -56,6 +56,7 @@
 #include <QPlainTextEdit>
 #include <QTextBrowser>
 #include <QStringList>
+#include <QJsonArray>>
 
 #include <time.h>
 
@@ -145,7 +146,7 @@ class FChannelPanel {
 
         bool getAlwaysPing() { return alwaysPing; }
 
-        JSONNode* toJSON();
+        QJsonDocument* toJSON();
         QString* toString();
 
         QStringList& getKeywordList() { return keywordlist; }
