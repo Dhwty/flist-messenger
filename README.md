@@ -18,6 +18,7 @@ Please do not bother the original devs of this project with questions about this
 * flist-messenger was migrated to Qt 6.5
 * Handling of stylesheets was improved, the app will now provide default files if none exist in the app folder
 * libjson was removed in favor of Qt's built-in JSON support
+* WebSocket connections are now properly handled by QWebSocket
 
 **Changes between 0.8.5 and 0.9.1:**
 * Internally flist-messenger has undergone a very heavy overhaul to improve code quality. While a great deal of effort has been spent trying to keep behaviour bug free and working, it's possible that unintended bugs have crept in.
