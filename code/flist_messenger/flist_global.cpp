@@ -1,12 +1,15 @@
 #include "flist_global.h"
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QSettings>
 #include <QByteArray>
+#include <QRegularExpression>
 #include <iostream>
 #include "flist_parser.h"
 #include "api/endpoint_v1.h"
 #include "flist_settings.h"
+#include <QWidget>
+#include <QWindow>
 
 QNetworkAccessManager *networkaccessmanager = 0;
 BBCodeParser *bbcodeparser = 0;
@@ -16,98 +19,82 @@ FSettings *settings = 0;
 FHttpApi::Endpoint *fapi = 0;
 
 void debugMessage(QString str) {
-	std::cout << str.toUtf8().data() << std::endl;
+    std::cout << str.toUtf8().data() << std::endl;
 }
 
 void debugMessage(std::string str) {
-	std::cout << str << std::endl;
+    std::cout << str << std::endl;
 }
 
 void debugMessage(const char *str) {
-	std::cout << str << std::endl;
+    std::cout << str << std::endl;
 }
 
-void globalInit()
-{
-	//todo: parse command line for options
-	//todo: make settingsfile configurable
-	settingsfile = qApp->applicationDirPath() + "/settings.ini";
-	//todo: make logpath configurable
-	logpath = qApp->applicationDirPath() + "/logs";
+void globalInit() {
+    // todo: parse command line for options
+    // todo: make settingsfile configurable
+    settingsfile = qApp->applicationDirPath() + "/settings.ini";
+    // todo: make logpath configurable
+    logpath = qApp->applicationDirPath() + "/logs";
 
-	networkaccessmanager = new QNetworkAccessManager(qApp);
-	bbcodeparser = new BBCodeParser();
-	fapi = new FHttpApi::Endpoint_v1(networkaccessmanager);
+    networkaccessmanager = new QNetworkAccessManager(qApp);
+    bbcodeparser = new BBCodeParser();
+    fapi = new FHttpApi::Endpoint_v1(networkaccessmanager);
 
-	//settings = new QSettings(settingsfile, QSettings::IniFormat);
-	settings = new FSettings(settingsfile, qApp);
+    // settings = new QSettings(settingsfile, QSettings::IniFormat);
+    settings = new FSettings(settingsfile, qApp);
 }
 
-void globalQuit()
-{
+void globalQuit() {}
 
+bool is_broken_escaped_apos(std::string const &data, std::string::size_type n) {
+    return n + 2 <= data.size() and data[n] == '\\' and data[n + 1] == '\'';
 }
 
-
-
-bool is_broken_escaped_apos(std::string const &data, std::string::size_type n)
-{
-        return n + 2 <= data.size()
-                        and data[n] == '\\'
-                        and data[n+1] == '\'';
-}
-void fix_broken_escaped_apos (std::string &data)
-{
-        for ( std::string::size_type n = 0; n != data.size(); ++n )
-        {
-                if ( is_broken_escaped_apos ( data, n ) )
-                {
-                        data.replace ( n, 2, 1, '\'' );
-                }
+void fix_broken_escaped_apos(std::string &data) {
+    for (std::string::size_type n = 0; n != data.size(); ++n) {
+        if (is_broken_escaped_apos(data, n)) {
+            data.replace(n, 2, 1, '\'');
         }
+    }
 }
 
-QString escapeFileName(QString infilename)
-{
-	QByteArray inname(infilename.toUtf8());
-	QByteArray outname;
-	for(int i = 0; i < inname.length(); i++) {
-		unsigned char c = inname.at(i);
-		if((c >= 'A' && c <= 'Z') ||
-		   (c >= 'a' && c <= 'z') ||
-		   (c >= '0' && c <= '9') ||
-		   c == '-' ||
-		   c == '_' ||
-		   c == ' ' ||
-		   c == '.') {
-			outname.append(c);
-		} else {
-			outname.append('%');
-			outname.append(QByteArray::number(c, 16));
-		}
-	}
-	return QString::fromUtf8(outname);
+QString escapeFileName(QString infilename) {
+    QByteArray inname(infilename.toUtf8());
+    QByteArray outname;
+    for (int i = 0; i < inname.length(); i++) {
+        unsigned char c = inname.at(i);
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_' || c == ' ' || c == '.') {
+            outname.append(c);
+        } else {
+            outname.append('%');
+            outname.append(QByteArray::number(c, 16));
+        }
+    }
+    return QString::fromUtf8(outname);
 }
 
 QString htmlToPlainText(QString input) {
-	QString output = input;
-	//Strip tags
-	output.replace(QRegExp("<[^>]*>"), "");
-	//Convert escaped symbols. Only worries about those in the ASCII range.
-	output.replace("&quot;", "\"");
-	output.replace("&lt;", "<");
-	output.replace("&gt;", ">");
-	output.replace("&apos;", "'");
-	output.replace("&nbsp;", " ");
-	output.replace("&amp;", "&");
-	return output;
+    QString output = input;
+    static QRegularExpression regEx("<[^>]*>");
+    QRegularExpressionMatch regExMatch = regEx.match(output);
+    // Strip tags
+    output.replace(regExMatch.captured(), "");
+    // Convert escaped symbols. Only worries about those in the ASCII range.
+    output.replace("&quot;", "\"");
+    output.replace("&lt;", "<");
+    output.replace("&gt;", ">");
+    output.replace("&apos;", "'");
+    output.replace("&nbsp;", " ");
+    output.replace("&amp;", "&");
+    return output;
 }
 
-void centerOnScreen(QWidget *widge)
-{
-	QRect screen = QApplication::desktop()->availableGeometry(widge);
-	QSize size = widge->size();
-	int x = ((screen.width() - size.width()) / 2) + screen.x();
-	int y = ((screen.height() - size.height()) / 2) + screen.y();
-	widge->setGeometry(x, y, size.width(), size.height());
+void centerOnScreen(QWidget *widge) {
+    QScreen *widgetScreen = widge->window()->screen();
+    QRect screen = widgetScreen->availableGeometry();
+    QSize size = widge->size();
+    int x = ((screen.width() - size.width()) / 2) + screen.x();
+    int y = ((screen.height() - size.height()) / 2) + screen.y();
+    widge->setGeometry(x, y, size.width(), size.height());
 }

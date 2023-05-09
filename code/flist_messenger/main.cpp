@@ -21,31 +21,46 @@
 
 #include <QApplication>
 #include <QFile>
-#include <QTextCodec>
 #include "flist_messenger.h"
 #include "flist_global.h"
 
-int main(int argc, char** argv)
-{
-	bool d = (argc > 1 && strcmp(argv[1], "-d") == 0) ? true : false;
-	QApplication *app = new QApplication(argc, argv);
+int main(int argc, char **argv) {
+    bool d = (argc > 1 && strcmp(argv[1], "-d") == 0) ? true : false;
+    QApplication *app = new QApplication(argc, argv);
 #if QT_VERSION >= 0x050000
-	//QT5 only uses UTF-8 for implicit text conversion.
+    // QT5 only uses UTF-8 for implicit text conversion.
 #else
-	//QT4 needs to be told to use UTF-8 for implicit text conversion.
-	QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
+    // QT4 needs to be told to use UTF-8 for implicit text conversion.
+    QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 #endif
-	app->setOrganizationName("F-list.net");
-	app->setOrganizationDomain("www.f-list.net");
-	app->setApplicationName("F-list Messenger");
-	globalInit();
-	QFile stylefile("default.qss");
-	stylefile.open(QFile::ReadOnly);
-	QString stylesheet = QLatin1String(stylefile.readAll());
-	app->setStyleSheet(stylesheet);
-	flist_messenger::init();
-	flist_messenger *fmessenger = new flist_messenger(d);
-	fmessenger->show();
-	return app->exec();
-	//todo: globalQuit();
+    app->setOrganizationName("F-list.net");
+    app->setOrganizationDomain("www.f-list.net");
+    app->setApplicationName("F-list Messenger");
+    globalInit();
+
+    if (!QFile::exists("default.qss")) {
+        qDebug() << "Qt Stylesheet file does not exist, copying default...";
+        QFile::copy(":/stylesheet/default.qss", "default.qss");
+    }
+
+    if (!QFile::exists("default.css")) {
+        qDebug() << "Stylesheet file does not exist, copying default...";
+        QFile::copy(":/stylesheet/default.css", "default.css");
+    }
+
+    if (!QFile::exists("colors.ini")) {
+        qDebug() << "Colors file does not exist, copying default...";
+        QFile::copy(":/stylesheet/colors.ini", "colors.ini");
+    }
+
+    QFile stylefile("default.qss");
+    stylefile.open(QFile::ReadOnly);
+    QString stylesheet = QLatin1String(stylefile.readAll());
+
+    app->setStyleSheet(stylesheet);
+    flist_messenger::init();
+    flist_messenger *fmessenger = new flist_messenger(d);
+    fmessenger->show();
+    return app->exec();
+    // todo: globalQuit();
 }

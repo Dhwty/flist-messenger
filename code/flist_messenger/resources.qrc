@@ -54,5 +54,8 @@
         <file>images/minus.png</file>
         <file>images/plus.png</file>
         <file>images/balloon.png</file>
+        <file>stylesheet/colors.ini</file>
+        <file>stylesheet/default.css</file>
+        <file>stylesheet/default.qss</file>
     </qresource>
 </RCC>

@@ -22,34 +22,21 @@
 #ifndef FLIST_SOUND_H
 #define FLIST_SOUND_H
 
-#include <QSound>
+#include <QSoundEffect>
 #include <QString>
 
 // note that play() is deliberately not static, since eventually this class will be
 // used to store options for playing sounds.
 
-class FSound
-{
+class FSound {
+    public:
+        enum soundName { SOUND_NONE, SOUND_ATTENTION, SOUND_CHAT, SOUND_LOGIN, SOUND_MODALERT, SOUND_NEWNOTE, SOUND_FRIENDUPDATE, SOUND_SYSTEM, SOUND_MAX };
 
-public:
-	enum soundName
-	{
-		SOUND_NONE,
-		SOUND_ATTENTION,
-		SOUND_CHAT,
-		SOUND_LOGIN,
-		SOUND_MODALERT,
-		SOUND_NEWNOTE,
-		SOUND_FRIENDUPDATE,
-		SOUND_SYSTEM,
-		SOUND_MAX
-	};
-	FSound();
-	void play ( soundName sound );
+        FSound();
+        void play(soundName sound);
 
-private:
-	QString soundToString ( soundName sound );
-
+    private:
+        QString soundToString(soundName sound);
 };
 
 #endif // FLIST_SOUND_H

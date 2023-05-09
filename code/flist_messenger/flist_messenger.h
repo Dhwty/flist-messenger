@@ -29,7 +29,7 @@
 #include <QTcpSocket>
 #include <QSslSocket>
 #if QT_VERSION >= 0x050000
-#include <QUrlQuery>
+#    include <QUrlQuery>
 #endif
 #include <QUrl>
 #include <QString>
@@ -37,7 +37,7 @@
 #include <QDesktopServices>
 
 #include <iostream>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QApplication>
 #include <QLabel>
 #include <QMenu>
@@ -106,311 +106,312 @@ class FAttentionSettingsWidget;
 
 class FChannelPanel;
 
-class flist_messenger : public QMainWindow, iUserInterface
-{
-	Q_OBJECT
+class flist_messenger : public QMainWindow, iUserInterface {
+        Q_OBJECT
 
-public:
-	static void init();
-	static const QString getSettingsPath() { return settingsPath; }
-	flist_messenger(bool d);
-	~flist_messenger();
-public:
-	virtual FSession *getSession(QString sessionid);
+    public:
+        static void init();
 
-	virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus);
+        static const QString getSettingsPath() { return settingsPath; }
 
-	virtual void openCharacterProfile(FSession *session, QString charactername);
-	virtual void addCharacterChat(FSession *session, QString charactername);
+        flist_messenger(bool d);
+        ~flist_messenger();
 
-	virtual void addChannel(FSession *session, QString name, QString title);
-	virtual void removeChannel(FSession *session, QString name);
-	virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername, bool notify);
-	virtual void removeChannelCharacter(FSession *session, QString channelname, QString charactername);
-	virtual void setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus);
-	virtual void joinChannel(FSession *session, QString channelname);
-	virtual void leaveChannel(FSession *session, QString channelname);
-	virtual void setChannelDescription(FSession *session, QString channelname, QString description);
-	virtual void setChannelMode(FSession *session, QString channelname, ChannelMode mode);
-	virtual void notifyChannelReady(FSession *session, QString channelname);
+    public:
+        virtual FSession *getSession(QString sessionid);
 
-public slots:
-	virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
-	virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
-	
-	void notifyIgnoreAdd(FSession *s, QString character);
-	void notifyIgnoreRemove(FSession *s, QString character);
-	
-public:
-	virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus);
-	virtual void notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername);
-	virtual void notifyCharacterProfileDataUpdated(FSession *session, QString charactername);
+        virtual void setChatOperator(FSession *session, QString characteroperator, bool opstatus);
 
-	virtual void messageMessage(FMessage message);
-	virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype);
-	virtual void messageAll(FSession *session, QString message, MessageType messagetype);
-	virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console = false, bool notify = false);
-	virtual void messageCharacter(FSession *session, QString charactername, QString message, MessageType messagetype);
-	virtual void messageSystem(FSession *session, QString message, MessageType messagetype);
+        virtual void openCharacterProfile(FSession *session, QString charactername);
+        virtual void addCharacterChat(FSession *session, QString charactername);
 
-	virtual void updateKnownChannelList(FSession *session);
-	virtual void updateKnownOpenRoomList(FSession *session);
+        virtual void addChannel(FSession *session, QString name, QString title);
+        virtual void removeChannel(FSession *session, QString name);
+        virtual void addChannelCharacter(FSession *session, QString channelname, QString charactername, bool notify);
+        virtual void removeChannelCharacter(FSession *session, QString channelname, QString charactername);
+        virtual void setChannelOperator(FSession *session, QString channelname, QString charactername, bool opstatus);
+        virtual void joinChannel(FSession *session, QString channelname);
+        virtual void leaveChannel(FSession *session, QString channelname);
+        virtual void setChannelDescription(FSession *session, QString channelname, QString description);
+        virtual void setChannelMode(FSession *session, QString channelname, ChannelMode mode);
+        virtual void notifyChannelReady(FSession *session, QString channelname);
 
-private:
-	void messageMany(QList<QString> &panelnames, QString message, MessageType messagetype);
-	bool getChannelBool(QString key, FChannelPanel *channelpanel, bool dflt);
-	bool needsAttention(QString key, FChannelPanel *channelpanel, AttentionMode dflt);
+    public slots:
+        virtual void notifyCharacterOnline(FSession *session, QString charactername, bool online);
+        virtual void notifyCharacterStatusUpdate(FSession *session, QString charactername);
 
-public:
-	QPushButton* pushButton;
-	FChannelTab* channelTab;
-	QLabel* label;
-	QComboBox* comboBox;
-	QGroupBox* groupBox;
-	//=================================
-	QMenuBar *menubar;
-	QAction *actionDisconnect;
-	QAction *actionQuit;
-	QAction *actionHelp;
-	QAction *actionAbout;
-	QAction *actionColours;
-	QAction *actionCommands;
-	//=================================
-	QWidget *horizontalLayoutWidget;
-	QWidget *verticalLayoutWidget;
-	QHBoxLayout *horizontalLayout;
-	QVBoxLayout *verticalLayout;
-	QSplitter *horizontalsplitter;
-	QWidget *centralstuffwidget;
-	QGridLayout *gridLayout;
-	QScrollArea *activePanels;
-	QVBoxLayout *activePanelsContents;
-	QVBoxLayout *centralStuff;
-	QHBoxLayout *centralButtons;
-	QWidget *centralButtonsWidget;
-	QPushButton *btnSettings;
-	QPushButton *btnChannels;
-	QPushButton *btnMakeRoom;
-	QPushButton *btnSetStatus;
-	QPushButton *btnFriends;
-	QPushButton *btnReport;
-	QPushButton *btnSendChat;
-	QPushButton *btnSendAdv;
-	QLabel *lblCheckingVersion;
-	QLabel *lblChannelName;
-	FLogTextBrowser *chatview;
-	QLineEdit *lineEdit;
-	QPlainTextEdit *plainTextEdit;
-	QListWidget *listWidget;
-	QMenu *menuHelp;
-	QMenu *menuFile;
-	UseReturn* returnFilter;
-	FAvatar avatarFetcher;
-	QSpacerItem* activePanelsSpacer;
+        void notifyIgnoreAdd(FSession *s, QString character);
+        void notifyIgnoreRemove(FSession *s, QString character);
 
-public slots:
-	void anchorClicked ( QUrl link );	// Handles anchor clicks in the main text field.
-	void insertLineBreak();				// Called when shift+enter is pressed while typing.
-	void closeEvent(QCloseEvent *event);
-	void iconActivated(QSystemTrayIcon::ActivationReason reason);
-	void enterPressed();
-	void startConnect(QString charName);
+    public:
+        virtual void setCharacterTypingStatus(FSession *session, QString charactername, TypingStatus typingstatus);
+        virtual void notifyCharacterCustomKinkDataUpdated(FSession *session, QString charactername);
+        virtual void notifyCharacterProfileDataUpdated(FSession *session, QString charactername);
 
-private slots:
-	void setupLoginBox();			// The login box is used for character selection
-	void setupRealUI();				// Creation of the chat environment GUI
-	void setupSettingsDialog();
-	void setupTimeoutDialog();
-	void timeoutDialogRequested();
-	void setupReportDialog();
-	bool setupChannelSettingsDialog();
-	void settingsDialogRequested();
-	void setupFriendsDialog();
-	void friendsDialogRequested();
-	void ignoreDialogRequested();
-	void channelsDialogRequested();
-	void makeRoomDialogRequested();
-	void setStatusDialogRequested();
-	void characterInfoDialogRequested();
-	void reportDialogRequested();
-	void helpDialogRequested();
-	void channelSettingsDialogRequested();
-	void destroyMenu();
-	void destroyChanMenu();
-	void socketError ( QAbstractSocket::SocketError socketError );
-	void socketSslError ( QList<QSslError> sslerrors );
-	void quitApp();
-	void aboutApp();
-	void channelButtonMenuRequested();
-	void channelButtonClicked();	// Called when channel button is clicked. This should switch panels, and do other necessary things.
-	void updateChannelMode();
-	void switchTab ( QString& tabname );
-	void inputChanged();
-	void userListContextMenuRequested ( const QPoint& point );
-	void friendListContextMenuRequested(QString character);
-	void submitReport();
-	void handleReportFinished();
-	void reportTicketFinished();
-	void btnSendAdvClicked();
-	void btnSendChatClicked();
-	void createPublicChannel(QString name);
-	void createPrivateChannel(QString name);
-	void ul_pmRequested();
-	void ul_infoRequested();
-	void ul_ignoreAdd();
-	void ul_ignoreRemove();
-	void ul_channelBan();
-	void ul_channelKick();
-	void ul_chatBan();
-	void ul_chatKick();
-	void ul_chatTimeout();
-	void ul_channelOpAdd();
-	void ul_channelOpRemove();
-	void ul_profileRequested();
-	void ul_copyLink();
-	void ul_chatOpAdd();
-	void ul_chatOpRemove();
-	void to_btnSubmitClicked();
-	void to_btnCancelClicked();
-	void re_btnSubmitClicked();
-	void re_btnCancelClicked();
-	void se_btnSubmitClicked();
-	void se_btnCancelClicked();
-	void tb_channelRightClicked ( const QPoint & point );
-	void tb_closeClicked();
-	void tb_settingsClicked();
-	void cs_chbEditDescriptionToggled(bool state);
-	void cs_btnCancelClicked();
-	void cs_btnSaveClicked();
-	void scrollChatViewEnd();
-	void openPMTab();
-	void openPMTab ( QString character );
-	void displayCharacterContextMenu ( FCharacter* ch );
-	void displayChannelContextMenu ( FChannelPanel* ch );
+        virtual void messageMessage(FMessage message);
+        virtual void messageMany(FSession *session, QList<QString> &channels, QList<QString> &characters, bool system, QString message, MessageType messagetype);
+        virtual void messageAll(FSession *session, QString message, MessageType messagetype);
+        virtual void messageChannel(FSession *session, QString channelname, QString message, MessageType messagetype, bool console = false, bool notify = false);
+        virtual void messageCharacter(FSession *session, QString charactername, QString message, MessageType messagetype);
+        virtual void messageSystem(FSession *session, QString message, MessageType messagetype);
 
-	void cl_joinRequested(QStringList channels);
-	void changeStatus (QString status, QString statusmsg );
+        virtual void updateKnownChannelList(FSession *session);
+        virtual void updateKnownOpenRoomList(FSession *session);
 
+    private:
+        void messageMany(QList<QString> &panelnames, QString message, MessageType messagetype);
+        bool getChannelBool(QString key, FChannelPanel *channelpanel, bool dflt);
+        bool needsAttention(QString key, FChannelPanel *channelpanel, AttentionMode dflt);
 
-public:
-	void leaveChannelPanel(QString panelname);
-	void closeChannelPanel(QString panelname);
-	void parseInput();
-	void flashApp(QString& reason);
-	static const int BUFFERPUB  = 4096; // Buffer limit in public
-	static const int BUFFERPRIV = 50000; // Buffer limit in private
+    public:
+        QPushButton *pushButton;
+        FChannelTab *channelTab;
+        QLabel *label;
+        QComboBox *comboBox;
+        QGroupBox *groupBox;
+        //=================================
+        QMenuBar *menubar;
+        QAction *actionDisconnect;
+        QAction *actionQuit;
+        QAction *actionHelp;
+        QAction *actionAbout;
+        QAction *actionColours;
+        QAction *actionCommands;
+        //=================================
+        QWidget *horizontalLayoutWidget;
+        QWidget *verticalLayoutWidget;
+        QHBoxLayout *horizontalLayout;
+        QVBoxLayout *verticalLayout;
+        QSplitter *horizontalsplitter;
+        QWidget *centralstuffwidget;
+        QGridLayout *gridLayout;
+        QScrollArea *activePanels;
+        QVBoxLayout *activePanelsContents;
+        QVBoxLayout *centralStuff;
+        QHBoxLayout *centralButtons;
+        QWidget *centralButtonsWidget;
+        QPushButton *btnSettings;
+        QPushButton *btnChannels;
+        QPushButton *btnMakeRoom;
+        QPushButton *btnSetStatus;
+        QPushButton *btnFriends;
+        QPushButton *btnReport;
+        QPushButton *btnSendChat;
+        QPushButton *btnSendAdv;
+        QLabel *lblCheckingVersion;
+        QLabel *lblChannelName;
+        FLogTextBrowser *chatview;
+        QLineEdit *lineEdit;
+        QPlainTextEdit *plainTextEdit;
+        QListWidget *listWidget;
+        QMenu *menuHelp;
+        QMenu *menuFile;
+        UseReturn *returnFilter;
+        FAvatar avatarFetcher;
+        QSpacerItem *activePanelsSpacer;
 
-private:
-	FAccount *account;
-	FServer *server;
+    public slots:
+        void anchorClicked(QUrl link); // Handles anchor clicks in the main text field.
+        void insertLineBreak();        // Called when shift+enter is pressed while typing.
+        void closeEvent(QCloseEvent *event);
+        void iconActivated(QSystemTrayIcon::ActivationReason reason);
+        void enterPressed();
+        void startConnect(QString charName);
 
-	bool debugging;
-	bool notificationsAreaMessageShown;
-	void printDebugInfo(std::string s);
-	void createTrayIcon();
-	void setupConsole();								// Makes the console channel.
-	void sendWS ( std::string& input );					// Sends messages to the server
-	FChannelTab* addToActivePanels ( QString& channel, QString &channelname, QString& tooltip );	// Adds the newly joined channel to the displayed list of channels
-	void refreshUserlist();								// Refreshes the GUI's userlist, based on what the current panel is
-	void refreshChatLines();							// Refreshes the GUI's chat lines, based on what the current panel is
-	void usersCommand();								// Does the /users thing.
-	void typingPaused ( FChannelPanel* channel );
-	void typingContinued ( FChannelPanel* channel );
-	void typingCleared ( FChannelPanel* channel );
-	void saveSettings();
-	void loadSettings();
-	void loadDefaultSettings();
-	void parseSettingsLine(QString line);
-	QNetworkAccessManager qnam;
-	QNetworkReply* lreply;
-	QUrl lurl;
-	QUrlQuery lparam;
+    private slots:
+        void setupLoginBox(); // The login box is used for character selection
+        void setupRealUI();   // Creation of the chat environment GUI
+        void setupSettingsDialog();
+        void setupTimeoutDialog();
+        void timeoutDialogRequested();
+        void setupReportDialog();
+        bool setupChannelSettingsDialog();
+        void settingsDialogRequested();
+        void setupFriendsDialog();
+        void friendsDialogRequested();
+        void ignoreDialogRequested();
+        void channelsDialogRequested();
+        void makeRoomDialogRequested();
+        void setStatusDialogRequested();
+        void characterInfoDialogRequested();
+        void reportDialogRequested();
+        void helpDialogRequested();
+        void channelSettingsDialogRequested();
+        void destroyMenu();
+        void destroyChanMenu();
+        void socketError(QAbstractSocket::SocketError socketError);
+        void socketSslError(QList<QSslError> sslerrors);
+        void quitApp();
+        void aboutApp();
+        void channelButtonMenuRequested();
+        void channelButtonClicked(); // Called when channel button is clicked. This should switch panels, and do other necessary things.
+        void updateChannelMode();
+        void switchTab(QString &tabname);
+        void inputChanged();
+        void userListContextMenuRequested(const QPoint &point);
+        void friendListContextMenuRequested(QString character);
+        void submitReport();
+        void handleReportFinished();
+        void reportTicketFinished();
+        void btnSendAdvClicked();
+        void btnSendChatClicked();
+        void createPublicChannel(QString name);
+        void createPrivateChannel(QString name);
+        void ul_pmRequested();
+        void ul_infoRequested();
+        void ul_ignoreAdd();
+        void ul_ignoreRemove();
+        void ul_channelBan();
+        void ul_channelKick();
+        void ul_chatBan();
+        void ul_chatKick();
+        void ul_chatTimeout();
+        void ul_channelOpAdd();
+        void ul_channelOpRemove();
+        void ul_profileRequested();
+        void ul_copyLink();
+        void ul_chatOpAdd();
+        void ul_chatOpRemove();
+        void to_btnSubmitClicked();
+        void to_btnCancelClicked();
+        void re_btnSubmitClicked();
+        void re_btnCancelClicked();
+        void se_btnSubmitClicked();
+        void se_btnCancelClicked();
+        void tb_channelRightClicked(const QPoint &point);
+        void tb_closeClicked();
+        void tb_settingsClicked();
+        void cs_chbEditDescriptionToggled(bool state);
+        void cs_btnCancelClicked();
+        void cs_btnSaveClicked();
+        void scrollChatViewEnd();
+        void openPMTab();
+        void openPMTab(QString character);
+        void displayCharacterContextMenu(FCharacter *ch);
+        void displayChannelContextMenu(FChannelPanel *ch);
 
-	FLoginWindow *loginWidget;
-	FLoginController *loginController;
-	FChannelPanel* console;	// We could just put this into the channel list, but the console needs to be accessed quite often. So here we go...
-	FChannelPanel* currentPanel;
-	FSound soundPlayer;
-	BBCodeParser bbparser;
-	QStringList keywordlist;
-	QStringList defaultChannels;
-	QString charName;
-	QString selfStatus;
-	QString selfStatusMessage;
-	bool disconnected;
-	static QString settingsPath;
-	bool doingWS;
-	QHash<QString, FChannelPanel*> channelList;
-	QString ul_recent_name;
-	QString tb_recent_name;
-	QMenu* recentCharMenu;
-	QMenu* recentChannelMenu;
-	//========================================
-	QSystemTrayIcon* trayIcon;
-	QMenu* trayIconMenu;
+        void cl_joinRequested(QStringList channels);
+        void changeStatus(QString status, QString statusmsg);
 
-	FMakeRoomDialog* makeRoomDialog; // mr stands for makeroom
+    public:
+        void leaveChannelPanel(QString panelname);
+        void closeChannelPanel(QString panelname);
+        void parseInput();
+        void flashApp(QString &reason);
+        static const int BUFFERPUB = 4096;   // Buffer limit in public
+        static const int BUFFERPRIV = 50000; // Buffer limit in private
 
-	StatusDialog *setStatusDialog;
+    private:
+        FAccount *account;
+        FServer *server;
 
-	QDialog* settingsDialog; // se stands for settings
-	QCheckBox* se_chbLeaveJoin;
-	QCheckBox* se_chbOnlineOffline;
-	QCheckBox* se_chbEnableChatLogs;
-	QCheckBox* se_chbMute;
-	QCheckBox* se_chbHelpdesk;
-	FAttentionSettingsWidget *se_attentionsettings;
+        bool debugging;
+        bool notificationsAreaMessageShown;
+        void printDebugInfo(std::string s);
+        void createTrayIcon();
+        void setupConsole();                                                                      // Makes the console channel.
+        void sendWS(std::string &input);                                                          // Sends messages to the server
+        FChannelTab *addToActivePanels(QString &channel, QString &channelname, QString &tooltip); // Adds the newly joined channel to the displayed list of channels
+        void refreshUserlist();                                                                   // Refreshes the GUI's userlist, based on what the current panel is
+        void refreshChatLines();                                                                  // Refreshes the GUI's chat lines, based on what the current panel is
+        void usersCommand();                                                                      // Does the /users thing.
+        void typingPaused(FChannelPanel *channel);
+        void typingContinued(FChannelPanel *channel);
+        void typingCleared(FChannelPanel *channel);
+        void saveSettings();
+        void loadSettings();
+        void loadDefaultSettings();
+        void parseSettingsLine(QString line);
+        QNetworkAccessManager qnam;
+        QNetworkReply *lreply;
+        QUrl lurl;
+        QUrlQuery lparam;
 
-	FCharacterInfoDialog *ci_dialog; // ci stands for character info
+        FLoginWindow *loginWidget;
+        FLoginController *loginController;
+        FChannelPanel *console; // We could just put this into the channel list, but the console needs to be accessed quite often. So here we go...
+        FChannelPanel *currentPanel;
+        FSound soundPlayer;
+        BBCodeParser bbparser;
+        QStringList keywordlist;
+        QStringList defaultChannels;
+        QString charName;
+        QString selfStatus;
+        QString selfStatusMessage;
+        bool disconnected;
+        static QString settingsPath;
+        bool doingWS;
+        QHash<QString, FChannelPanel *> channelList;
+        QString ul_recent_name;
+        QString tb_recent_name;
+        QMenu *recentCharMenu;
+        QMenu *recentChannelMenu;
+        //========================================
+        QSystemTrayIcon *trayIcon;
+        QMenu *trayIconMenu;
 
-	FriendsDialog* friendsDialog; // fr stands for friends
+        FMakeRoomDialog *makeRoomDialog; // mr stands for makeroom
 
-	QDialog* reportDialog; // re stands for report
-	QVBoxLayout* re_vblOverview;
-	QLabel* re_lblWho;
-	QLabel* re_lblProblem;
-	QLabel* re_lblInstructions;
-	QLineEdit* re_leWho;
-	QTextEdit* re_teProblem;
-	QHBoxLayout* re_hblButtons;
-	QPushButton* re_btnCancel;
-	QPushButton* re_btnSubmit;
+        StatusDialog *setStatusDialog;
 
-	FHelpDialog *helpDialog;
-	FAboutDialog *aboutDialog;
+        QDialog *settingsDialog; // se stands for settings
+        QCheckBox *se_chbLeaveJoin;
+        QCheckBox *se_chbOnlineOffline;
+        QCheckBox *se_chbEnableChatLogs;
+        QCheckBox *se_chbMute;
+        QCheckBox *se_chbHelpdesk;
+        FAttentionSettingsWidget *se_attentionsettings;
 
-	QDialog* timeoutDialog; // to stands for timeout
-	QLineEdit* to_leWho;
-	QLineEdit* to_leLength;
-	QLineEdit* to_leReason;
+        FCharacterInfoDialog *ci_dialog; // ci stands for character info
 
-	QDialog* channelSettingsDialog; // cs stands for channel settings
+        FriendsDialog *friendsDialog;    // fr stands for friends
 
-	QTextEdit* cs_teDescription;
-	QTextBrowser* cs_tbDescription;
-	QCheckBox* cs_chbEditDescription;
-	QVBoxLayout* cs_vblOverview;
-	QVBoxLayout* cs_vblDescription;
-	QGroupBox* cs_gbDescription;
-	QHBoxLayout* cs_hblButtons;
-	QPushButton* cs_btnCancel;
-	QPushButton* cs_btnSave;
-	QString cs_qsPlainDescription;
-	FChannelPanel* cs_chanCurrent;
-	FAttentionSettingsWidget *cs_attentionsettings;
-    
-	FChannelListDialog *cl_dialog;
-	FChannelListModel  *cl_data;
+        QDialog *reportDialog;           // re stands for report
+        QVBoxLayout *re_vblOverview;
+        QLabel *re_lblWho;
+        QLabel *re_lblProblem;
+        QLabel *re_lblInstructions;
+        QLineEdit *re_leWho;
+        QTextEdit *re_teProblem;
+        QHBoxLayout *re_hblButtons;
+        QPushButton *re_btnCancel;
+        QPushButton *re_btnSubmit;
 
+        FHelpDialog *helpDialog;
+        FAboutDialog *aboutDialog;
 
-	/* The following GUIs still need to be made:
-	QDialog* kinkSearchDialog;
-	 */
+        QDialog *timeoutDialog; // to stands for timeout
+        QLineEdit *to_leWho;
+        QLineEdit *to_leLength;
+        QLineEdit *to_leReason;
 
-	/* Stuff to do:
-		Kink search:
-		[14:27 PM]>>FKS {"kinks":["77","239"],"genders":["Female","Transgender"],"orientations":["Straight","Gay"],"languages":["English"],"furryprefs":["Furs and / or humans"]}
+        QDialog *channelSettingsDialog; // cs stands for channel settings
 
-	 */
+        QTextEdit *cs_teDescription;
+        QTextBrowser *cs_tbDescription;
+        QCheckBox *cs_chbEditDescription;
+        QVBoxLayout *cs_vblOverview;
+        QVBoxLayout *cs_vblDescription;
+        QGroupBox *cs_gbDescription;
+        QHBoxLayout *cs_hblButtons;
+        QPushButton *cs_btnCancel;
+        QPushButton *cs_btnSave;
+        QString cs_qsPlainDescription;
+        FChannelPanel *cs_chanCurrent;
+        FAttentionSettingsWidget *cs_attentionsettings;
+
+        FChannelListDialog *cl_dialog;
+        FChannelListModel *cl_data;
+
+        /* The following GUIs still need to be made:
+        QDialog* kinkSearchDialog;
+         */
+
+        /* Stuff to do:
+                Kink search:
+                [14:27 PM]>>FKS {"kinks":["77","239"],"genders":["Female","Transgender"],"orientations":["Straight","Gay"],"languages":["English"],"furryprefs":["Furs and / or
+           humans"]}
+
+         */
 };
 #endif // flist_messenger_H
