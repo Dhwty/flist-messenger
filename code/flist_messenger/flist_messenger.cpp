@@ -177,7 +177,8 @@ void flist_messenger::startConnect(QString charName) {
     this->centralWidget()->deleteLater();
 
     setupRealUI();
-    connect(session, SIGNAL(socketErrorSignal(QAbstractSocket::SocketError)), this, SLOT(socketError(QAbstractSocket::SocketError)));
+    connect(session, SIGNAL(socketErrorSignal(QString)), this, SLOT(receivedSocketError(QString)));
+    connect(session, SIGNAL(socketSSLErrorSignal(QString)), this, SLOT(receivedSocketSslError(QString)));
 
     connect(session, SIGNAL(notifyCharacterOnline(FSession *, QString, bool)), this, SLOT(notifyCharacterOnline(FSession *, QString, bool)));
     connect(session, SIGNAL(notifyCharacterStatusUpdate(FSession *, QString)), this, SLOT(notifyCharacterStatusUpdate(FSession *, QString)));
@@ -1186,33 +1187,20 @@ void flist_messenger::quitApp() {
     QApplication::quit();
 }
 
-void flist_messenger::socketError(QAbstractSocket::SocketError socketError) {
-    (void)socketError;
-    FSession *session = account->getSession(charName); // todo: fix this
-    QString sockErrorStr = session->tcpsocket->errorString();
+void flist_messenger::receivedSocketError(QString socketError) {
     if (currentPanel) {
-        QString errorstring = "<b>Socket Error: </b>" + sockErrorStr;
+        QString errorstring = "<b>Socket Error: </b>" + socketError;
         messageSystem(0, errorstring, MESSAGE_TYPE_ERROR);
     } else
-        QMessageBox::critical(this, "Socket Error!", "Socket Error: " + sockErrorStr);
+        QMessageBox::critical(this, "Socket Error!", "Socket Error: " + socketError);
 
     disconnected = true;
-    // session->tcpsocket->abort();
-    // session->tcpsocket->deleteLater();
-    // session->tcpsocket = 0;
 }
 
-void flist_messenger::socketSslError(QList<QSslError> sslerrors) {
+void flist_messenger::receivedSocketSslError(QString sslerrors) {
     QMessageBox msgbox;
-    QString errorstring;
-    foreach (const QSslError &error, sslerrors) {
-        if (!errorstring.isEmpty()) {
-            errorstring += ", ";
-        }
-        errorstring += error.errorString();
-    }
-    msgbox.critical(this, "SSL ERROR DURING LOGIN!", errorstring);
-    messageSystem(0, errorstring, MESSAGE_TYPE_ERROR);
+    msgbox.critical(this, "SSL ERROR DURING LOGIN!", sslerrors);
+    messageSystem(0, sslerrors, MESSAGE_TYPE_ERROR);
 }
 
 // todo: Calls to sendWS() are to be replaced with appropriate calls to FSession methods.
