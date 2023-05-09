@@ -37,6 +37,7 @@ HEADERS += \
            flist_character.h \
            flist_common.h \
            flist_global.h \
+    flist_jsonhelper.h \
            flist_messenger.h \
            flist_parser.h \
            flist_session.h \
@@ -86,6 +87,7 @@ SOURCES += \
            flist_channeltab.cpp \
            flist_character.cpp \
            flist_global.cpp \
+    flist_jsonhelper.cpp \
            flist_messenger.cpp \
            flist_parser.cpp \
            flist_session.cpp \

@@ -12,8 +12,6 @@
 #include "flist_parser.h"
 #include "flist_message.h"
 
-#include "../libjson/libJSON.h"
-
 FSession::FSession(FAccount *account, QString &character, QObject *parent)
     : QObject(parent),
       connected(false),
@@ -77,27 +75,17 @@ QString FSession::getCharacterHtml(QString name) {
 Tell the server that we wish to join the given channel.
  */
 void FSession::joinChannel(QString name) {
-    JSONNode joinnode;
-    joinnode.push_back(JSONNode("channel", name.toStdString()));
-    wsSend("JCH", joinnode);
+    wsSend(generateJsonCommandWithKeyValue("JCH", "channel", name).toStdString().c_str());
 }
 
 void FSession::createPublicChannel(QString name) {
     // [0:59 AM]>>CRC {"channel":"test"}
-    JSONNode node;
-    JSONNode channode("channel", name.toStdString());
-    node.push_back(channode);
-    std::string out = "CRC " + node.write();
-    wsSend(out);
+    wsSend(generateJsonCommandWithKeyValue("CRC", "channel", name).toStdString().c_str());
 }
 
 void FSession::createPrivateChannel(QString name) {
     // [17:24 PM]>>CCR {"channel":"abc"}
-    JSONNode makenode;
-    JSONNode namenode("channel", name.toStdString());
-    makenode.push_back(namenode);
-    std::string out = "CCR " + makenode.write();
-    wsSend(out);
+    wsSend(generateJsonCommandWithKeyValue("CCR", "channel", name).toStdString().c_str());
 }
 
 FChannel *FSession::addChannel(QString name, QString title) {
@@ -287,13 +275,23 @@ void FSession::socketReadReady() {
     }
 }
 
+QString FSession::generateJsonCommandWithKeyValue(QString command, QString key, QString value) {
+    FJsonHelper helper;
+    QString result;
+
+    QJsonDocument resultNode = helper.generateJsonNodeWithKeyValue(key, value);
+    result = command + " " + resultNode.toJson();
+
+    return result;
+}
+
 void FSession::wsSend(const char *command) {
     std::string cmd = command;
     wsSend(cmd);
 }
 
-void FSession::wsSend(const char *command, JSONNode &nodes) {
-    std::string cmd = command + (" " + nodes.write());
+void FSession::wsSend(const char *command, QJsonDocument &nodes) {
+    std::string cmd = command + (" " + nodes.toJson().toStdString());
     wsSend(cmd);
 }
 
@@ -349,14 +347,16 @@ void FSession::wsRecv(std::string packet) {
     debugMessage("<<" + packet);
     try {
         std::string cmd = packet.substr(0, 3);
-        JSONNode nodes;
+        QJsonDocument nodes;
+        QVariantMap nodeMap;
         if (packet.length() > 4) {
-            nodes = libJSON::parse(packet.substr(4, packet.length() - 4));
+            nodes.fromJson(packet.substr(4, packet.length() - 4).c_str());
+            nodeMap = nodes.toVariant().toMap();
         }
-#define CMD(name)                 \
-    if (cmd == #name) {           \
-        cmd##name(packet, nodes); \
-        return;                   \
+#define CMD(name)                   \
+    if (cmd == #name) {             \
+        cmd##name(packet, nodeMap); \
+        return;                     \
     }
         CMD(ADL); // List of all chat operators.
         CMD(AOP); // Add a chat operator.
@@ -415,7 +415,7 @@ void FSession::wsRecv(std::string packet) {
 
         CMD(PIN); // Ping.
 
-        debugMessage(QString("The command '%1' was received, but is unknown and could not be processed. %2").arg(QString::fromStdString(cmd)).arg(QString::fromStdString(packet)));
+        debugMessage(QString("The command '%1' was received, but is unknown and could not be processed. %2").arg(QString::fromStdString(cmd), QString::fromStdString(packet)));
     } catch (std::invalid_argument) {
         debugMessage("Server returned invalid json in its response: " + packet);
     } catch (std::out_of_range) {
@@ -423,18 +423,18 @@ void FSession::wsRecv(std::string packet) {
     }
 }
 
-#define COMMAND(name) void FSession::cmd##name(std::string &rawpacket, JSONNode &nodes)
+#define COMMAND(name) void FSession::cmd##name(std::string &rawpacket, QVariantMap &nodes)
 
 // todo: Merge common code in ADL, AOP and DOP into a separate function.
 COMMAND(ADL) {
     (void)rawpacket;
     // The list of current chat-ops.
     // ADL {"ops": ["name1", "name2"]}
-    JSONNode childnode = nodes.at("ops");
+    QStringList childnode = nodes.value("ops").toStringList();
     int size = childnode.size();
 
     for (int i = 0; i < size; ++i) {
-        QString op = childnode[i].as_string().c_str();
+        QString op = childnode[i];
         operatorlist[op.toLower()] = op;
 
         if (isCharacterOnline(op)) {
@@ -450,7 +450,7 @@ COMMAND(AOP) {
     (void)rawpacket;
     // Add a character to the list of known chat-operators.
     // AOP {"character": "Viona"}
-    QString op = nodes.at("character").as_string().c_str();
+    QString op = nodes.value("character").toString();
     operatorlist[op.toLower()] = op;
 
     if (isCharacterOnline(op)) {
@@ -465,7 +465,7 @@ COMMAND(DOP) {
     (void)rawpacket;
     // Remove a character from the list of  chat operators.
     // DOP {"character": "Viona"}
-    QString op = nodes.at("character").as_string().c_str();
+    QString op = nodes.value("character").toString();
     operatorlist.remove(op.toLower());
 
     if (isCharacterOnline(op)) {
@@ -482,15 +482,15 @@ COMMAND(SFC) {
     // SFC {"action": "report", "callid": "ID?", "character": "Character Name", "logid": "LogID", "report": "Report Text"}
     // SFC {"action": "confirm", "moderator": "Character Name", "character": "Character Name"}
     // The wiki has no documentation on this command.
-    QString action = nodes.at("action").as_string().c_str();
+    QString action = nodes.value("action").toString();
     if (action == "report") {
-        QString callid = nodes.at("callid").as_string().c_str();
-        QString character = nodes.at("character").as_string().c_str();
-        QString report = nodes.at("report").as_string().c_str();
+        QString callid = nodes.value("callid").toString();
+        QString character = nodes.value("character").toString();
+        QString report = nodes.value("report").toString();
         QString logid;
         QString logstring;
         try {
-            logid = nodes.at("logid").as_string().c_str();
+            logid = nodes.value("logid").toString();
             logstring = QString("<a href=\"https://www.f-list.net/fchat/getLog.php?log=%1\" ><b>Log~</b></a> | ").arg(logid);
         } catch (std::out_of_range) {
             logstring.clear();
@@ -505,8 +505,8 @@ COMMAND(SFC) {
                                   .arg(callid);
         account->ui->messageSystem(this, message, MESSAGE_TYPE_REPORT);
     } else if (action == "confirm") {
-        QString moderator = nodes.at("moderator").as_string().c_str();
-        QString character = nodes.at("character").as_string().c_str();
+        QString moderator = nodes.value("moderator").toString();
+        QString character = nodes.value("character").toString();
         QString message = QString("<b>%1</b> is handling <b>%2</b>'s report.").arg(moderator).arg(character);
         account->ui->messageSystem(this, message, MESSAGE_TYPE_REPORT);
     } else {
@@ -517,8 +517,8 @@ COMMAND(SFC) {
 COMMAND(CDS) {
     // Channel description.
     // CDS {"channel": "Channel Name", "description": "Description Text"}
-    QString channelname = nodes.at("channel").as_string().c_str();
-    QString description = nodes.at("description").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
+    QString description = nodes.value("description").toString();
     FChannel *channel = channellist.value(channelname);
     if (!channel) {
         debugMessage(QString("[SERVER BUG] Was give the description for the channel '%1', but the channel '%1' is unknown (or never joined).  %2")
@@ -533,9 +533,9 @@ COMMAND(CDS) {
 COMMAND(CIU) {
     // Channel invite.
     // CIU {"sender": "Character Name", "name": "Channel Name", "title": "Channel Title"}
-    QString charactername = nodes.at("sender").as_string().c_str();
-    QString channelname = nodes.at("name").as_string().c_str();
-    QString channeltitle = nodes.at("title").as_string().c_str();
+    QString charactername = nodes.value("sender").toString();
+    QString channelname = nodes.value("name").toString();
+    QString channeltitle = nodes.value("title").toString();
     FCharacter *character = getCharacter(charactername);
     if (!character) {
         debugMessage(QString("Received invite to the channel '%1' (title '%2') by '%3' but the character '%3' does not exist. %4")
@@ -561,19 +561,19 @@ COMMAND(ICH) {
     // "Jayson"}, {"identity": "Valoriel Talonheart"}, {"identity": "Jordan Costa"}, {"identity": "Skip Weber"}, {"identity": "Niruka"}, {"identity": "Jake Brian Purplecat"},
     // {"identity": "Hexxy"}], "channel": "Frontpage", "mode": "chat"}
     FChannel *channel;
-    QString channelname = nodes.at("channel").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
     ;
     // debugMessage(QString("ICH: channel: %1").arg(channelname));
-    QString channelmode = nodes.at("mode").as_string().c_str();
+    QString channelmode = nodes.value("mode").toString();
     ;
     // debugMessage(QString("ICH: mode: %1").arg(channelmode));
-    JSONNode childnode = nodes.at("users");
+    QList<QVariant> childnode = nodes.value("users").toList();
     // debugMessage(QString("ICH: users: #%1").arg(childnode.size()));
     QString channeltitle;
     if (channelname.startsWith("ADH-")) {
         try {
             // todo: Wiki says to expect "title" in the ICH command, but none is received
-            channeltitle = nodes.at("title").as_string().c_str();
+            channeltitle = nodes.value("title").toString();
         } catch (std::out_of_range) {
             channeltitle = channelname;
         }
@@ -597,7 +597,8 @@ COMMAND(ICH) {
     int size = childnode.size();
     debugMessage("Initial channel data for '" + channelname + "', charcter count: " + QString::number(size));
     for (int i = 0; i < size; i++) {
-        QString charactername = childnode.at(i).at("identity").as_string().c_str();
+        QMap characterNode = childnode.at(i).toMap();
+        QString charactername = characterNode.value("identity").toString();
         if (!isCharacterOnline(charactername)) {
             debugMessage("[SERVER BUG] Server gave us a character in the channel user list that we don't know about yet: " + charactername.toStdString() + ", " + rawpacket);
             continue;
@@ -613,12 +614,12 @@ COMMAND(JCH) {
     // Join channel notification. Sent when a character joins a channel.
     // JCH {"character": {"identity": "Character Name"}, "channel": "Channel Name", "title": "Channel Title"}
     FChannel *channel;
-    QString channelname = nodes.at("channel").as_string().c_str();
-    ;
+    QString channelname = nodes.value("channel").toString();
     QString channeltitle;
-    QString charactername = nodes.at("character").at("identity").as_string().c_str();
+    QMap<QString, QVariant> characterNode = nodes.value("character").toMap();
+    QString charactername = characterNode.value("identity").toString();
     if (channelname.startsWith("ADH-")) {
-        channeltitle = nodes.at("title").as_string().c_str();
+        channeltitle = nodes.value("title").toString();
     } else {
         channeltitle = channelname;
     }
@@ -634,9 +635,8 @@ COMMAND(LCH) {
     // Leave a channel. Sent when a character leaves a channel.
     // LCH {"channel": "Channel Name", "character", "Character Name"}
     FChannel *channel;
-    QString channelname = nodes.at("channel").as_string().c_str();
-    ;
-    QString charactername = nodes.at("character").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
+    QString charactername = nodes.value("character").toString();
     channel = getChannel(channelname);
     if (!channel) {
         debugMessage("[SERVER BUG] Was told about character '" + charactername + "' leaving unknown channel '" + channelname + "'.  " + QString::fromStdString(rawpacket));
@@ -654,8 +654,8 @@ COMMAND(RMO) {
     // Room mode.
     // RMO {"mode": mode_enum, "channel": "Channel Name"}
     // Where mode_enum
-    QString channelname = nodes.at("channel").as_string().c_str();
-    QString channelmode = nodes.at("mode").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
+    QString channelmode = nodes.value("mode").toString();
     FChannel *channel = channellist[channelname];
     if (!channel) {
         // todo: Determine if RMO can be sent even if we're not in the channel in question.
@@ -687,9 +687,9 @@ COMMAND(NLN) {
     // NLN {"identity": "Character Name", "gender": genderenum, "status": statusenum}
     // Where 'statusenum' is one of: "online"
     // Where 'genderenum' is one of: "Male", "Female",
-    QString charactername = nodes.at("identity").as_string().c_str();
-    QString gender = nodes.at("gender").as_string().c_str();
-    QString status = nodes.at("status").as_string().c_str();
+    QString charactername = nodes.value("identity").toString();
+    QString gender = nodes.value("gender").toString();
+    QString status = nodes.value("status").toString();
     FCharacter *character = addCharacter(charactername);
     character->setGender(gender);
     character->setStatus(status);
@@ -704,21 +704,20 @@ COMMAND(LIS) {
     // List of online characters. This can be sent in multiple blocks.
     // LIS {"characters": [character, character]
     // Where 'character' is: ["Character Name", genderenum, statusenum, "Status Message"]
-    nodes.preparse();
-    JSONNode childnode = nodes.at("characters");
-    int size = childnode.size();
+    QList<QVariant> childnode = nodes.value("characters").toList();
+    int count = childnode.count();
     // debugMessage("Character list count: " + QString::number(size));
     // debugMessage(childnode.write());
-    for (int i = 0; i < size; i++) {
-        JSONNode characternode = childnode.at(i);
+    for (int i = 0; i < count; i++) {
+        QList<QVariant> characternode = childnode.at(i).toList();
         // debugMessage("char #" + QString::number(i) + " : " + QString::fromStdString(characternode.write()));
-        QString charactername = characternode.at(0).as_string().c_str();
+        QString charactername = characternode.at(0).toString();
         // debugMessage("charactername: " + charactername);
-        QString gender = characternode.at(1).as_string().c_str();
+        QString gender = characternode.at(1).toString();
         // debugMessage("gender: " + gender);
-        QString status = characternode.at(2).as_string().c_str();
+        QString status = characternode.at(2).toString();
         // debugMessage("status: " + status);
-        QString statusmessage = characternode.at(3).as_string().c_str();
+        QString statusmessage = characternode.at(3).toString();
         // debugMessage("statusmessage: " + statusmessage);
         FCharacter *character;
         character = addCharacter(charactername);
@@ -736,7 +735,7 @@ COMMAND(FLN) {
     (void)rawpacket;
     // Character is now offline.
     // FLN {"character": "Character Name"}
-    QString charactername = nodes.at("character").as_string().c_str();
+    QString charactername = nodes.value("character").toString();
     if (!isCharacterOnline(charactername)) {
         debugMessage("[SERVER BUG] Received offline message for '" + charactername + "' but they're not listed as being online.");
         return;
@@ -754,8 +753,8 @@ COMMAND(FLN) {
 COMMAND(STA) {
     // Status change.
     // STA {"character": "Character Name", "status": statusenum, "statusmsg": "Status message"}
-    QString charactername = nodes.at("character").as_string().c_str();
-    QString status = nodes.at("status").as_string().c_str();
+    QString charactername = nodes.value("character").toString();
+    QString status = nodes.value("status").toString();
     QString statusmessage;
     FCharacter *character = getCharacter(charactername);
     if (!character) {
@@ -766,7 +765,7 @@ COMMAND(STA) {
     }
     character->setStatus(status);
     try {
-        statusmessage = nodes.at("statusmsg").as_string().c_str();
+        statusmessage = nodes.value("statusmsg").toString();
         character->setStatusMsg(statusmessage);
     } catch (std::out_of_range) {
         // Crown messages can cause there to be no statusmsg.
@@ -778,9 +777,9 @@ COMMAND(STA) {
 COMMAND(CBUCKU) {
     // CBU and CKU commands commoned up. Except for their messages, their behaviour is identical.
     FChannel *channel;
-    QString channelname = nodes.at("channel").as_string().c_str();
-    QString charactername = nodes.at("character").as_string().c_str();
-    QString operatorname = nodes.at("operator").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
+    QString charactername = nodes.value("character").toString();
+    QString operatorname = nodes.value("operator").toString();
     bool banned = rawpacket.substr(0, 3) == "CBU";
     QString kicktype = banned ? "kicked and banned" : "kicked";
     channel = getChannel(channelname);
@@ -845,19 +844,18 @@ COMMAND(CKU) {
 COMMAND(COL) {
     // Channel operator list.
     // COL {"channel":"Channel Name", "oplist":["Character Name"]}
-    QString channelname = nodes.at("channel").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
     FChannel *channel = getChannel(channelname);
     if (!channel) {
         debugMessage(QString("[SERVER BUG] Was given the channel operator list for the channel '%1', but the channel '%1' is unknown (or never joined).  %2")
-                             .arg(channelname)
-                             .arg(QString::fromStdString(rawpacket)));
+                             .arg(channelname, QString::fromStdString(rawpacket)));
         return;
     }
-    JSONNode childnode = nodes.at("oplist");
+    QStringList childnode = nodes.value("oplist").toStringList();
     // todo: clear the existing operator list first
     int size = childnode.size();
     for (int i = 0; i < size; i++) {
-        QString charactername = childnode.at(i).as_string().c_str();
+        QString charactername = childnode.at(i);
         channel->addOperator(charactername);
     }
 }
@@ -865,8 +863,8 @@ COMMAND(COL) {
 COMMAND(COA) {
     // Channel operator add.
     // COA {"channel":"Channel Name", "character":"Character Name"}
-    QString channelname = nodes.at("channel").as_string().c_str();
-    QString charactername = nodes.at("character").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
+    QString charactername = nodes.value("character").toString();
     FChannel *channel = getChannel(channelname);
     if (!channel) {
         debugMessage(QString("[SERVER BUG] Was told to add '%2' as a channel operator for channel '%1', but the channel '%1' is unknown (or never joined).  %3")
@@ -882,8 +880,8 @@ COMMAND(COA) {
 COMMAND(COR) {
     // Channel operator remove.
     // COR {"channel":"Channel Name", "character":"Character Name"}
-    QString channelname = nodes.at("channel").as_string().c_str();
-    QString charactername = nodes.at("character").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
+    QString charactername = nodes.value("character").toString();
     FChannel *channel = getChannel(channelname);
     if (!channel) {
         debugMessage(QString("[SERVER BUG] Was told to remove '%2' from the list of channel operators for channel '%1', but the channel '%1' is unknown (or never joined).  %3")
@@ -900,7 +898,7 @@ COMMAND(BRO) {
     (void)rawpacket;
     // Broadcast message.
     // BRO {"message": "Message Text"}
-    QString message = nodes.at("message").as_string().c_str();
+    QString message = nodes.value("message").toString();
     account->ui->messageAll(this, QString("<b>Broadcast message:</b> %1").arg(bbcodeparser->parse(message)), MESSAGE_TYPE_SYSTEM);
 }
 
@@ -908,7 +906,7 @@ COMMAND(SYS) {
     (void)rawpacket;
     // System message
     // SYS {"message": "Message Text"}
-    QString message = nodes.at("message").as_string().c_str();
+    QString message = nodes.value("message").toString();
     account->ui->messageSystem(this, QString("<b>System message:</b> %1").arg(message), MESSAGE_TYPE_SYSTEM);
 }
 
@@ -916,7 +914,7 @@ COMMAND(CON) {
     (void)rawpacket;
     // User count.
     // CON {"count": usercount}
-    QString count = nodes.at("count").as_string().c_str();
+    QString count = nodes.value("count").toString();
     // The message doesn't handle the plural case correctly, but that only happens on the test server.
     account->ui->messageSystem(this, QString("%1 users are currently connected.").arg(count), MESSAGE_TYPE_LOGIN);
 }
@@ -925,7 +923,7 @@ COMMAND(HLO) {
     (void)rawpacket;
     // Server hello. Sent during the initial connection traffic after identification.
     // HLO {"message": "Server Message"}
-    QString message = nodes.at("message").as_string().c_str();
+    QString message = nodes.value("message").toString();
     account->ui->messageSystem(this, QString("<b>%1</b>").arg(message), MESSAGE_TYPE_LOGIN);
     foreach (QString channelname, autojoinchannels) {
         joinChannel(channelname);
@@ -935,7 +933,7 @@ COMMAND(HLO) {
 COMMAND(IDN) {
     // Identity acknowledged.
     // IDN {"character": "Character Name"}
-    QString charactername = nodes.at("character").as_string().c_str();
+    QString charactername = nodes.value("character").toString();
 
     QString message = QString("<b>%1</b> connected.").arg(charactername);
     account->ui->messageSystem(this, message, MESSAGE_TYPE_LOGIN);
@@ -949,8 +947,8 @@ COMMAND(VAR) {
     (void)rawpacket;
     // Server variable
     // VAR {"value":value, "variable":"Variable_Name"}
-    QString value = nodes.at("value").as_string().c_str();
-    QString variable = nodes.at("variable").as_string().c_str();
+    QString value = nodes.value("value").toString();
+    QString variable = nodes.value("variable").toString();
     servervariables[variable] = value;
     debugMessage(QString("Server variable: %1 = '%2'").arg(variable).arg(value));
     // todo: Parse and store variables of interest.
@@ -960,10 +958,11 @@ COMMAND(FRL) {
     (void)rawpacket;
     // Friends and bookmarks list.
     // FRL {"characters":["Character Name"]}
-    JSONNode childnode = nodes.at("characters");
+    qDebug() << "FRL ->" << nodes;
+    QStringList childnode = nodes.value("characters").toStringList();
     int size = childnode.size();
     for (int i = 0; i < size; i++) {
-        QString charactername = childnode.at(i).as_string().c_str();
+        QString charactername = childnode.at(i);
         if (!friendslist.contains(charactername)) {
             friendslist.append(charactername);
             // debugMessage(QString("Added friend '%1'.").arg(charactername));
@@ -976,20 +975,20 @@ COMMAND(IGN) {
     // IGN {"action": "init", "characters":, ["Character Name"]}
     // IGN {"action": "add", "characters":, "Character Name"}
     // IGN {"action": "delete", "characters":, "Character Name"}
-    QString action = nodes.at("action").as_string().c_str();
+    QString action = nodes.value("action").toString();
     if (action == "init") {
-        JSONNode childnode = nodes.at("characters");
+        QStringList childnode = nodes.value("characters").toStringList();
         ignorelist.clear();
         int size = childnode.size();
         for (int i = 0; i < size; i++) {
-            QString charactername = childnode.at(i).as_string().c_str();
+            QString charactername = childnode.at(i);
             if (!ignorelist.contains(charactername, Qt::CaseInsensitive)) {
                 ignorelist.append(charactername.toLower());
             }
         }
         emit notifyIgnoreList(this);
     } else if (action == "add") {
-        QString charactername = nodes.at("character").as_string().c_str();
+        QString charactername = nodes.value("character").toString();
         if (ignorelist.contains(charactername, Qt::CaseInsensitive)) {
             debugMessage(
                     QString("[BUG] Was told to add '%1' to our ignore list, but '%1' is already on our ignore list. %2").arg(charactername).arg(QString::fromStdString(rawpacket)));
@@ -998,7 +997,7 @@ COMMAND(IGN) {
         }
         emit notifyIgnoreAdd(this, charactername);
     } else if (action == "delete") {
-        QString charactername = nodes.at("character").as_string().c_str();
+        QString charactername = nodes.value("character").toString();
         if (!ignorelist.contains(charactername, Qt::CaseInsensitive)) {
             debugMessage(QString("[BUG] Was told to remove '%1' from our ignore list, but '%1' is not on our ignore list. %2")
                                  .arg(charactername)
@@ -1067,9 +1066,9 @@ QString FSession::makeMessage(QString message, QString charactername, FCharacter
 COMMAND(LRP) {
     // Looking for RP message.
     // LRP {"channel": "Channel Name", "character": "Character Name", "message": "Message Text"}
-    QString channelname = nodes.at("channel").as_string().c_str();
-    QString charactername = nodes.at("character").as_string().c_str();
-    QString message = nodes.at("message").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
+    QString charactername = nodes.value("character").toString();
+    QString message = nodes.value("message").toString();
     FChannel *channel = getChannel(channelname);
     FCharacter *character = getCharacter(charactername);
     if (!channel) {
@@ -1097,9 +1096,9 @@ COMMAND(LRP) {
 COMMAND(MSG) {
     // Channel message.
     // MSG {"channel": "Channel Name", "character": "Character Name", "message": "Message Text"}
-    QString channelname = nodes.at("channel").as_string().c_str();
-    QString charactername = nodes.at("character").as_string().c_str();
-    QString message = nodes.at("message").as_string().c_str();
+    QString channelname = nodes.value("channel").toString();
+    QString charactername = nodes.value("character").toString();
+    QString message = nodes.value("message").toString();
     FChannel *channel = getChannel(channelname);
     FCharacter *character = getCharacter(charactername);
     if (!channel) {
@@ -1127,8 +1126,8 @@ COMMAND(MSG) {
 COMMAND(PRI) {
     // Private message.
     // PRI {"character": "Character Name", "message": "Message Text"}
-    QString charactername = nodes.at("character").as_string().c_str();
-    QString message = nodes.at("message").as_string().c_str();
+    QString charactername = nodes.value("character").toString();
+    QString message = nodes.value("message").toString();
     FCharacter *character = getCharacter(charactername);
     if (!character) {
         debugMessage(QString("[SERVER BUG] Received a message from the character '%1', but the character '%1' is unknown. %2")
@@ -1160,15 +1159,15 @@ COMMAND(RLL) {
     // "-1d10"], "results": [number, number, number]}
     QString channelname;
     try {
-        channelname = nodes.at("channel").as_string().c_str();
+        channelname = nodes.value("channel").toString();
     } catch (std::out_of_range) {
     }
-    QString charactername = nodes.at("character").as_string().c_str();
+    QString charactername = nodes.value("character").toString();
     if (channelname.isEmpty() && charactername == this->character) {
         // We're the character rolling in a PM, so the "recipient" field contains the character we want.
-        charactername = nodes.at("recipient").as_string().c_str();
+        charactername = nodes.value("recipient").toString();
     }
-    QString message = nodes.at("message").as_string().c_str();
+    QString message = nodes.value("message").toString();
     if (isCharacterIgnored(charactername)) {
         // Ignore message
         return;
@@ -1198,8 +1197,8 @@ COMMAND(TPN) {
     // Typing status.
     // TPN {"status": typing_enum, "character": "Character Name"}
     // Where 'typing_enum' is one of: "typing", "paused", "clear"
-    QString charactername = nodes.at("character").as_string().c_str();
-    QString typingstatus = nodes.at("status").as_string().c_str();
+    QString charactername = nodes.value("character").toString();
+    QString typingstatus = nodes.value("status").toString();
     FCharacter *character = getCharacter(charactername);
     if (!character) {
         debugMessage(QString("[SERVER BUG] Received a typing status update for the character '%1' but the character '%1' is unknown. %2")
@@ -1231,8 +1230,8 @@ COMMAND(KID) {
     // KID {"type": "end", "character": "Character Name", "message": "End of custom kinks."}
     // KID {"type": "custom", "character": "Character Name", "key": "Key Text", "value": "Value Text"}
     // Where "kinkdataenum" is one of: "start", "end", "custom"
-    QString type = nodes.at("type").as_string().c_str();
-    QString charactername = nodes.at("character").as_string().c_str();
+    QString type = nodes.value("type").toString();
+    QString charactername = nodes.value("character").toString();
     FCharacter *character = getCharacter(charactername);
     if (!character) {
         debugMessage(QString("[SERVER BUG] Received custom kink data for the character '%1' but the character '%1' is unknown. %2")
@@ -1246,8 +1245,8 @@ COMMAND(KID) {
     } else if (type == "end") {
         account->ui->notifyCharacterCustomKinkDataUpdated(this, charactername);
     } else if (type == "custom") {
-        QString key = nodes.at("key").as_string().c_str();
-        QString value = nodes.at("value").as_string().c_str();
+        QString key = nodes.value("key").toString();
+        QString value = nodes.value("value").toString();
         character->addCustomKinkData(key, value);
     } else {
         debugMessage(QString("[BUG] Received custom kink data for the character '%1' with a type of '%2' but we don't know how to handle '%2'. %3")
@@ -1264,8 +1263,8 @@ COMMAND(PRD) {
     // PRD {"type": "info", "character": "Character Name", "key": "Key Text", "value": "Value Text"}
     // PRD {"type": "select", "character": "Character Name", ???}
     // Where "profiledataenum" is one of: "start", "end", "info", "select"
-    QString type = nodes.at("type").as_string().c_str();
-    QString charactername = nodes.at("character").as_string().c_str();
+    QString type = nodes.value("type").toString();
+    QString charactername = nodes.value("character").toString();
     FCharacter *character = getCharacter(charactername);
     if (!character) {
         debugMessage(QString("[SERVER BUG] Received profile data for the character '%1' but the character '%1' is unknown. %2")
@@ -1279,8 +1278,8 @@ COMMAND(PRD) {
     } else if (type == "end") {
         account->ui->notifyCharacterProfileDataUpdated(this, charactername);
     } else if (type == "info") {
-        QString key = nodes.at("key").as_string().c_str();
-        QString value = nodes.at("value").as_string().c_str();
+        QString key = nodes.value("key").toString();
+        QString value = nodes.value("value").toString();
         character->addProfileData(key, value);
     } else {
         // todo: "select" is referred to in the wiki but no additional detail is given.
@@ -1295,14 +1294,20 @@ COMMAND(CHA) {
     // Channel list.
     // CHA {"channels": [{"name": "Channel Name", "characters": character_count}]}
     knownchannellist.clear();
-    JSONNode childnode = nodes.at("channels");
+    QList<QVariant> childnode = nodes.value("channels").toList();
     int size = childnode.size();
     for (int i = 0; i < size; i++) {
-        JSONNode channelnode = childnode.at(i);
-        QString channelname = channelnode.at("name").as_string().c_str();
-        QString channelcountstring = channelnode.at("characters").as_string().c_str();
-        // todo: Verify the count string can be converted properly.
-        int channelcount = channelcountstring.toInt();
+        QVariantMap channelnode = childnode.at(i).toMap();
+        QString channelname = channelnode.value("name").toString();
+        QString channelcountstring = channelnode.value("characters").toString();
+
+        bool _ok = false;
+        int channelcount = channelcountstring.toInt(&_ok);
+        if (!_ok) {
+            qDebug() << "CHA ->"
+                     << "Could not convert channel count to int, original string value is:" << channelcountstring;
+            channelcount = 0;
+        }
         knownchannellist.append(FChannelSummary(FChannelSummary::Public, channelname, channelcount));
     }
     account->ui->updateKnownChannelList(this);
@@ -1313,14 +1318,22 @@ COMMAND(ORS) {
     // Open room list.
     // CHA {"channels": [{"name": "Channel Name", "title": "Channel Title", "characters": character_count}]}
     knownopenroomlist.clear();
-    JSONNode childnode = nodes.at("channels");
+    QList<QVariant> childnode = nodes.value("channels").toList();
     int size = childnode.size();
     for (int i = 0; i < size; i++) {
-        JSONNode channelnode = childnode.at(i);
-        QString channelname = channelnode.at("name").as_string().c_str();
-        QString channeltitle = channelnode.at("title").as_string().c_str();
-        QString channelcountstring = channelnode.at("characters").as_string().c_str();
-        int channelcount = channelcountstring.toInt();
+        QVariantMap channelnode = childnode.at(i).toMap();
+        QString channelname = channelnode.value("name").toString();
+        QString channeltitle = channelnode.value("title").toString();
+        QString channelcountstring = channelnode.value("characters").toString();
+
+        bool _ok = false;
+        int channelcount = channelcountstring.toInt(&_ok);
+        if (!_ok) {
+            qDebug() << "ORS ->"
+                     << "Could not convert channel count to int, original string value is:" << channelcountstring;
+            channelcount = 0;
+        }
+
         knownopenroomlist.append(FChannelSummary(FChannelSummary::Private, channelname, channeltitle, channelcount));
     }
     account->ui->updateKnownOpenRoomList(this);
@@ -1339,11 +1352,11 @@ COMMAND(RTB) {
     // RTB {"type":"friendremove","name":"Character Name"}
 
     // todo: Determine all the RTB messages.
-    QString type = nodes.at("type").as_string().c_str();
+    QString type = nodes.value("type").toString();
     if (type == "note") {
-        QString charactername = nodes.at("sender").as_string().c_str();
-        QString subject = nodes.at("subject").as_string().c_str();
-        QString id = nodes.at("id").as_string().c_str();
+        QString charactername = nodes.value("sender").toString();
+        QString subject = nodes.value("subject").toString();
+        QString id = nodes.value("id").toString();
 
         QString message = "Note recieved from %1: <a href=\"https://www.f-list.net/view_note.php?note_id=%2\">%3</a>";
         message = message.arg(getCharacterHtml(charactername)).arg(id).arg(subject);
@@ -1352,7 +1365,7 @@ COMMAND(RTB) {
         account->ui->messageMessage(fmessage);
         // account->ui->messageSystem(this, message, MESSAGE_TYPE_NOTE);
     } else if (type == "trackadd") {
-        QString charactername = nodes.at("name").as_string().c_str();
+        QString charactername = nodes.value("name").toString();
         if (!friendslist.contains(charactername)) {
             friendslist.append(charactername);
             // debugMessage(QString("Added friend '%1'.").arg(charactername));
@@ -1365,7 +1378,7 @@ COMMAND(RTB) {
         // account->ui->messageSystem(this, message, MESSAGE_TYPE_BOOKMARK);
     } else if (type == "trackrem") {
         // todo: Update bookmark list? (Removing has the complication in that bookmarks and friends aren't distinguished and multiple instances of friends may exist.)
-        QString charactername = nodes.at("name").as_string().c_str();
+        QString charactername = nodes.value("name").toString();
         QString message = "Bookmark update: %1 has been removed from your bookmarks."; // todo: escape characters?
         message = message.arg(getCharacterHtml(charactername));
         FMessage fmessage(message, MESSAGE_TYPE_BOOKMARK);
@@ -1373,7 +1386,7 @@ COMMAND(RTB) {
         account->ui->messageMessage(fmessage);
         // account->ui->messageSystem(this, message, MESSAGE_TYPE_BOOKMARK);
     } else if (type == "friendrequest") {
-        QString charactername = nodes.at("name").as_string().c_str();
+        QString charactername = nodes.value("name").toString();
         QString message =
                 "Friend update: %1 has requested to be friends with one of your characters. Visit <a href=\"%2\">%2</a> to view the request on F-List."; // todo: escape characters?
         message = message.arg(charactername).arg("https://www.f-list.net/messages.php?show=friends");
@@ -1382,7 +1395,7 @@ COMMAND(RTB) {
         account->ui->messageMessage(fmessage);
         // account->ui->messageSystem(this, message, MESSAGE_TYPE_FRIEND);
     } else if (type == "friendadd") {
-        QString charactername = nodes.at("name").as_string().c_str();
+        QString charactername = nodes.value("name").toString();
         if (!friendslist.contains(charactername)) {
             friendslist.append(getCharacterHtml(charactername));
             // debugMessage(QString("Added friend '%1'.").arg(charactername));
@@ -1395,7 +1408,7 @@ COMMAND(RTB) {
         // account->ui->messageSystem(this, message, MESSAGE_TYPE_FRIEND);
     } else if (type == "friendremove") {
         // todo: Update bookmark/friend list? (Removing has the complication in that bookmarks and friends aren't distinguished and multiple instances of friends may exist.)
-        QString charactername = nodes.at("name").as_string().c_str();
+        QString charactername = nodes.value("name").toString();
         QString message = "Friend update: %1 was removed as a friend from one of your characters."; // todo: escape characters?
         message = message.arg(getCharacterHtml(charactername));
         FMessage fmessage(message, MESSAGE_TYPE_FRIEND);
@@ -1415,15 +1428,18 @@ COMMAND(ZZZ) {
     // Debug test command.
     // ZZZ {"message": "???"}
     // This command is not documented.
-    QString message = nodes.at("message").as_string().c_str();
+    QString message = nodes.value("message").toString();
     account->ui->messageSystem(this, QString("<b>Debug Reply:</b> %1").arg(message), MESSAGE_TYPE_SYSTEM);
 }
 
 COMMAND(ERR) {
     // Error message.
     // ERR {"number": error_number, "message": "Error Message"}
-    QString errornumberstring = nodes.at("number").as_string().c_str();
-    QString errormessage = nodes.at("message").as_string().c_str();
+
+    FJsonHelper helper;
+
+    QString errornumberstring = nodes.value("number").toString();
+    QString errormessage = nodes.value("message").toString();
     QString message = QString("<b>Error %1: </b> %2").arg(errornumberstring).arg(errormessage);
     account->ui->messageSystem(this, message, MESSAGE_TYPE_ERROR);
     bool ok;
@@ -1440,14 +1456,15 @@ COMMAND(ERR) {
     switch (errornumber) {
         case 34: // Error 34 is not in the wiki, but the existing code sends out another identification if it is received.
             {
-                JSONNode loginnode;
-                loginnode.push_back(JSONNode("method", "ticket"));
-                loginnode.push_back(JSONNode("ticket", account->ticket.toStdString()));
-                loginnode.push_back(JSONNode("account", account->getUserName().toStdString()));
-                loginnode.push_back(JSONNode("cname", FLIST_CLIENTID));
-                loginnode.push_back(JSONNode("cversion", FLIST_VERSIONNUM));
-                loginnode.push_back(JSONNode("character", character.toStdString()));
-                std::string idenStr = "IDN " + loginnode.write();
+                QMap<QString, QString> valueMap;
+                valueMap.insert("method", "ticket");
+                valueMap.insert("ticket", account->ticket);
+                valueMap.insert("account", account->getUserName());
+                valueMap.insert("cname", FLIST_CLIENTID);
+                valueMap.insert("cversion", FLIST_VERSIONNUM);
+                valueMap.insert("character", character);
+                QJsonDocument loginNode = helper.generateJsonNodesFromMap(valueMap);
+                std::string idenStr = "IDN " + loginNode.toJson(QJsonDocument::Compact).toStdString();
                 // debugMessage("Indentify...");
                 wsSend(idenStr);
                 break;
@@ -1467,6 +1484,8 @@ COMMAND(PIN) {
 
 // todo: Lots of duplicated between sendChannelMessage() and sendChannelAdvertisement() that can be refactored into a common function.
 void FSession::sendChannelMessage(QString channelname, QString message) {
+    FJsonHelper helper;
+
     // Confirm channel is known, joined and has the right permissions.
     FChannel *channel = getChannel(channelname);
     if (!channel) {
@@ -1484,10 +1503,11 @@ void FSession::sendChannelMessage(QString channelname, QString message) {
                                    MESSAGE_TYPE_FEEDBACK);
         return;
     }
-    JSONNode nodes;
-    nodes.push_back(JSONNode("channel", channelname.toStdString()));
-    nodes.push_back(JSONNode("message", message.toStdString()));
-    wsSend("MSG", nodes);
+    QMap<QString, QString> valueMap;
+    valueMap.insert("channel", channelname);
+    valueMap.insert("message", message);
+    QJsonDocument messageNode = helper.generateJsonNodesFromMap(valueMap);
+    wsSend("MSG", messageNode);
     // Escape HTML characters.
     message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
     // Send the message to the UI now.
@@ -1498,6 +1518,8 @@ void FSession::sendChannelMessage(QString channelname, QString message) {
 }
 
 void FSession::sendChannelAdvertisement(QString channelname, QString message) {
+    FJsonHelper helper;
+
     // Confirm channel is known, joined and has the right permissions.
     FChannel *channel = getChannel(channelname);
     if (!channel) {
@@ -1515,10 +1537,11 @@ void FSession::sendChannelAdvertisement(QString channelname, QString message) {
                                    MESSAGE_TYPE_FEEDBACK);
         return;
     }
-    JSONNode nodes;
-    nodes.push_back(JSONNode("channel", channelname.toStdString()));
-    nodes.push_back(JSONNode("message", message.toStdString()));
-    wsSend("LRP", nodes);
+    QMap<QString, QString> valueMap;
+    valueMap.insert("channel", channelname);
+    valueMap.insert("message", message);
+    QJsonDocument messageNode = helper.generateJsonNodesFromMap(valueMap);
+    wsSend("LRP", messageNode);
     // Escape HTML characters.
     message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
     // Send the message to the UI now.
@@ -1529,6 +1552,8 @@ void FSession::sendChannelAdvertisement(QString channelname, QString message) {
 }
 
 void FSession::sendCharacterMessage(QString charactername, QString message) {
+    FJsonHelper helper;
+
     // Confirm character is known, online and we are not ignoring them.
     if (!isCharacterOnline(charactername)) {
         account->ui->messageSystem(this, QString("Tried to send a message to '%1' but they are offline or unknown. Message: %2").arg(charactername).arg(message),
@@ -1540,10 +1565,11 @@ void FSession::sendCharacterMessage(QString charactername, QString message) {
         return;
     }
     // Make packet and send it.
-    JSONNode nodes;
-    nodes.push_back(JSONNode("recipient", charactername.toStdString()));
-    nodes.push_back(JSONNode("message", message.toStdString()));
-    wsSend("PRI", nodes);
+    QMap<QString, QString> valueMap;
+    valueMap.insert("recipient", charactername);
+    valueMap.insert("message", message);
+    QJsonDocument messageNode = helper.generateJsonNodesFromMap(valueMap);
+    wsSend("PRI", messageNode);
     // Escape HTML characters.
     // todo: use a proper function
     message.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
