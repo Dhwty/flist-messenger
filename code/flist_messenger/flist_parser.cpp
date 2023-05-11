@@ -38,6 +38,7 @@ BBCodeParser::BBCodeTag* BBCodeParser::BBCODE_URL = new BBCodeParser::BBCodeTagU
 BBCodeParser::BBCodeTag* BBCodeParser::BBCODE_CHANNEL = new BBCodeParser::BBCodeTagChannel(true);
 BBCodeParser::BBCodeTag* BBCodeParser::BBCODE_SESSION = new BBCodeParser::BBCodeTagSession(true);
 BBCodeParser::BBCodeTag* BBCodeParser::BBCODE_ICON = new BBCodeParser::BBCodeTagIcon(true);
+BBCodeParser::BBCodeTag* BBCodeParser::BBCODE_EICON = new BBCodeParser::BBCodeTagEicon(true);
 BBCodeParser::BBCodeTag* BBCodeParser::BBCODE_NOPARSE = new BBCodeParser::BBCodeTagNoparse(false);
 BBCodeParser::BBCodeTag* BBCodeParser::BBCODE_USER = new BBCodeParser::BBCodeTagUser(false);
 
@@ -58,6 +59,7 @@ BBCodeParser::BBCodeParser() {
     addTag("channel", BBCODE_CHANNEL);
     addTag("session", BBCODE_SESSION);
     addTag("icon", BBCODE_ICON);
+    addTag("eicon", BBCODE_EICON);
     addTag("user", BBCODE_USER);
     addTag("noparse", BBCODE_NOPARSE);
 }
@@ -100,7 +102,7 @@ QString BBCodeParser::BBCodeTagNoparse::parse(QString& param, QString& content) 
 QString BBCodeParser::BBCodeTagChannel::parse(QString& param, QString& content) {
     (void)param;
     static QRegularExpression bbTagChannel("[A-Za-z0-9 \\-/']+", QRegularExpression::CaseInsensitiveOption);
-    if (content.indexOf(bbTagChannel)) {
+    if (content.indexOf(bbTagChannel) >= 0) {
         return "<a href=\"#AHI-" + content + "\"><img src=\":/images/hash.png\" />" + content + "</a>";
     }
     return content;
@@ -110,7 +112,7 @@ QString BBCodeParser::BBCodeTagChannel::parse(QString& param, QString& content) 
 //  [session=Ponyville]ADH-27f9aeaebbf401b7178c[/session]
 QString BBCodeParser::BBCodeTagSession::parse(QString& param, QString& content) {
     static QRegularExpression bbTagSession("[A-Za-z0-9 \\-]+", QRegularExpression::CaseInsensitiveOption);
-    if (content.indexOf(bbTagSession)) {
+    if (content.indexOf(bbTagSession) >= 0) {
         return "<a href=\"#AHI-" + content + "\"><img src=\":/images/key.png\" />" + param + "</a>";
     }
     return content;
@@ -119,9 +121,20 @@ QString BBCodeParser::BBCodeTagSession::parse(QString& param, QString& content) 
 QString BBCodeParser::BBCodeTagIcon::parse(QString& param, QString& content) {
     (void)param;
     static QRegularExpression bbTagIcon("[A-Za-z0-9 \\-_]+", QRegularExpression::CaseInsensitiveOption);
-    if (content.indexOf(bbTagIcon)) {
-        return "<a href=\"https://www.f-list.net/c/" + content + "\"><img src=\"https://static.f-list.net/images/avatar/" + content.toLower()
+    if (content.indexOf(bbTagIcon) >= 0) {
+        content = content.replace(" ", "%20");
+        return "<a href=\"https://www.f-list.net/c/" + content + "\"><img class=\"icon\" src=\"https://static.f-list.net/images/avatar/" + content.toLower()
                + ".png\" style=\"width:50px;height:50px;\" align=\"top\"/></a>";
+    }
+    return content;
+}
+
+QString BBCodeParser::BBCodeTagEicon::parse(QString& param, QString& content) {
+    (void)param;
+    static QRegularExpression bbTagEicon("[A-Za-z0-9 \\-_]+", QRegularExpression::CaseInsensitiveOption);
+    if (content.indexOf(bbTagEicon) >= 0) {
+        content = content.replace(" ", "%20");
+        return "<img class=\"eicon\" src=\"https://static.f-list.net/images/eicon/" + content.toLower() + ".gif\" style=\"width:50px;height:50px;\" align=\"top\"/>";
     }
     return content;
 }
@@ -129,7 +142,7 @@ QString BBCodeParser::BBCodeTagIcon::parse(QString& param, QString& content) {
 QString BBCodeParser::BBCodeTagUser::parse(QString& param, QString& content) {
     (void)param;
     static QRegularExpression bbTagUser("[A-Za-z0-9 \\-_]+", QRegularExpression::CaseInsensitiveOption);
-    if (content.indexOf(bbTagUser)) {
+    if (content.indexOf(bbTagUser) >= 0) {
         return "<a href=\"https://www.f-list.net/c/" + content + "\"><img src=\":/images/user.png\" />" + content + "</a>";
     }
     return content;

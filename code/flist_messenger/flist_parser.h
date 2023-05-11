@@ -116,6 +116,13 @@ class BBCodeParser {
                 QString parse(QString& param, QString& content);
         };
 
+        class BBCodeTagEicon : public BBCodeTag {
+            public:
+                BBCodeTagEicon(bool blacklist) : BBCodeTag(blacklist) {}
+
+                QString parse(QString& param, QString& content);
+        };
+
         class BBCodeTagUser : public BBCodeTag {
             public:
                 BBCodeTagUser(bool blacklist) : BBCodeTag(blacklist) {}
@@ -141,6 +148,7 @@ class BBCodeParser {
         static BBCodeTag* BBCODE_CHANNEL;
         static BBCodeTag* BBCODE_SESSION;
         static BBCodeTag* BBCODE_ICON;
+        static BBCodeTag* BBCODE_EICON;
         static BBCodeTag* BBCODE_USER;
         static BBCodeTag* BBCODE_NOPARSE;
 

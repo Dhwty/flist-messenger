@@ -45,7 +45,7 @@ GETSETANY(QString, toString, String)
 //Account
 GETSETSTRING(UserAccount, "Global/account", "")
 //Channels
-GETSETSTRING(DefaultChannels, "Global/default_channels", "Frontpage|||F-chat Desktop Client")
+GETSETSTRING(DefaultChannels, "Global/default_channels", "")
 //Logging
 GETSETBOOL(LogChat, "Global/log_chat", true)
 //Show message options
